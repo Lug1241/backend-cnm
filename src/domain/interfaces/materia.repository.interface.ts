@@ -1,3 +1,4 @@
+import { LimitOnUpdateNotSupportedError } from 'typeorm';
 import { Materia, NivelMateria, TipoMateria } from '../entities/materia.entity';
 
 export const I_MATERIA_REPOSITORY = 'IMateriaRepository';
@@ -7,8 +8,16 @@ export interface IMateriaRepository {
   update(id: number, materia: Partial<Materia>): Promise<boolean>;
   findById(id: number): Promise<Materia | null>;
   findByNombre(nombre: string): Promise<Materia | null>;
-  findByNivel(nivel: NivelMateria): Promise<{ data: Materia[]; totalRows: number }>;
-  findByTipo(tipo: TipoMateria): Promise<{ data: Materia[]; totalRows: number }>;
+  findByNivel(
+    nivel: NivelMateria,
+    page: number,
+    limit: number,
+): Promise<{ data: Materia[]; totalRows: number }>;
+  findByTipo(
+    tipo: TipoMateria,
+    page: number,
+    limit: number,
+): Promise<{ data: Materia[]; totalRows: number }>;
   findAll(
     page: number,
     limit: number,
