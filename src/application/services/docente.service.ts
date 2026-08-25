@@ -12,15 +12,18 @@ import {
 import { Docente } from '@domain/entities/docente.entity';
 import { CreateDocenteDto } from '../dtos/create-docente.dto';
 import { UpdateDocenteDto } from '../dtos/update-docente.dto';
-
-// 💡 NOTA: Más adelante puedes crear un MailService, por ahora puedes importar tu utilidad así:
-// import { enviarContrasenia } from '@infrastructure/utils/enviarCorreo';
+import {
+  type IMailService,
+  I_MAIL_SERVICE,
+} from '@domain/interfaces/mail.service.interface';
 
 @Injectable()
 export class DocenteService {
   constructor(
     @Inject(I_DOCENTE_REPOSITORY)
     private readonly docenteRepository: IDocenteRepository,
+    @Inject(I_MAIL_SERVICE)
+    private readonly mailService: IMailService,
   ) {}
 
   private generarPasswordFuerte(): string {
@@ -71,7 +74,7 @@ export class DocenteService {
     });
 
     const guardado = await this.docenteRepository.create(nuevoDocente);
-
+    await this.mailService.enviarContrasenia(dto.email, provicional);
     const {
       password: _password,
       resetToken: _resetToken,
