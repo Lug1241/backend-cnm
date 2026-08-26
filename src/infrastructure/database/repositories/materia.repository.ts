@@ -13,12 +13,15 @@ export class MateriaRepository implements IMateriaRepository {
     ) {}
 
     async create(materia: Materia): Promise<Materia> {
+        const fecha = new Date()
         const ormEntity = this.ormRepository.create({
             nombre: materia.nombre,
             nivel: materia.nivel,
             tipo: materia.tipo,
             observaciones: materia.observaciones,
             edadMin: materia.edadMin,
+            fechaCreacion: fecha,
+            fechaModificacion: fecha,
         });
         
         const savedEntity = await this.ormRepository.save(ormEntity);

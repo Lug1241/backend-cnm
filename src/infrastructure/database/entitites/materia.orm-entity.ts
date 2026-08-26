@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { NivelMateria, TipoMateria } from '../../../domain/entities/materia.entity';
 import { empty } from 'rxjs';
 
@@ -34,4 +34,10 @@ export class MateriaOrmEntity {
         type: 'integer',
     })
     edadMin!: number;
+
+    @Column({ type: 'datetime', name: 'createdAt' }) 
+    fechaCreacion!: Date;
+
+    @Column({ type: 'datetime', name: 'updatedAt' })
+    fechaModificacion!: Date;
 }
