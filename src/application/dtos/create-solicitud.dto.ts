@@ -11,8 +11,8 @@ import { DescripcionSolicitud } from '../../domain/entities/solicitud.entity';
 
 export class CreateSolicitudDto {
   @IsString()
-  @IsNotEmpty({ message: 'La cédula del docente no puede estar vacía' })
-  nroCedulaDocente!: string;
+  @IsNotEmpty({ message: 'El ID del docente no puede estar vacío' })
+  ID_docente!: string;
 
   @IsEnum(DescripcionSolicitud, {
     message: 'Debe seleccionar una descripción válida',

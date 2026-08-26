@@ -30,7 +30,7 @@ export class SolicitudService {
     this.validateDateRange(fechaInicio, fechaFin);
 
     const existe = await this.solicitudRepository.findDuplicate({
-      nroCedulaDocente: dto.nroCedulaDocente,
+      ID_docente: dto.ID_docente,
       fechaInicio,
       fechaFin,
       motivo: dto.motivo,

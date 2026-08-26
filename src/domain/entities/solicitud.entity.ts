@@ -1,3 +1,4 @@
+import { Docente } from './docente.entity';
 export enum DescripcionSolicitud {
   PARCIAL1_QUIM1 = 'parcial1_quim1',
   PARCIAL2_QUIM1 = 'parcial2_quim1',
@@ -22,7 +23,7 @@ export class Solicitud {
   motivo!: string;
   estado!: EstadoSolicitud;
   fechaSolicitud!: Date;
-  nroCedulaDocente!: string;
+  docente?: Docente;
 
   constructor(partial: Partial<Solicitud>) {
     Object.assign(this, partial);

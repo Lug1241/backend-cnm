@@ -4,6 +4,7 @@ import { DocenteModule } from './docente/docente.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { PeriodoAcademicoModule } from './periodo-academico/periodo-academico.module';
 import { MailModule } from './infrastructure/mail/mail.module';
+import { SolicitudModule } from './solicitud/solicitud.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { MailModule } from './infrastructure/mail/mail.module';
     PeriodoAcademicoModule,
     DocenteModule,
     MailModule,
+    SolicitudModule,
   ],
 })
 export class AppModule {}
