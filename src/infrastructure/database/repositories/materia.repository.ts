@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { IMateriaRepository } from '../../../domain/interfaces/materia.repository.interface';
-import {
-  Materia,
-  NivelMateria,
-  TipoMateria,
-} from '../../../domain/entities/materia.entity';
+import { Materia, NivelMateria, TipoMateria } from '../../../domain/entities/materia.entity';
 import { MateriaOrmEntity } from '../entitites/materia.orm-entity';
 
 @Injectable()
@@ -16,10 +12,82 @@ export class MateriaRepository implements IMateriaRepository {
         private readonly ormRepository: Repository<MateriaOrmEntity>,
     ) {}
 
-    private toDomain(
-        ormEntity: MateriaOrmEntity | null,
-    ): Materia | null {
-        if(!ormEntity) return null;
+    async create(materia: Materia): Promise<Materia> {
+        const ormEntity = this.ormRepository.create({
+            nombre: materia.nombre,
+            nivel: materia.nivel,
+            tipo: materia.tipo,
+            observaciones: materia.observaciones,
+            edadMin: materia.edadMin,
+        });
+        
+        const savedEntity = await this.ormRepository.save(ormEntity);
+        return this.toDomain(savedEntity)!; 
+    }
+
+    async update(id: number, materia: Partial<Materia>): Promise<boolean> {
+        const result = await this.ormRepository.update(id, {
+            nombre: materia.nombre,
+            nivel: materia.nivel,
+            tipo: materia.tipo,
+            observaciones: materia.observaciones,
+            edadMin: materia.edadMin,
+        });
+
+        return (result.affected ?? 0) > 0;
+    }
+
+    async findById(id: number): Promise<Materia | null> {
+        const ormEntity = await this.ormRepository.findOne({ where: { id } });
+        if (!ormEntity) return null;
+        return this.toDomain(ormEntity);
+    }
+
+    async findAll(page: number, limit: number, search: string): Promise<{ data: Materia[]; totalRows: number }> {
+        const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
+            where: search ? { nombre: Like(`%${search}%`) } : {},
+            skip: (page - 1) * limit,
+            take: limit,
+        });
+        
+        const data = ormEntities.map(entity => this.toDomain(entity)!);
+        return { data, totalRows };
+    }
+
+    async findByNivel(nivel: NivelMateria, page: number, limit: number): Promise<{ data: Materia[]; totalRows: number }> {
+        const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
+            where: { nivel },
+            skip: (page - 1) * limit,
+            take: limit,
+        });
+        
+        const data = ormEntities.map(entity => this.toDomain(entity)!);
+        return { data, totalRows };
+    }
+
+    async findByTipo(tipo: TipoMateria, page: number, limit: number): Promise<{ data: Materia[]; totalRows: number }> {
+        const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
+            where: { tipo },
+            skip: (page - 1) * limit,
+            take: limit,
+        });
+        
+        const data = ormEntities.map(entity => this.toDomain(entity)!);
+        return { data, totalRows };
+    }
+
+    async findByNombre(nombre: string): Promise<Materia | null> {
+        const ormEntity = await this.ormRepository.findOne({ where: { nombre } });
+        if (!ormEntity) return null;
+        return this.toDomain(ormEntity);
+    }
+
+    async delete(id: number): Promise<void> {
+        await this.ormRepository.delete(id);
+    }
+
+    private toDomain(ormEntity: MateriaOrmEntity | null): Materia | null {
+        if (!ormEntity) return null;
         return new Materia({
             id: ormEntity.id,
             nombre: ormEntity.nombre,
@@ -28,40 +96,5 @@ export class MateriaRepository implements IMateriaRepository {
             observaciones: ormEntity.observaciones,
             edadMin: ormEntity.edadMin,
         });
-    }
-
-    create(materia: Materia): Promise<Materia> {
-        const entity = this.ormRepository.create(
-            materia as unknown as MateriaOrmEntity,
-        );
-
-        return this.ormRepository.save(entity) as Promise<Materia>;
-    }
-    update(id: number, materia: Partial<Materia>): Promise<boolean> {
-        return this.ormRepository
-            .update(id, materia as unknown as Partial<MateriaOrmEntity>)
-            .then((result) => (result.affected ?? 0) > 0);
-    }
-
-    async findById(id: number): Promise<Materia | null> {
-        const ormEntity = await this.ormRepository.findOne({ where: { id }});
-        if(!ormEntity) return null;
-        return this.toDomain(ormEntity);
-    }
-
-    findByNombre(nombre: string): Promise<Materia | null> {
-        throw new Error('Method not implemented.');
-    }
-    findByNivel(nivel: NivelMateria, page: number, limit: number): Promise<{ data: Materia[]; totalRows: number; }> {
-        throw new Error('Method not implemented.');
-    }
-    findByTipo(tipo: TipoMateria, page: number, limit: number): Promise<{ data: Materia[]; totalRows: number; }> {
-        throw new Error('Method not implemented.');
-    }
-    findAll(page: number, limit: number, search: string): Promise<{ data: Materia[]; totalRows: number; }> {
-        throw new Error('Method not implemented.');
-    }
-    delete(id: number): Promise<void> {
-        throw new Error('Method not implemented.');
     }
 }
