@@ -5,6 +5,7 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 import { PeriodoAcademicoModule } from './periodo-academico/periodo-academico.module';
 import { MateriaModule } from './materia/materia.module';
 import { MailModule } from './infrastructure/mail/mail.module';
+import { SolicitudModule } from './solicitud/solicitud.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MailModule } from './infrastructure/mail/mail.module';
     MateriaModule,
     DocenteModule,
     MailModule,
+    SolicitudModule,
   ],
 })
 export class AppModule {}
