@@ -3,7 +3,7 @@ import { DescripcionSolicitud, Solicitud } from '../entities/solicitud.entity';
 export const I_SOLICITUD_REPOSITORY = 'ISolicitudRepository';
 
 export interface SolicitudDuplicateCriteria {
-  ID_docente: string;
+  ID_docente: number;
   fechaInicio: Date | null;
   fechaFin: Date | null;
   motivo: string;

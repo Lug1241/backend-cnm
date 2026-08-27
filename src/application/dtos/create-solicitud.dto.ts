@@ -4,15 +4,16 @@ import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsString,
+  IsNumber,
   Length,
+  IsString,
 } from 'class-validator';
 import { DescripcionSolicitud } from '../../domain/entities/solicitud.entity';
 
 export class CreateSolicitudDto {
-  @IsString()
+  @IsNumber()
   @IsNotEmpty({ message: 'El ID del docente no puede estar vacío' })
-  ID_docente!: string;
+  ID_docente!: number;
 
   @IsEnum(DescripcionSolicitud, {
     message: 'Debe seleccionar una descripción válida',

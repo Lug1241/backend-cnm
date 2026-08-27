@@ -77,9 +77,9 @@ export class SolicitudRepository implements ISolicitudRepository {
     return this.toDomain(ormEntity);
   }
 
-  async findByDocente(ID_docente: string): Promise<Solicitud[]> {
+  async findByDocente(nroCedula: string): Promise<Solicitud[]> {
     const ormEntities = await this.ormRepository.find({
-      where: { ID_docente },
+      where: { docente: { nroCedula } },
       relations: { docente: true },
     });
     return ormEntities.map((ent) => this.toDomain(ent)!);
@@ -93,11 +93,11 @@ export class SolicitudRepository implements ISolicitudRepository {
   }
 
   async findLastAcceptedByDocente(
-    ID_docente: string,
+    nroCedula: string,
   ): Promise<Solicitud | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: {
-        ID_docente,
+        docente: { nroCedula },
         estado: EstadoSolicitud.ACEPTADA,
       },
       order: {

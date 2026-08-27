@@ -16,8 +16,8 @@ export class SolicitudOrmEntity {
   @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ name: 'ID_docente', type: 'varchar', length: 20 })
-  ID_docente!: string;
+  @Column({ name: 'ID_docente', type: 'integer' })
+  ID_docente!: number;
 
   @ManyToOne(() => DocenteOrmEntity)
   @JoinColumn({ name: 'ID_docente' })
