@@ -13,6 +13,10 @@ import { Docente } from '@domain/entities/docente.entity';
 import { CreateDocenteDto } from '../dtos/create-docente.dto';
 import { UpdateDocenteDto } from '../dtos/update-docente.dto';
 import {
+  generarPasswordFuerte,
+  ocultarDatosSensibles,
+} from '@infrastructure/utils/security.utils';
+import {
   type IMailService,
   I_MAIL_SERVICE,
 } from '@domain/interfaces/mail.service.interface';
@@ -22,49 +26,29 @@ export class DocenteService {
   constructor(
     @Inject(I_DOCENTE_REPOSITORY)
     private readonly docenteRepository: IDocenteRepository,
+
     @Inject(I_MAIL_SERVICE)
     private readonly mailService: IMailService,
   ) {}
-
-  private generarPasswordFuerte(): string {
-    const mayus = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const minus = 'abcdefghijklmnopqrstuvwxyz';
-    const num = '0123456789';
-    const esp = '!@#$%^&*()_+~|}{[]:;?><,./-=';
-    const todos = mayus + minus + num + esp;
-
-    let password = '';
-    password += mayus[Math.floor(Math.random() * mayus.length)];
-    password += minus[Math.floor(Math.random() * minus.length)];
-    password += num[Math.floor(Math.random() * num.length)];
-    password += esp[Math.floor(Math.random() * esp.length)];
-
-    for (let i = 4; i < 8; i++) {
-      password += todos[Math.floor(Math.random() * todos.length)];
-    }
-
-    return password
-      .split('')
-      .sort(() => 0.5 - Math.random())
-      .join('');
-  }
 
   async create(dto: CreateDocenteDto) {
     const docenteExistente = await this.docenteRepository.findByCedula(
       dto.nroCedula,
     );
+
     if (docenteExistente) {
       throw new ConflictException('La cédula ya existe');
     }
 
     const emailExistente = await this.docenteRepository.findByEmail(dto.email);
+
     if (emailExistente) {
       throw new ConflictException('El email ya está registrado');
     }
 
-    const provicional = this.generarPasswordFuerte();
+    const passwordProvisional = generarPasswordFuerte();
     const salt = await genSalt(10);
-    const hashedPassword = await hash(provicional, salt);
+    const hashedPassword = await hash(passwordProvisional, salt);
 
     const nuevoDocente = new Docente({
       ...dto,
@@ -73,24 +57,22 @@ export class DocenteService {
       habilitado: false,
     });
 
-    const guardado = await this.docenteRepository.create(nuevoDocente);
-    await this.mailService.enviarContrasenia(dto.email, provicional);
-    const {
-      password: _password,
-      resetToken: _resetToken,
-      resetTokenExpires: _resetTokenExpires,
-      ...result
-    } = guardado;
-    return result;
+    const docenteGuardado = await this.docenteRepository.create(nuevoDocente);
+
+    await this.mailService.enviarContrasenia(dto.email, passwordProvisional);
+
+    return ocultarDatosSensibles(docenteGuardado);
   }
 
   async update(nroCedula: string, dto: UpdateDocenteDto) {
     const docenteActual = await this.docenteRepository.findByCedula(nroCedula);
+
     if (!docenteActual) {
       throw new NotFoundException('Docente no encontrado');
     }
 
     const datosAActualizar: Partial<Docente> = { ...dto };
+    let passwordProvisional: string | null = null;
 
     if (dto.password) {
       const salt = await genSalt(10);
@@ -99,44 +81,46 @@ export class DocenteService {
 
     if (dto.email && dto.email !== docenteActual.email) {
       const emailEnUso = await this.docenteRepository.findByEmail(dto.email);
+
       if (emailEnUso) {
         throw new ConflictException(
           'El nuevo email ya está registrado por otro docente',
         );
       }
 
-      const provicional = this.generarPasswordFuerte();
-      const salt = await genSalt(10);
-      datosAActualizar.password = await hash(provicional, salt);
+      if (!dto.password) {
+        passwordProvisional = generarPasswordFuerte();
 
-      // 👇 Aquí envías el correo a la nueva dirección
-      // await enviarContrasenia(dto.email, provicional);
+        const salt = await genSalt(10);
+        datosAActualizar.password = await hash(passwordProvisional, salt);
+        datosAActualizar.debeCambiarPassword = true;
+      }
     }
 
     await this.docenteRepository.update(nroCedula, datosAActualizar);
 
-    const actualizado = await this.docenteRepository.findByCedula(nroCedula);
-    const {
-      password: _password,
-      resetToken: _resetToken,
-      resetTokenExpires: _resetTokenExpires,
-      ...result
-    } = actualizado!;
-    return result;
+    if (passwordProvisional && dto.email) {
+      await this.mailService.enviarContrasenia(dto.email, passwordProvisional);
+    }
+
+    const docenteActualizado =
+      await this.docenteRepository.findByCedula(nroCedula);
+
+    if (!docenteActualizado) {
+      throw new NotFoundException('Docente actualizado no encontrado');
+    }
+
+    return ocultarDatosSensibles(docenteActualizado);
   }
 
   async getByCedula(nroCedula: string) {
     const docente = await this.docenteRepository.findByCedula(nroCedula);
+
     if (!docente) {
       throw new NotFoundException('Docente no encontrado');
     }
-    const {
-      password: _password,
-      resetToken: _resetToken,
-      resetTokenExpires: _resetTokenExpires,
-      ...result
-    } = docente;
-    return result;
+
+    return ocultarDatosSensibles(docente);
   }
 
   async getAll(page: number, limit: number, search: string) {
@@ -146,18 +130,8 @@ export class DocenteService {
       search,
     );
 
-    const docentesLimpios = data.map((docente) => {
-      const {
-        password: _password,
-        resetToken: _resetToken,
-        resetTokenExpires: _resetTokenExpires,
-        ...resto
-      } = docente;
-      return resto;
-    });
-
     return {
-      data: docentesLimpios,
+      data: data.map((docente) => ocultarDatosSensibles(docente)),
       totalPages: Math.ceil(totalRows / limit),
       currentPage: page,
       totalRows,
@@ -166,17 +140,13 @@ export class DocenteService {
 
   async delete(nroCedula: string) {
     const docente = await this.docenteRepository.findByCedula(nroCedula);
+
     if (!docente) {
       throw new NotFoundException('Docente no encontrado');
     }
+
     await this.docenteRepository.delete(nroCedula);
 
-    const {
-      password: _password,
-      resetToken: _resetToken,
-      resetTokenExpires: _resetTokenExpires,
-      ...result
-    } = docente;
-    return result;
+    return ocultarDatosSensibles(docente);
   }
 }

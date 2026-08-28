@@ -4,7 +4,6 @@ import {
   NotFoundException,
   Inject,
 } from '@nestjs/common';
-import { randomInt } from 'crypto';
 import { hash, genSalt } from 'bcryptjs';
 import {
   type IRepresentanteRepository,
@@ -13,6 +12,10 @@ import {
 import { Representante } from '@domain/entities/representante.entity';
 import { CreateRepresentanteDto } from '../dtos/create-representante.dto';
 import { UpdateRepresentanteDto } from '../dtos/update-representante.dto';
+import {
+  ocultarDatosSensibles,
+  generarPasswordFuerte,
+} from '@infrastructure/utils/security.utils';
 import {
   type IMailService,
   I_MAIL_SERVICE,
@@ -27,46 +30,6 @@ export class RepresentanteService {
     @Inject(I_MAIL_SERVICE)
     private readonly mailService: IMailService,
   ) {}
-
-  private generarPasswordFuerte(): string {
-    const mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const minusculas = 'abcdefghijklmnopqrstuvwxyz';
-    const numeros = '0123456789';
-    const especiales = '!@#$%^&*()_+-=';
-    const todos = mayusculas + minusculas + numeros + especiales;
-
-    const obtenerCaracter = (caracteres: string): string =>
-      caracteres[randomInt(caracteres.length)];
-
-    const password = [
-      obtenerCaracter(mayusculas),
-      obtenerCaracter(minusculas),
-      obtenerCaracter(numeros),
-      obtenerCaracter(especiales),
-    ];
-
-    while (password.length < 8) {
-      password.push(obtenerCaracter(todos));
-    }
-
-    for (let i = password.length - 1; i > 0; i--) {
-      const posicion = randomInt(i + 1);
-      [password[i], password[posicion]] = [password[posicion], password[i]];
-    }
-
-    return password.join('');
-  }
-
-  private ocultarDatosSensibles(representante: Representante) {
-    const {
-      password: _password,
-      resetToken: _resetToken,
-      resetTokenExpires: _resetTokenExpires,
-      ...resultado
-    } = representante;
-
-    return resultado;
-  }
 
   async create(dto: CreateRepresentanteDto) {
     const representanteExistente =
@@ -84,7 +47,7 @@ export class RepresentanteService {
       throw new ConflictException('El email ya está registrado');
     }
 
-    const passwordProvisional = this.generarPasswordFuerte();
+    const passwordProvisional = generarPasswordFuerte();
     const salt = await genSalt(10);
     const hashedPassword = await hash(passwordProvisional, salt);
 
@@ -100,7 +63,7 @@ export class RepresentanteService {
 
     await this.mailService.enviarContrasenia(dto.email, passwordProvisional);
 
-    return this.ocultarDatosSensibles(representanteGuardado);
+    return ocultarDatosSensibles(representanteGuardado);
   }
 
   async update(nroCedula: string, dto: UpdateRepresentanteDto) {
@@ -146,7 +109,7 @@ export class RepresentanteService {
       }
 
       if (!dto.password) {
-        passwordProvisional = this.generarPasswordFuerte();
+        passwordProvisional = generarPasswordFuerte();
 
         const salt = await genSalt(10);
         datosAActualizar.password = await hash(passwordProvisional, salt);
@@ -174,7 +137,7 @@ export class RepresentanteService {
       throw new NotFoundException('Representante actualizado no encontrado');
     }
 
-    return this.ocultarDatosSensibles(representanteActualizado);
+    return ocultarDatosSensibles(representanteActualizado);
   }
 
   async getByCedula(nroCedula: string) {
@@ -185,7 +148,7 @@ export class RepresentanteService {
       throw new NotFoundException('Representante no encontrado');
     }
 
-    return this.ocultarDatosSensibles(representante);
+    return ocultarDatosSensibles(representante);
   }
 
   async getAll(page: number, limit: number, search: string) {
@@ -196,9 +159,7 @@ export class RepresentanteService {
     );
 
     return {
-      data: data.map((representante) =>
-        this.ocultarDatosSensibles(representante),
-      ),
+      data: data.map((representante) => ocultarDatosSensibles(representante)),
       totalPages: Math.ceil(totalRows / limit),
       currentPage: page,
       totalRows,
@@ -215,6 +176,6 @@ export class RepresentanteService {
 
     await this.representanteRepository.delete(nroCedula);
 
-    return this.ocultarDatosSensibles(representante);
+    return ocultarDatosSensibles(representante);
   }
 }
