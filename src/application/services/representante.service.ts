@@ -145,11 +145,13 @@ export class RepresentanteService {
         );
       }
 
-      passwordProvisional = this.generarPasswordFuerte();
+      if (!dto.password) {
+        passwordProvisional = this.generarPasswordFuerte();
 
-      const salt = await genSalt(10);
-      datosAActualizar.password = await hash(passwordProvisional, salt);
-      datosAActualizar.debeCambiarPassword = true;
+        const salt = await genSalt(10);
+        datosAActualizar.password = await hash(passwordProvisional, salt);
+        datosAActualizar.debeCambiarPassword = true;
+      }
     }
 
     const actualizado = await this.representanteRepository.update(
