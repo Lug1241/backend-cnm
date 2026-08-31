@@ -13,38 +13,38 @@ export class FechaProcesoService {
     private readonly fechaProcesoRepository: IFechaProcesoRepository,
   ) {}
 
-  async create(dto: CreateFechaProcesoDto) {
-    return this.fechaProcesoRepository.create(dto as any);
-  }
-
-  async update(id: number, dto: UpdateFechaProcesoDto): Promise<FechaProceso> {
-    await this.getById(id);
-    await this.fechaProcesoRepository.update(id, dto);
-    const actualizado = await this.fechaProcesoRepository.findById(id);
-    return actualizado!;
-  }
-
-  async verificarPeriodoMatricula() {
-    const hoy = new Date().toISOString().split('T')[0];
-    const proceso = await this.fechaProcesoRepository.findLatestByProceso(TipoProceso.MATRICULA);
-
-    if (!proceso) {
-      return { periodoActivo: false, mensaje: 'No hay matrícula definida.' };
+    async create(dto: CreateFechaProcesoDto) {
+        return this.fechaProcesoRepository.create(dto as any);
     }
 
-    const fechaProcesoStr = typeof proceso.fechaProceso === 'string' 
-      ? proceso.fechaProceso 
-      : proceso.fechaProceso.toISOString().split('T')[0];
+    async update(id: number, dto: UpdateFechaProcesoDto): Promise<FechaProceso> {
+        await this.getById(id);
+        await this.fechaProcesoRepository.update(id, dto);
+        const actualizado = await this.fechaProcesoRepository.findById(id);
+        return actualizado!;
+    }
 
-    const activo = hoy === fechaProcesoStr;
+    async verificarPeriodoMatricula() {
+        const hoy = new Date().toISOString().split('T')[0];
+        const proceso = await this.fechaProcesoRepository.findLatestByProceso(TipoProceso.MATRICULA);
 
-    return {
-      periodoActivo: activo,
-      proceso: proceso.proceso,
-      fechaProceso: fechaProcesoStr,
-      mensaje: activo ? 'La matrícula está activa hoy.' : 'La matrícula no está activa hoy.',
-    };
-  }
+        if (!proceso) {
+        return { periodoActivo: false, mensaje: 'No hay matrícula definida.' };
+        }
+
+        const fechaProcesoStr = typeof proceso.fechaProceso === 'string' 
+        ? proceso.fechaProceso 
+        : proceso.fechaProceso.toISOString().split('T')[0];
+
+        const activo = hoy === fechaProcesoStr;
+
+        return {
+        periodoActivo: activo,
+        proceso: proceso.proceso,
+        fechaProceso: fechaProcesoStr,
+        mensaje: activo ? 'La matrícula está activa hoy.' : 'La matrícula no está activa hoy.',
+        };
+    }
   
     async getById(id: number): Promise<FechaProceso> {
         const fechaProceso = await this.fechaProcesoRepository.findById(id);
