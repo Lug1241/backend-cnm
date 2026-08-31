@@ -9,6 +9,7 @@ import {
   Matches,
   MaxLength,
   Min,
+  IsNumber,
 } from 'class-validator';
 import {
   GeneroEstudiante,
@@ -154,11 +155,7 @@ export class CreateEstudianteDto {
   })
   nivel!: NivelEstudiante;
 
-  @IsString()
-  @IsNotEmpty({ message: 'La identificación del representante es requerida' })
-  @Matches(/^[0-9]{7,10}$/, {
-    message:
-      'La identificación del representante debe tener entre 7 y 10 dígitos numéricos',
-  })
-  nroCedulaRepresentante!: string;
+  @IsNumber()
+  @IsNotEmpty({ message: 'El ID del representante no puede estar vacío' })
+  ID_representante!: number;
 }

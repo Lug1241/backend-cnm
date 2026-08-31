@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { type IEstudianteRepository } from '@domain/interfaces/estudiante.repository.interface';
 import { Estudiante } from '@domain/entities/estudiante.entity';
 import { EstudianteOrmEntity } from '../entitites/estudiante.orm-entity';
-
+import { Representante } from '@domain/entities/representante.entity';
 @Injectable()
 export class EstudianteRepository implements IEstudianteRepository {
   constructor(
@@ -35,7 +35,14 @@ export class EstudianteRepository implements IEstudianteRepository {
       matriculaIerPdf: ormEntity.matriculaIerPdf,
       direccion: ormEntity.direccion,
       nivel: ormEntity.nivel,
-      nroCedulaRepresentante: ormEntity.nroCedulaRepresentante,
+      representante: new Representante({
+        id: ormEntity.representante.id,
+        nroCedula: ormEntity.representante.nroCedula,
+        primerNombre: ormEntity.representante.primerNombre,
+        segundoNombre: ormEntity.representante.segundoNombre,
+        primerApellido: ormEntity.representante.primerApellido,
+        segundoApellido: ormEntity.representante.segundoApellido,
+      }),
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     });

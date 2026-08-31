@@ -1,3 +1,4 @@
+import { Representante } from './representante.entity';
 export enum GeneroEstudiante {
   MASCULINO = 'Masculino',
   FEMENINO = 'Femenino',
@@ -51,7 +52,7 @@ export class Estudiante {
   matriculaIerPdf?: string | null;
   direccion!: string;
   nivel!: NivelEstudiante;
-  nroCedulaRepresentante!: string;
+  representante!: Representante;
   createdAt?: Date;
   updatedAt?: Date;
 

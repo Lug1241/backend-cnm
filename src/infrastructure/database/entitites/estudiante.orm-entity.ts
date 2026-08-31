@@ -139,23 +139,14 @@ export class EstudianteOrmEntity {
   })
   nivel!: NivelEstudiante;
 
-  @Index('nroCedula_representante')
-  @Column({
-    name: 'nroCedula_representante',
-    type: 'varchar',
-    length: 255,
-  })
-  nroCedulaRepresentante!: string;
-
   @ManyToOne(() => RepresentanteOrmEntity, {
     nullable: false,
     onDelete: 'RESTRICT',
     onUpdate: 'CASCADE',
   })
   @JoinColumn({
-    name: 'nroCedula_representante',
-    referencedColumnName: 'nroCedula',
-    foreignKeyConstraintName: 'estudiantes_ibfk_1',
+    name: 'ID_representante',
+    referencedColumnName: 'ID',
   })
   representante!: RepresentanteOrmEntity;
 

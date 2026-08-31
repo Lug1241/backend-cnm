@@ -36,10 +36,9 @@ export class EstudianteService {
       throw new ConflictException('La cédula ya está registrada');
     }
 
-    const representanteExistente =
-      await this.representanteRepository.findByCedula(
-        dto.nroCedulaRepresentante,
-      );
+    const representanteExistente = await this.representanteRepository.findByID(
+      dto.ID_representante,
+    );
 
     if (!representanteExistente) {
       throw new NotFoundException('Representante no encontrado');
@@ -83,11 +82,12 @@ export class EstudianteService {
       cedulaActualizada = dto.nroCedula;
     }
 
-    if (dto.nroCedulaRepresentante) {
+    if (
+      dto.ID_representante &&
+      dto.ID_representante !== estudianteActual.representante.id
+    ) {
       const representanteExistente =
-        await this.representanteRepository.findByCedula(
-          dto.nroCedulaRepresentante,
-        );
+        await this.representanteRepository.findByID(dto.ID_representante);
 
       if (!representanteExistente) {
         throw new NotFoundException('Representante no encontrado');
