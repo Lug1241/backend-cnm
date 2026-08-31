@@ -1,9 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { TipoProceso } from '../../../domain/entities/fecha-proceso.entity';
 
 @Entity('fechas_procesos')
 export class FechaProcesoOrmEntity {
-  @PrimaryGeneratedColumn( { name: 'ID'} )
+  @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
   @Column({ type: 'date', name: 'fecha_proceso' })

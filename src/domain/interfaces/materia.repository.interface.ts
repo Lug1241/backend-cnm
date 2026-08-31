@@ -12,12 +12,12 @@ export interface IMateriaRepository {
     nivel: NivelMateria,
     page: number,
     limit: number,
-): Promise<{ data: Materia[]; totalRows: number }>;
+  ): Promise<{ data: Materia[]; totalRows: number }>;
   findByTipo(
     tipo: TipoMateria,
     page: number,
     limit: number,
-): Promise<{ data: Materia[]; totalRows: number }>;
+  ): Promise<{ data: Materia[]; totalRows: number }>;
   findAll(
     page: number,
     limit: number,

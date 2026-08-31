@@ -10,7 +10,7 @@ import {
   I_MATERIA_REPOSITORY,
 } from '../../domain/interfaces/materia.repository.interface';
 import {
-    Materia,
+  Materia,
   NivelMateria,
   TipoMateria,
 } from '../../domain/entities/materia.entity';
@@ -19,100 +19,98 @@ import { UpdateMateriaDto } from '../dtos/update-materia.dto';
 
 @Injectable()
 export class MateriaService {
-    constructor(
-        @Inject(I_MATERIA_REPOSITORY)
-        private readonly materiaRepository: IMateriaRepository,
-    ) {}
+  constructor(
+    @Inject(I_MATERIA_REPOSITORY)
+    private readonly materiaRepository: IMateriaRepository,
+  ) {}
 
-    async create(dto: CreateMateriaDto): Promise<Materia> {
-        const existe = await this.materiaRepository.findByNombre(
-          dto.nombre,
-        );
-        if (existe) {
-          throw new ConflictException('Error la materia ya existe');
-        }
-        
-        const nuevaMateria = new Materia(dto);
-        const resultado = await this.materiaRepository.create(nuevaMateria);
-    
-        return resultado;
+  async create(dto: CreateMateriaDto): Promise<Materia> {
+    const existe = await this.materiaRepository.findByNombre(dto.nombre);
+    if (existe) {
+      throw new ConflictException('Error la materia ya existe');
+    }
+
+    const nuevaMateria = new Materia(dto);
+    const resultado = await this.materiaRepository.create(nuevaMateria);
+
+    return resultado;
+  }
+
+  async update(id: number, dto: UpdateMateriaDto): Promise<Materia> {
+    const materiaActual = await this.getById(id);
+    if (dto.nombre) {
+      const existe = await this.materiaRepository.findByNombre(dto.nombre);
+      if (existe && existe.id != materiaActual.id) {
+        throw new ConflictException('Error la materia ya existe');
       }
-
-    async update(id: number, dto: UpdateMateriaDto): Promise<Materia> {
-        const materiaActual = await this.getById(id);
-        if(dto.nombre) {
-            const existe = await this.materiaRepository.findByNombre(dto.nombre);
-            if (existe && existe.id != materiaActual.id) {
-                throw new ConflictException('Error la materia ya existe');
-            }
-        }
-
-        await this.materiaRepository.update(id, dto);
-        const actualizado = await this.materiaRepository.findById(id);
-        return actualizado!;
     }
 
-    async getById(id: number): Promise<Materia> {
-        const materia = await this.materiaRepository.findById(id);
-        if (!materia) {
-          throw new NotFoundException('Materia no encontrada');
-        }
-        return materia;
-    }
+    await this.materiaRepository.update(id, dto);
+    const actualizado = await this.materiaRepository.findById(id);
+    return actualizado!;
+  }
 
-    async getByName(nombre: string): Promise<Materia> {
-        const materia = await this.materiaRepository.findByNombre(nombre);
-        if (!materia) {
-          throw new NotFoundException('Materia no encontrada');
-        }
-        return materia;
+  async getById(id: number): Promise<Materia> {
+    const materia = await this.materiaRepository.findById(id);
+    if (!materia) {
+      throw new NotFoundException('Materia no encontrada');
     }
+    return materia;
+  }
 
-    async getAll(page: number = 1, limit: number = 10, search: string = '') {
-        const { data, totalRows } = await this.materiaRepository.findAll(
-          page,
-          limit,
-          search,
-        );
-        return {
-          data,
-          totalPages: Math.ceil(totalRows / limit),
-          currentPage: page,
-          totalRows,
-        };
+  async getByName(nombre: string): Promise<Materia> {
+    const materia = await this.materiaRepository.findByNombre(nombre);
+    if (!materia) {
+      throw new NotFoundException('Materia no encontrada');
     }
+    return materia;
+  }
 
-    async getByLevel(nivel: NivelMateria, page: number = 1, limit: number = 10) {
-        const { data, totalRows } = await this.materiaRepository.findByNivel(
-          nivel,
-          page,
-          limit,
-        );
-        return {
-          data,
-          totalPages: Math.ceil(totalRows / limit),
-          currentPage: page,
-          totalRows,
-        };
-    }
-    
-    async getByType(tipo: TipoMateria, page: number = 1, limit: number = 10) {
-        const { data, totalRows } = await this.materiaRepository.findByTipo(
-          tipo,
-          page,
-          limit,
-        );
-        return {
-          data,
-          totalPages: Math.ceil(totalRows / limit),
-          currentPage: page,
-          totalRows,
-        };
-    }
+  async getAll(page: number = 1, limit: number = 10, search: string = '') {
+    const { data, totalRows } = await this.materiaRepository.findAll(
+      page,
+      limit,
+      search,
+    );
+    return {
+      data,
+      totalPages: Math.ceil(totalRows / limit),
+      currentPage: page,
+      totalRows,
+    };
+  }
 
-    async delete(id: number): Promise<Materia> {
-        const materia = await this.getById(id);
-        await this.materiaRepository.delete(id);
-        return materia;
-    }
+  async getByLevel(nivel: NivelMateria, page: number = 1, limit: number = 10) {
+    const { data, totalRows } = await this.materiaRepository.findByNivel(
+      nivel,
+      page,
+      limit,
+    );
+    return {
+      data,
+      totalPages: Math.ceil(totalRows / limit),
+      currentPage: page,
+      totalRows,
+    };
+  }
+
+  async getByType(tipo: TipoMateria, page: number = 1, limit: number = 10) {
+    const { data, totalRows } = await this.materiaRepository.findByTipo(
+      tipo,
+      page,
+      limit,
+    );
+    return {
+      data,
+      totalPages: Math.ceil(totalRows / limit),
+      currentPage: page,
+      totalRows,
+    };
+  }
+
+  async delete(id: number): Promise<Materia> {
+    const materia = await this.getById(id);
+    await this.materiaRepository.delete(id);
+    return materia;
+  }
 }

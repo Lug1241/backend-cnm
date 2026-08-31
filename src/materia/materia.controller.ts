@@ -23,10 +23,7 @@ export class MateriaController {
   }
 
   @Put('editar/:id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateDto: UpdateMateriaDto,
-  ) {
+  async update(@Param('id') id: string, @Body() updateDto: UpdateMateriaDto) {
     return this.materiaService.update(+id, updateDto);
   }
 
@@ -61,16 +58,14 @@ export class MateriaController {
   ) {
     return this.materiaService.getByType(tipo, +page, +limit);
   }
-  
+
   @Get('obtener/nombre/:nombre')
-  async getNombre(
-    @Param('nombre') nombre: string
-  ) {
+  async getNombre(@Param('nombre') nombre: string) {
     return this.materiaService.getByName(nombre);
   }
-  
+
   @Delete('eliminar/:id')
   async deleteMateria(@Param('id') id: string) {
-    return this.materiaService.delete(+id)
+    return this.materiaService.delete(+id);
   }
 }
