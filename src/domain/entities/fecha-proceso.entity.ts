@@ -4,10 +4,11 @@ export enum TipoProceso {
 }
 
 export class FechaProceso {
-  constructor(
-    public readonly id: number,
-    public fechaProceso: Date,
-    public proceso: TipoProceso,
-    public descripcion?: string,
-  ) {}
+    id?: number;
+    fechaProceso!: Date;
+    proceso!: TipoProceso;
+    descripcion!: string;
+  constructor(partial: Partial<FechaProceso>) {
+    Object.assign(this, partial);
+  }
 }
