@@ -1,4 +1,13 @@
-import { IsString, IsNotEmpty, Length, IsEnum, IsNumber, IsInt, IsOptional, Min} from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  Length,
+  IsEnum,
+  IsNumber,
+  IsInt,
+  IsOptional,
+  Min,
+} from 'class-validator';
 import { NivelMateria, TipoMateria } from '@domain/entities/materia.entity';
 
 export class CreateMateriaDto {
@@ -21,7 +30,7 @@ export class CreateMateriaDto {
 
   @IsNumber()
   @IsNotEmpty({ message: 'No se permiten valores vacíos' })
-  @IsInt({ message: 'Debe ser un número entero'})
-  @Min(7, { message: 'La edad mínima debe ser al menos 7 años'})
+  @IsInt({ message: 'Debe ser un número entero' })
+  @Min(7, { message: 'La edad mínima debe ser al menos 7 años' })
   edadMin!: number;
 }
