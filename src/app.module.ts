@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DocenteModule } from './docente/docente.module';
 import { RepresentanteModule } from './representante/representante.module';
+import { EstudianteModule } from './estudiante/estudiante.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { PeriodoAcademicoModule } from './periodo-academico/periodo-academico.module';
 import { MateriaModule } from './materia/materia.module';
@@ -20,6 +21,9 @@ import { FechaProcesoModule } from './fecha-proceso/fecha-proceso.module';
     MailModule,
     SolicitudModule,
     FechaProcesoModule,
+    EstudianteModule,
+    MailModule,
+    SolicitudModule,
   ],
 })
 export class AppModule {}

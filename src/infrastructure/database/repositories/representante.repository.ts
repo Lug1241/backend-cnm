@@ -50,23 +50,17 @@ export class RepresentanteRepository implements IRepresentanteRepository {
   }
 
   async update(
-    nroCedula: string,
+    id: number,
     representante: Partial<Representante>,
   ): Promise<boolean> {
-    const resultado = await this.ormRepository.update(
-      { nroCedula },
-      representante,
-    );
+    const resultado = await this.ormRepository.update({ id }, representante);
 
     return (resultado.affected ?? 0) > 0;
   }
 
-  async updatePassword(
-    nroCedula: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
+  async updatePassword(id: number, hashedPassword: string): Promise<boolean> {
     const resultado = await this.ormRepository.update(
-      { nroCedula },
+      { id },
       { password: hashedPassword },
     );
 
@@ -76,6 +70,13 @@ export class RepresentanteRepository implements IRepresentanteRepository {
   async findByCedula(nroCedula: string): Promise<Representante | null> {
     const ormEntity = await this.ormRepository.findOne({
       where: { nroCedula },
+    });
+
+    return this.toDomain(ormEntity);
+  }
+  async findByID(id: number): Promise<Representante | null> {
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id },
     });
 
     return this.toDomain(ormEntity);
@@ -142,7 +143,7 @@ export class RepresentanteRepository implements IRepresentanteRepository {
     };
   }
 
-  async delete(nroCedula: string): Promise<void> {
-    await this.ormRepository.delete({ nroCedula });
+  async delete(id: number): Promise<void> {
+    await this.ormRepository.delete({ id });
   }
 }
