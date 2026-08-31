@@ -8,6 +8,7 @@ import { PeriodoAcademicoModule } from './periodo-academico/periodo-academico.mo
 import { MateriaModule } from './materia/materia.module';
 import { MailModule } from './infrastructure/mail/mail.module';
 import { SolicitudModule } from './solicitud/solicitud.module';
+import { FechaProcesoModule } from './fecha-proceso/fecha-proceso.module';
 
 @Module({
   imports: [
@@ -17,6 +18,9 @@ import { SolicitudModule } from './solicitud/solicitud.module';
     MateriaModule,
     DocenteModule,
     RepresentanteModule,
+    MailModule,
+    SolicitudModule,
+    FechaProcesoModule,
     EstudianteModule,
     MailModule,
     SolicitudModule,
