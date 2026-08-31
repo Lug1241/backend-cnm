@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
-import { IFechaProcesoRepository } from '../../../domain/interfaces/fecha-proceso.interface';
+import { Repository } from 'typeorm';
+import { IFechaProcesoRepository } from '../../../domain/interfaces/fecha-proceso.repository.interface';
 import { FechaProceso, TipoProceso } from '../../../domain/entities/fecha-proceso.entity';
 import { FechaProcesoOrmEntity } from '../entitites/fecha-proceso.orm-entity';
 

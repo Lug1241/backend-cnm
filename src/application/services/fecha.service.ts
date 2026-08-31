@@ -1,10 +1,8 @@
 import { Injectable, Inject, ConflictException, NotFoundException } from '@nestjs/common';
-import type { IFechaProcesoRepository } from '../../domain/interfaces/fecha-proceso.interface';
+import { type IFechaProcesoRepository , I_FECHA_PROCESO_REPOSITORY } from '../../domain/interfaces/fecha-proceso.repository.interface';
 import { CreateFechaProcesoDto } from '../dtos/create-fecha.dto';
 import { FechaProceso, TipoProceso } from '../../domain/entities/fecha-proceso.entity';
 import { UpdateFechaProcesoDto } from '@application/dtos/update-fecha.dto';
-
-const I_FECHA_PROCESO_REPOSITORY = 'I_FECHA_PROCESO_REPOSITORY';
 
 @Injectable()
 export class FechaProcesoService {
