@@ -13,7 +13,6 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
     ) {}
 
     async create(fechaProceso: Partial<FechaProceso>): Promise<FechaProceso> {
-        const fecha = new Date()
         const ormEntity = this.ormRepository.create( {
             fechaProceso: fechaProceso.fechaProceso,
             proceso: fechaProceso.proceso,
@@ -30,9 +29,9 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
         return this.toDomain(ormEntity);
     }
 
-    async findAll(page: number, limit: number, proceso: TipoProceso): Promise<{ data: FechaProceso[]; totalRows: number }> {
+    async findAll(page: number, limit: number, proceso?: TipoProceso): Promise<{ data: FechaProceso[]; totalRows: number }> {
         const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
-            where: { proceso },
+            where: !proceso ? {} : { proceso },
             skip: (page - 1) * limit,
             take: limit,
         });
