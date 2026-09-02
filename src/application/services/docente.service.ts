@@ -113,6 +113,15 @@ export class DocenteService {
     return ocultarDatosSensibles(docenteActualizado);
   }
 
+  async getByID(id: number) {
+    const docente = await this.docenteRepository.findByID(id);
+    if (!docente) {
+      throw new NotFoundException('Docente no encontrado');
+    }
+
+    return ocultarDatosSensibles(docente);
+  }
+
   async getByCedula(nroCedula: string) {
     const docente = await this.docenteRepository.findByCedula(nroCedula);
 

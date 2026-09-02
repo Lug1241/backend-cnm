@@ -7,6 +7,7 @@ export interface IDocenteRepository {
   update(nroCedula: string, docente: Partial<Docente>): Promise<boolean>;
   updatePassword(nroCedula: string, hashedPw: string): Promise<boolean>;
   findByCedula(nroCedula: string): Promise<Docente | null>;
+  findByID(id: number): Promise<Docente | null>;
   findByEmail(email: string): Promise<Docente | null>;
   findAll(
     page: number,
