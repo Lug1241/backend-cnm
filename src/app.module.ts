@@ -10,6 +10,7 @@ import { MailModule } from './infrastructure/mail/mail.module';
 import { SolicitudModule } from './solicitud/solicitud.module';
 import { FechaProcesoModule } from './fecha-proceso/fecha-proceso.module';
 import { AsignacionModule } from './asignacion/asignacion.module';
+import { MatriculaModule } from './matricula/matricula.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AsignacionModule } from './asignacion/asignacion.module';
     MailModule,
     SolicitudModule,
     AsignacionModule,
+    MatriculaModule,
   ],
 })
 export class AppModule {}

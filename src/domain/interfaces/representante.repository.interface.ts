@@ -5,9 +5,12 @@ export const I_REPRESENTANTE_REPOSITORY = 'IRepresentanteRepository';
 export interface IRepresentanteRepository {
   create(representante: Representante): Promise<Representante>;
 
-  update(id: number, representante: Partial<Representante>): Promise<boolean>;
+  update(
+    nroCedula: string,
+    representante: Partial<Representante>,
+  ): Promise<boolean>;
 
-  updatePassword(id: number, hashedPassword: string): Promise<boolean>;
+  updatePassword(nroCedula: string, hashedPassword: string): Promise<boolean>;
 
   findByCedula(nroCedula: string): Promise<Representante | null>;
 
@@ -20,5 +23,5 @@ export interface IRepresentanteRepository {
     search: string,
   ): Promise<{ data: Representante[]; totalRows: number }>;
 
-  delete(id: number): Promise<void>;
+  delete(nroCedula: string): Promise<void>;
 }

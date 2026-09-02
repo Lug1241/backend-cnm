@@ -50,17 +50,23 @@ export class RepresentanteRepository implements IRepresentanteRepository {
   }
 
   async update(
-    id: number,
+    nroCedula: string,
     representante: Partial<Representante>,
   ): Promise<boolean> {
-    const resultado = await this.ormRepository.update({ id }, representante);
+    const resultado = await this.ormRepository.update(
+      { nroCedula },
+      representante,
+    );
 
     return (resultado.affected ?? 0) > 0;
   }
 
-  async updatePassword(id: number, hashedPassword: string): Promise<boolean> {
+  async updatePassword(
+    nroCedula: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
     const resultado = await this.ormRepository.update(
-      { id },
+      { nroCedula },
       { password: hashedPassword },
     );
 
@@ -143,7 +149,7 @@ export class RepresentanteRepository implements IRepresentanteRepository {
     };
   }
 
-  async delete(id: number): Promise<void> {
-    await this.ormRepository.delete({ id });
+  async delete(nroCedula: string): Promise<void> {
+    await this.ormRepository.delete({ nroCedula });
   }
 }
