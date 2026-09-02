@@ -107,6 +107,59 @@ export class EstudianteController {
     @Query('limit')
     limit?: string,
   ) {
+    const paginacion = this.parsePaginacion(page, limit);
+
+    return this.estudianteService.getByNivel(
+      nivel,
+      paginacion.page,
+      paginacion.limit,
+    );
+  }
+
+  @Get('matricula/:nivel/periodo/:idPeriodo')
+  async getEstudiantesByMatricula(
+    @Param('nivel', new ParseEnumPipe(NivelEstudiante))
+    nivel: NivelEstudiante,
+
+    @Param('idPeriodo', ParseIntPipe)
+    idPeriodo: number,
+
+    @Query('page')
+    page?: string,
+
+    @Query('limit')
+    limit?: string,
+  ) {
+    if (!Number.isSafeInteger(idPeriodo) || idPeriodo < 1) {
+      throw new BadRequestException(
+        'El ID del período debe ser un número entero mayor que cero',
+      );
+    }
+
+    const paginacion = this.parsePaginacion(page, limit);
+
+    return this.estudianteService.getByMatricula(
+      nivel,
+      idPeriodo,
+      paginacion.page,
+      paginacion.limit,
+    );
+  }
+
+  @Get('verificar-cedula/:cedula')
+  async verificarCedula(@Param('cedula') cedula: string) {
+    return this.estudianteService.verificarCedulaActualizada(cedula);
+  }
+
+  @Delete('eliminar/:cedula')
+  async eliminarEstudiante(@Param('cedula') cedula: string) {
+    return this.estudianteService.delete(cedula);
+  }
+
+  private parsePaginacion(
+    page?: string,
+    limit?: string,
+  ): { page?: number; limit?: number } {
     const tienePage = page !== undefined;
     const tieneLimit = limit !== undefined;
 
@@ -117,7 +170,7 @@ export class EstudianteController {
     }
 
     if (!tienePage && !tieneLimit) {
-      return this.estudianteService.getByNivel(nivel);
+      return {};
     }
 
     if (
@@ -137,6 +190,7 @@ export class EstudianteController {
     if (
       !Number.isSafeInteger(pageNumber) ||
       !Number.isSafeInteger(limitNumber) ||
+      !Number.isSafeInteger((pageNumber - 1) * limitNumber) ||
       pageNumber < 1 ||
       limitNumber < 1
     ) {
@@ -145,16 +199,6 @@ export class EstudianteController {
       );
     }
 
-    return this.estudianteService.getByNivel(nivel, pageNumber, limitNumber);
-  }
-
-  @Get('verificar-cedula/:cedula')
-  async verificarCedula(@Param('cedula') cedula: string) {
-    return this.estudianteService.verificarCedulaActualizada(cedula);
-  }
-
-  @Delete('eliminar/:cedula')
-  async eliminarEstudiante(@Param('cedula') cedula: string) {
-    return this.estudianteService.delete(cedula);
+    return { page: pageNumber, limit: limitNumber };
   }
 }

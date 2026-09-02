@@ -26,6 +26,13 @@ export interface IEstudianteRepository {
     limit?: number,
   ): Promise<{ data: Estudiante[]; totalRows: number }>;
 
+  findByMatricula(
+    nivel: NivelEstudiante,
+    idPeriodo: number,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: Estudiante[]; totalRows: number }>;
+
   findAll(
     page: number,
     limit: number,

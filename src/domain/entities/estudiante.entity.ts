@@ -53,7 +53,13 @@ export class Estudiante {
   direccion!: string;
   nivel!: NivelEstudiante;
   representanteId!: number;
+  representanteCedula!: string;
   representante?: Representante;
+  matriculas?: {
+    id: number;
+    nivel: NivelEstudiante;
+    periodoAcademicoId: number;
+  }[];
   createdAt?: Date;
   updatedAt?: Date;
 

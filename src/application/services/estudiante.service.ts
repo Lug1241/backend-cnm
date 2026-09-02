@@ -59,6 +59,7 @@ export class EstudianteService {
     const nuevoEstudiante = new Estudiante({
       ...datosEstudiante,
       representanteId: ID_representante,
+      representanteCedula: representanteExistente.nroCedula,
       representante: representanteExistente,
       nroMatricula: dto.nroMatricula ?? 1,
     });
@@ -114,6 +115,7 @@ export class EstudianteService {
       }
 
       datosAActualizar.representanteId = ID_representante;
+      datosAActualizar.representanteCedula = representanteExistente.nroCedula;
     }
 
     const actualizado = await this.estudianteRepository.update(
@@ -201,6 +203,37 @@ export class EstudianteService {
     if (data.length === 0) {
       throw new NotFoundException(
         'No se encontraron estudiantes para este nivel',
+      );
+    }
+
+    return data;
+  }
+
+  async getByMatricula(
+    nivel: NivelEstudiante,
+    idPeriodo: number,
+    page?: number,
+    limit?: number,
+  ) {
+    const { data, totalRows } = await this.estudianteRepository.findByMatricula(
+      nivel,
+      idPeriodo,
+      page,
+      limit,
+    );
+
+    if (page !== undefined && limit !== undefined) {
+      return {
+        data,
+        totalPages: Math.ceil(totalRows / limit),
+        currentPage: page,
+        totalRows,
+      };
+    }
+
+    if (data.length === 0) {
+      throw new NotFoundException(
+        'No se encontró ningún estudiante para este nivel y período',
       );
     }
 

@@ -1,7 +1,6 @@
 import {
   Column,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -140,10 +139,11 @@ export class EstudianteOrmEntity {
   nivel!: NivelEstudiante;
 
   @Column({
-    name: 'ID_representante',
-    type: 'int',
+    name: 'nroCedula_representante',
+    type: 'varchar',
+    length: 255,
   })
-  representanteId!: number;
+  representanteCedula!: string;
 
   @ManyToOne(() => RepresentanteOrmEntity, {
     nullable: false,
@@ -151,8 +151,8 @@ export class EstudianteOrmEntity {
     onUpdate: 'CASCADE',
   })
   @JoinColumn({
-    name: 'ID_representante',
-    referencedColumnName: 'id',
+    name: 'nroCedula_representante',
+    referencedColumnName: 'nroCedula',
   })
   representante!: RepresentanteOrmEntity;
 
