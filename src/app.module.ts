@@ -9,6 +9,7 @@ import { MateriaModule } from './materia/materia.module';
 import { MailModule } from './infrastructure/mail/mail.module';
 import { SolicitudModule } from './solicitud/solicitud.module';
 import { FechaProcesoModule } from './fecha-proceso/fecha-proceso.module';
+import { AsignacionModule } from './asignacion/asignacion.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { FechaProcesoModule } from './fecha-proceso/fecha-proceso.module';
     EstudianteModule,
     MailModule,
     SolicitudModule,
+    AsignacionModule,
   ],
 })
 export class AppModule {}
