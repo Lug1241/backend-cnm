@@ -35,14 +35,17 @@ export class EstudianteRepository implements IEstudianteRepository {
       matriculaIerPdf: ormEntity.matriculaIerPdf,
       direccion: ormEntity.direccion,
       nivel: ormEntity.nivel,
-      representante: new Representante({
-        id: ormEntity.representante.id,
-        nroCedula: ormEntity.representante.nroCedula,
-        primerNombre: ormEntity.representante.primerNombre,
-        segundoNombre: ormEntity.representante.segundoNombre,
-        primerApellido: ormEntity.representante.primerApellido,
-        segundoApellido: ormEntity.representante.segundoApellido,
-      }),
+      representanteId: ormEntity.representanteId,
+      representante: ormEntity.representante
+        ? new Representante({
+            id: ormEntity.representante.id,
+            nroCedula: ormEntity.representante.nroCedula,
+            primerNombre: ormEntity.representante.primerNombre,
+            segundoNombre: ormEntity.representante.segundoNombre,
+            primerApellido: ormEntity.representante.primerApellido,
+            segundoApellido: ormEntity.representante.segundoApellido,
+          })
+        : undefined,
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     });
@@ -50,9 +53,11 @@ export class EstudianteRepository implements IEstudianteRepository {
 
   async create(estudiante: Estudiante): Promise<Estudiante> {
     const ahora = new Date();
+    const { representante: _representante, ...datosEstudiante } = estudiante;
 
     const nuevaEntidad = this.ormRepository.create({
-      ...estudiante,
+      ...datosEstudiante,
+      representanteId: estudiante.representanteId,
       createdAt: ahora,
       updatedAt: ahora,
     });
@@ -66,10 +71,12 @@ export class EstudianteRepository implements IEstudianteRepository {
     nroCedula: string,
     estudiante: Partial<Estudiante>,
   ): Promise<boolean> {
+    const { representante: _representante, ...datosEstudiante } = estudiante;
+
     const resultado = await this.ormRepository.update(
       { nroCedula },
       {
-        ...estudiante,
+        ...datosEstudiante,
         updatedAt: new Date(),
       },
     );

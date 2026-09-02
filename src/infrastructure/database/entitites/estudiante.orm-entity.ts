@@ -139,6 +139,12 @@ export class EstudianteOrmEntity {
   })
   nivel!: NivelEstudiante;
 
+  @Column({
+    name: 'ID_representante',
+    type: 'int',
+  })
+  representanteId!: number;
+
   @ManyToOne(() => RepresentanteOrmEntity, {
     nullable: false,
     onDelete: 'RESTRICT',
@@ -146,7 +152,7 @@ export class EstudianteOrmEntity {
   })
   @JoinColumn({
     name: 'ID_representante',
-    referencedColumnName: 'ID',
+    referencedColumnName: 'id',
   })
   representante!: RepresentanteOrmEntity;
 

@@ -44,8 +44,12 @@ export class EstudianteService {
       throw new NotFoundException('Representante no encontrado');
     }
 
+    const { ID_representante, ...datosEstudiante } = dto;
+
     const nuevoEstudiante = new Estudiante({
-      ...dto,
+      ...datosEstudiante,
+      representanteId: ID_representante,
+      representante: representanteExistente,
       nroMatricula: dto.nroMatricula ?? 1,
     });
 
@@ -82,21 +86,25 @@ export class EstudianteService {
       cedulaActualizada = dto.nroCedula;
     }
 
+    const { ID_representante, ...datosEstudiante } = dto;
+
+    const datosAActualizar: Partial<Estudiante> = {
+      ...datosEstudiante,
+    };
+
     if (
-      dto.ID_representante &&
-      dto.ID_representante !== estudianteActual.representante.id
+      ID_representante !== undefined &&
+      ID_representante !== estudianteActual.representanteId
     ) {
       const representanteExistente =
-        await this.representanteRepository.findByID(dto.ID_representante);
+        await this.representanteRepository.findByID(ID_representante);
 
       if (!representanteExistente) {
         throw new NotFoundException('Representante no encontrado');
       }
-    }
 
-    const datosAActualizar: Partial<Estudiante> = {
-      ...dto,
-    };
+      datosAActualizar.representanteId = ID_representante;
+    }
 
     const actualizado = await this.estudianteRepository.update(
       nroCedula,

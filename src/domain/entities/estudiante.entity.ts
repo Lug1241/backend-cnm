@@ -52,7 +52,8 @@ export class Estudiante {
   matriculaIerPdf?: string | null;
   direccion!: string;
   nivel!: NivelEstudiante;
-  representante!: Representante;
+  representanteId!: number;
+  representante?: Representante;
   createdAt?: Date;
   updatedAt?: Date;
 
