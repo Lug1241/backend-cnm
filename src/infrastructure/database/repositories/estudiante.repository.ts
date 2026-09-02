@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { type IEstudianteRepository } from '@domain/interfaces/estudiante.repository.interface';
-import { Estudiante } from '@domain/entities/estudiante.entity';
+import {
+  Estudiante,
+  type NivelEstudiante,
+} from '@domain/entities/estudiante.entity';
 import { EstudianteOrmEntity } from '../entitites/estudiante.orm-entity';
 import { Representante } from '@domain/entities/representante.entity';
 @Injectable()
@@ -44,6 +47,8 @@ export class EstudianteRepository implements IEstudianteRepository {
             segundoNombre: ormEntity.representante.segundoNombre,
             primerApellido: ormEntity.representante.primerApellido,
             segundoApellido: ormEntity.representante.segundoApellido,
+            cedulaPdf: ormEntity.representante.cedulaPdf,
+            croquisPdf: ormEntity.representante.croquisPdf,
           })
         : undefined,
       createdAt: ormEntity.createdAt,
@@ -127,6 +132,74 @@ export class EstudianteRepository implements IEstudianteRepository {
       .orderBy('estudiante.id', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
+
+    const [ormEntities, totalRows] = await query.getManyAndCount();
+
+    return {
+      data: ormEntities.map((entity) => this.toDomain(entity)!),
+      totalRows,
+    };
+  }
+
+  async findByRepresentanteCedula(nroCedula: string): Promise<Estudiante[]> {
+    const ormEntities = await this.ormRepository
+      .createQueryBuilder('estudiante')
+      .innerJoin('estudiante.representante', 'representante')
+      .where('representante.nroCedula = :nroCedula', { nroCedula })
+      .orderBy('estudiante.primerApellido', 'ASC')
+      .addOrderBy('estudiante.primerNombre', 'ASC')
+      .addOrderBy('estudiante.id', 'ASC')
+      .getMany();
+
+    return ormEntities.map((entity) => this.toDomain(entity)!);
+  }
+
+  async findByApellido(
+    apellido: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: Estudiante[]; totalRows: number }> {
+    const [ormEntities, totalRows] = await this.ormRepository
+      .createQueryBuilder('estudiante')
+      .where('LOWER(estudiante.primerApellido) LIKE :apellido', {
+        apellido: `%${apellido.trim().toLowerCase()}%`,
+      })
+      .orderBy('estudiante.primerApellido', 'ASC')
+      .addOrderBy('estudiante.primerNombre', 'ASC')
+      .addOrderBy('estudiante.id', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: ormEntities.map((entity) => this.toDomain(entity)!),
+      totalRows,
+    };
+  }
+
+  async findByNivel(
+    nivel: NivelEstudiante,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: Estudiante[]; totalRows: number }> {
+    const query = this.ormRepository
+      .createQueryBuilder('estudiante')
+      .where('estudiante.nivel = :nivel', { nivel })
+      .orderBy('estudiante.primerApellido', 'ASC')
+      .addOrderBy('estudiante.primerNombre', 'ASC')
+      .addOrderBy('estudiante.id', 'ASC');
+
+    if (page !== undefined && limit !== undefined) {
+      query.skip((page - 1) * limit).take(limit);
+    } else {
+      query
+        .leftJoin('estudiante.representante', 'representante')
+        .addSelect([
+          'representante.id',
+          'representante.cedulaPdf',
+          'representante.croquisPdf',
+        ]);
+    }
 
     const [ormEntities, totalRows] = await query.getManyAndCount();
 

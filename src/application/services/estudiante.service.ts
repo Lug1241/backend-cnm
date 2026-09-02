@@ -13,7 +13,14 @@ import {
   type IRepresentanteRepository,
   I_REPRESENTANTE_REPOSITORY,
 } from '@domain/interfaces/representante.repository.interface';
-import { Estudiante } from '@domain/entities/estudiante.entity';
+import {
+  type IPeriodoAcademicoRepository,
+  I_PERIODO_REPOSITORY,
+} from '@domain/interfaces/periodo-academico.repository.interface';
+import {
+  Estudiante,
+  type NivelEstudiante,
+} from '@domain/entities/estudiante.entity';
 import { CreateEstudianteDto } from '../dtos/create-estudiante.dto';
 import { UpdateEstudianteDto } from '../dtos/update-estudiante.dto';
 
@@ -25,6 +32,9 @@ export class EstudianteService {
 
     @Inject(I_REPRESENTANTE_REPOSITORY)
     private readonly representanteRepository: IRepresentanteRepository,
+
+    @Inject(I_PERIODO_REPOSITORY)
+    private readonly periodoRepository: IPeriodoAcademicoRepository,
   ) {}
 
   async create(dto: CreateEstudianteDto) {
@@ -133,6 +143,104 @@ export class EstudianteService {
     }
 
     return estudiante;
+  }
+
+  async getByRepresentanteCedula(nroCedula: string) {
+    const estudiantes =
+      await this.estudianteRepository.findByRepresentanteCedula(nroCedula);
+
+    if (estudiantes.length === 0) {
+      throw new NotFoundException(
+        'No se encontraron estudiantes para este representante',
+      );
+    }
+
+    return estudiantes;
+  }
+
+  async getByApellido(page: number, limit: number, search: string) {
+    if (!search.trim()) {
+      return {
+        estudiantes: [],
+        totalPages: 0,
+        currentPage: page,
+        totalRows: 0,
+      };
+    }
+
+    const { data, totalRows } = await this.estudianteRepository.findByApellido(
+      search,
+      page,
+      limit,
+    );
+
+    return {
+      estudiantes: data,
+      totalPages: Math.ceil(totalRows / limit),
+      currentPage: page,
+      totalRows,
+    };
+  }
+
+  async getByNivel(nivel: NivelEstudiante, page?: number, limit?: number) {
+    const { data, totalRows } = await this.estudianteRepository.findByNivel(
+      nivel,
+      page,
+      limit,
+    );
+
+    if (page !== undefined && limit !== undefined) {
+      return {
+        data,
+        totalPages: Math.ceil(totalRows / limit),
+        currentPage: page,
+        totalRows,
+      };
+    }
+
+    if (data.length === 0) {
+      throw new NotFoundException(
+        'No se encontraron estudiantes para este nivel',
+      );
+    }
+
+    return data;
+  }
+
+  async verificarCedulaActualizada(nroCedula: string) {
+    const estudiante = await this.getByCedula(nroCedula);
+    const periodoActivo = await this.periodoRepository.findActive();
+
+    if (!periodoActivo) {
+      throw new NotFoundException({
+        message: 'No hay un período académico activo',
+        datosActualizados: false,
+      });
+    }
+
+    const anioLectivo = periodoActivo.descripcion
+      .trim()
+      .replace(/^per[ií]odo\s*/i, '')
+      .trim();
+    // El backend anterior guarda la cédula como <cedula>_copiaCedula_<periodo>.pdf.
+    const nombreArchivo = estudiante.cedulaPdf
+      ?.trim()
+      .replace(/\\/g, '/')
+      .split('/')
+      .pop();
+    const datosActualizados = Boolean(
+      anioLectivo &&
+      nombreArchivo
+        ?.toLowerCase()
+        .endsWith(`_${anioLectivo.toLowerCase()}.pdf`),
+    );
+
+    return {
+      datosActualizados,
+      message: datosActualizados
+        ? 'El estudiante tiene los documentos actualizados'
+        : 'El estudiante debe actualizar la cedula antes de matricularse',
+    };
   }
 
   async getAll(page: number, limit: number, search: string) {
