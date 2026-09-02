@@ -74,10 +74,10 @@ export class EstudianteController {
 
   @Get('obtenerPorApellido')
   async getEstudiantesByApellido(
-    @Query('page', new ParseIntPipe({ optional: true }))
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe)
     page: number = 1,
 
-    @Query('limit', new ParseIntPipe({ optional: true }))
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe)
     limit: number = 10,
 
     @Query('search')
