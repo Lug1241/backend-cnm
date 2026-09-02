@@ -20,10 +20,11 @@ export interface IAsignacionRepository {
         page: number,
         limit: number,
         search: string,
+        periodo: PeriodoAcademico,
     ): Promise<{ data: Asignacion[]; totalRows: number }>;
     findByPeriodo(periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number }>;
     findByMateria(periodo: PeriodoAcademico, nivelMateria: NivelMateria, materia: string, jornada: Jornada): Promise<{ data: Asignacion[]; totalRows: number }>;
-    findByDocenteSinMatricula(docente: Docente): Promise<{ data: Asignacion[]; totalRows: number }>;
+    findByDocenteSinMatricula(docente: Docente, periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number }>;
     findBySinMatricula(/*matricula: Matricula*/): Promise<{ data: Asignacion[]; totalRows: number }>;
     delete(id: number): Promise<void>;
 }

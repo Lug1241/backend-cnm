@@ -181,8 +181,9 @@ export class AsignacionService {
         return this.asignacionRepository.findByNivelMateria(nivel, periodoDummy);
     }
 
-    async getAll(page: number, limit: number, search: string) {
-        return this.asignacionRepository.findAll(page, limit, search);
+    async getAll(page: number, limit: number, search: string, id_periodo: number) {
+        const periodo = { id: id_periodo } as any;
+        return this.asignacionRepository.findAll(page, limit, search, periodo);
     }
 
     async getByPeriodo(id_periodo: number) {
@@ -196,12 +197,13 @@ export class AsignacionService {
     }
 
     //TODO: modificar la firma al incluir la entidad matricula y sus relaciones
-    async getByDocenteSinMatricula(id_docente: number) {
+    async getByDocenteSinMatricula(id_docente: number, id_periodo: number) {
         const docente = await this.docenteService.getByID(id_docente) as Docente | null;
         if (!docente) {
             throw new NotFoundException("Docente no encontrado");
         }
-        return this.asignacionRepository.findByDocenteSinMatricula(docente);
+        const periodo = { id: id_periodo } as any;
+        return this.asignacionRepository.findByDocenteSinMatricula(docente, periodo);
     }
 
     //TODO: modificar la firma al incluir la entidad matricula y sus relaciones

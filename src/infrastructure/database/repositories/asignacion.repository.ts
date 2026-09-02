@@ -56,9 +56,15 @@ export class AsignacionRepository implements IAsignacionRepository {
         return { data: ormEntities.map(e => this.toDomain(e)!), totalRows };
     }
 
-    async findAll(page: number, limit: number, search: string): Promise<{ data: Asignacion[]; totalRows: number; }> {
-        const whereCondition = search ? { materia: { nombre: ILike(`%${search}%`) } } : {};
-        
+    async findAll(page: number, limit: number, search: string, periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number; }> {
+        const whereCondition: any = {
+            periodoAcademico: { id: periodo.id }
+        };
+
+        if (search && search.trim() !== '') {
+            whereCondition.materia = { nombre: ILike(`%${search}%`) };
+        }
+
         const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
             where: whereCondition,
             relations: { docente: true, materia: true, periodoAcademico: true },
@@ -106,7 +112,7 @@ export class AsignacionRepository implements IAsignacionRepository {
         return { data: ormEntities.map(e => this.toDomain(e)!), totalRows };
     }
 
-    async findByDocenteSinMatricula(docente: Docente): Promise<{ data: Asignacion[]; totalRows: number; }> {
+    async findByDocenteSinMatricula(docente: Docente, periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number; }> {
         //TODO: QueryBuilder usado porque aún no existe la relación "matriculas" en AsignacionOrmEntity
         const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('asignacion')
             .leftJoinAndSelect('asignacion.docente', 'docente')
