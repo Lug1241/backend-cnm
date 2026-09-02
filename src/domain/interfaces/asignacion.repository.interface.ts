@@ -12,7 +12,7 @@ export enum Jornada {
 
 export interface IAsignacionRepository {
     create(asignacion: Asignacion): Promise <Asignacion>;
-    update(id: number, asignacion: Asignacion): Promise <boolean>;
+    update(id: number, asignacion: Asignacion): Promise <Asignacion>;
     findById(id: number): Promise<Asignacion | null>;
     findByDocente(docente: Docente): Promise<{ data: Asignacion[]; totalRows: number }>;
     findByNivelMateria(nivel: NivelMateria, periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number }>;
