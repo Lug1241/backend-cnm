@@ -163,7 +163,7 @@ export class EstudianteService {
   async getByApellido(page: number, limit: number, search: string) {
     if (!search.trim()) {
       return {
-        estudiantes: [],
+        data: [],
         totalPages: 0,
         currentPage: page,
         totalRows: 0,
@@ -177,12 +177,11 @@ export class EstudianteService {
     );
 
     return {
-      estudiantes: data,
+      data,
       totalPages: Math.ceil(totalRows / limit),
       currentPage: page,
       totalRows,
     };
-  }
 
   async getByNivel(nivel: NivelEstudiante, page?: number, limit?: number) {
     const { data, totalRows } = await this.estudianteRepository.findByNivel(
