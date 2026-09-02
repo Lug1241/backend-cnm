@@ -182,6 +182,7 @@ export class EstudianteService {
       currentPage: page,
       totalRows,
     };
+  }
 
   async getByNivel(nivel: NivelEstudiante, page?: number, limit?: number) {
     const { data, totalRows } = await this.estudianteRepository.findByNivel(
@@ -254,12 +255,13 @@ export class EstudianteService {
       .trim()
       .replace(/^per[ií]odo\s*/i, '')
       .trim();
-    // El backend anterior guarda la cédula como <cedula>_copiaCedula_<periodo>.pdf.
+
     const nombreArchivo = estudiante.cedulaPdf
       ?.trim()
       .replace(/\\/g, '/')
       .split('/')
       .pop();
+
     const datosActualizados = Boolean(
       anioLectivo &&
       nombreArchivo

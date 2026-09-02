@@ -88,20 +88,12 @@ export class MatriculaRepository implements IMatriculaRepository {
     );
   }
 
-  async findPeriodosByEstudiante(
-    estudianteId: number,
-  ): Promise<Pick<Matricula, 'id' | 'nivel' | 'periodoAcademicoId'>[]> {
+  async findPeriodosByEstudiante(estudianteId: number): Promise<Matricula[]> {
     const entidades = await this.ormRepository.find({
       where: { estudianteId },
-      select: { id: true, nivel: true, periodoAcademicoId: true },
       order: { id: 'ASC' },
     });
-
-    return entidades.map(({ id, nivel, periodoAcademicoId }) => ({
-      id,
-      nivel,
-      periodoAcademicoId,
-    }));
+    return entidades.map((ent) => this.toDomain(ent)!);
   }
 
   async existeEstudiante(id: number): Promise<boolean> {
