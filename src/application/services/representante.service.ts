@@ -66,8 +66,9 @@ export class RepresentanteService {
     return ocultarDatosSensibles(representanteGuardado);
   }
 
-  async update(ID: number, dto: UpdateRepresentanteDto) {
-    const representanteActual = await this.representanteRepository.findByID(ID);
+  async update(nroCedula: string, dto: UpdateRepresentanteDto) {
+    const representanteActual =
+      await this.representanteRepository.findByCedula(nroCedula);
 
     if (!representanteActual) {
       throw new NotFoundException('Representante no encontrado');
@@ -117,7 +118,7 @@ export class RepresentanteService {
     }
 
     const actualizado = await this.representanteRepository.update(
-      ID,
+      nroCedula,
       datosAActualizar,
     );
 
@@ -165,14 +166,15 @@ export class RepresentanteService {
     };
   }
 
-  async delete(ID: number) {
-    const representante = await this.representanteRepository.findByID(ID);
+  async delete(nroCedula: string) {
+    const representante =
+      await this.representanteRepository.findByCedula(nroCedula);
 
     if (!representante) {
       throw new NotFoundException('Representante no encontrado');
     }
 
-    await this.representanteRepository.delete(ID);
+    await this.representanteRepository.delete(nroCedula);
 
     return ocultarDatosSensibles(representante);
   }

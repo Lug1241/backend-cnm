@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { type IEstudianteRepository } from '@domain/interfaces/estudiante.repository.interface';
-import { Estudiante } from '@domain/entities/estudiante.entity';
+import {
+  Estudiante,
+  type NivelEstudiante,
+} from '@domain/entities/estudiante.entity';
 import { EstudianteOrmEntity } from '../entitites/estudiante.orm-entity';
 import { Representante } from '@domain/entities/representante.entity';
 @Injectable()
@@ -12,7 +15,18 @@ export class EstudianteRepository implements IEstudianteRepository {
     private readonly ormRepository: Repository<EstudianteOrmEntity>,
   ) {}
 
-  private toDomain(ormEntity: EstudianteOrmEntity | null): Estudiante | null {
+  private consultaEstudiantes() {
+    // El ID de la API se obtiene del representante; la FK existente es su cédula.
+    return this.ormRepository
+      .createQueryBuilder('estudiante')
+      .leftJoin('estudiante.representante', 'representante')
+      .addSelect('representante.id');
+  }
+
+  private toDomain(
+    ormEntity: EstudianteOrmEntity | null,
+    incluirRepresentante = false,
+  ): Estudiante | null {
     if (!ormEntity) return null;
 
     return new Estudiante({
@@ -35,14 +49,21 @@ export class EstudianteRepository implements IEstudianteRepository {
       matriculaIerPdf: ormEntity.matriculaIerPdf,
       direccion: ormEntity.direccion,
       nivel: ormEntity.nivel,
-      representante: new Representante({
-        id: ormEntity.representante.id,
-        nroCedula: ormEntity.representante.nroCedula,
-        primerNombre: ormEntity.representante.primerNombre,
-        segundoNombre: ormEntity.representante.segundoNombre,
-        primerApellido: ormEntity.representante.primerApellido,
-        segundoApellido: ormEntity.representante.segundoApellido,
-      }),
+      representanteId: ormEntity.representante?.id,
+      representanteCedula: ormEntity.representanteCedula,
+      representante:
+        incluirRepresentante && ormEntity.representante
+          ? new Representante({
+              id: ormEntity.representante.id,
+              nroCedula: ormEntity.representante.nroCedula,
+              primerNombre: ormEntity.representante.primerNombre,
+              segundoNombre: ormEntity.representante.segundoNombre,
+              primerApellido: ormEntity.representante.primerApellido,
+              segundoApellido: ormEntity.representante.segundoApellido,
+              cedulaPdf: ormEntity.representante.cedulaPdf,
+              croquisPdf: ormEntity.representante.croquisPdf,
+            })
+          : undefined,
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     });
@@ -50,26 +71,41 @@ export class EstudianteRepository implements IEstudianteRepository {
 
   async create(estudiante: Estudiante): Promise<Estudiante> {
     const ahora = new Date();
+    const {
+      representante: _representante,
+      representanteId,
+      matriculas: _matriculas,
+      ...datosEstudiante
+    } = estudiante;
 
     const nuevaEntidad = this.ormRepository.create({
-      ...estudiante,
+      ...datosEstudiante,
       createdAt: ahora,
       updatedAt: ahora,
     });
 
     const guardado = await this.ormRepository.save(nuevaEntidad);
 
-    return this.toDomain(guardado)!;
+    const resultado = this.toDomain(guardado)!;
+    resultado.representanteId = representanteId;
+    return resultado;
   }
 
   async update(
     nroCedula: string,
     estudiante: Partial<Estudiante>,
   ): Promise<boolean> {
+    const {
+      representante: _representante,
+      representanteId: _representanteId,
+      matriculas: _matriculas,
+      ...datosEstudiante
+    } = estudiante;
+
     const resultado = await this.ormRepository.update(
       { nroCedula },
       {
-        ...estudiante,
+        ...datosEstudiante,
         updatedAt: new Date(),
       },
     );
@@ -78,9 +114,9 @@ export class EstudianteRepository implements IEstudianteRepository {
   }
 
   async findByCedula(nroCedula: string): Promise<Estudiante | null> {
-    const ormEntity = await this.ormRepository.findOne({
-      where: { nroCedula },
-    });
+    const ormEntity = await this.consultaEstudiantes()
+      .where('estudiante.nroCedula = :nroCedula', { nroCedula })
+      .getOne();
 
     return this.toDomain(ormEntity);
   }
@@ -90,7 +126,7 @@ export class EstudianteRepository implements IEstudianteRepository {
     limit: number,
     search: string,
   ): Promise<{ data: Estudiante[]; totalRows: number }> {
-    const query = this.ormRepository.createQueryBuilder('estudiante');
+    const query = this.consultaEstudiantes();
 
     const terms = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
 
@@ -125,6 +161,131 @@ export class EstudianteRepository implements IEstudianteRepository {
 
     return {
       data: ormEntities.map((entity) => this.toDomain(entity)!),
+      totalRows,
+    };
+  }
+
+  async findByRepresentanteCedula(nroCedula: string): Promise<Estudiante[]> {
+    const ormEntities = await this.consultaEstudiantes()
+      .where('estudiante.representanteCedula = :nroCedula', { nroCedula })
+      .orderBy('estudiante.primerApellido', 'ASC')
+      .addOrderBy('estudiante.primerNombre', 'ASC')
+      .addOrderBy('estudiante.id', 'ASC')
+      .getMany();
+
+    return ormEntities.map((entity) => this.toDomain(entity)!);
+  }
+
+  async findByApellido(
+    apellido: string,
+    page: number,
+    limit: number,
+  ): Promise<{ data: Estudiante[]; totalRows: number }> {
+    const [ormEntities, totalRows] = await this.consultaEstudiantes()
+      .where('LOWER(estudiante.primerApellido) LIKE :apellido', {
+        apellido: `%${apellido.trim().toLowerCase()}%`,
+      })
+      .orderBy('estudiante.primerApellido', 'ASC')
+      .addOrderBy('estudiante.primerNombre', 'ASC')
+      .addOrderBy('estudiante.id', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: ormEntities.map((entity) => this.toDomain(entity)!),
+      totalRows,
+    };
+  }
+
+  async findByNivel(
+    nivel: NivelEstudiante,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: Estudiante[]; totalRows: number }> {
+    const query = this.consultaEstudiantes()
+      .where('estudiante.nivel = :nivel', { nivel })
+      .orderBy('estudiante.primerApellido', 'ASC')
+      .addOrderBy('estudiante.primerNombre', 'ASC')
+      .addOrderBy('estudiante.id', 'ASC');
+
+    const paginado = page !== undefined && limit !== undefined;
+
+    if (paginado) {
+      query.skip((page - 1) * limit).take(limit);
+    } else {
+      query.addSelect(['representante.cedulaPdf', 'representante.croquisPdf']);
+    }
+
+    const [ormEntities, totalRows] = await query.getManyAndCount();
+
+    return {
+      data: ormEntities.map((entity) => this.toDomain(entity, !paginado)!),
+      totalRows,
+    };
+  }
+
+  async findByMatricula(
+    nivel: NivelEstudiante,
+    idPeriodo: number,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: Estudiante[]; totalRows: number }> {
+    // Se consulta la tabla existente mientras se migra el módulo de matrículas.
+    const query = this.consultaEstudiantes()
+      .innerJoin(
+        'matriculas',
+        'matricula',
+        'matricula.ID_estudiante = estudiante.id',
+      )
+      .where('matricula.nivel = :nivel', { nivel })
+      .andWhere('matricula.ID_periodo_academico = :idPeriodo', { idPeriodo })
+      .addSelect('matricula.ID', 'matricula_id')
+      .addSelect('matricula.ID_estudiante', 'matricula_estudianteId')
+      .addSelect('matricula.nivel', 'matricula_nivel')
+      .addSelect('matricula.ID_periodo_academico', 'matricula_periodoId')
+      .distinct(true)
+      .orderBy('estudiante.primerApellido', 'ASC')
+      .addOrderBy('estudiante.primerNombre', 'ASC')
+      .addOrderBy('estudiante.id', 'ASC');
+
+    const paginado = page !== undefined && limit !== undefined;
+
+    if (paginado) {
+      query.skip((page - 1) * limit).take(limit);
+    } else {
+      query.addSelect(['representante.cedulaPdf', 'representante.croquisPdf']);
+    }
+
+    const { entities, raw } = await query.getRawAndEntities<{
+      matricula_id: number;
+      matricula_estudianteId: number;
+      matricula_nivel: NivelEstudiante;
+      matricula_periodoId: number;
+    }>();
+    const totalRows = paginado ? await query.getCount() : entities.length;
+    const matriculasPorEstudiante = new Map<
+      number,
+      NonNullable<Estudiante['matriculas']>
+    >();
+
+    for (const fila of raw) {
+      const matriculas =
+        matriculasPorEstudiante.get(fila.matricula_estudianteId) ?? [];
+      matriculas.push({
+        id: fila.matricula_id,
+        nivel: fila.matricula_nivel,
+        periodoAcademicoId: fila.matricula_periodoId,
+      });
+      matriculasPorEstudiante.set(fila.matricula_estudianteId, matriculas);
+    }
+
+    return {
+      data: entities.map((entity) => {
+        const estudiante = this.toDomain(entity, !paginado)!;
+        estudiante.matriculas = matriculasPorEstudiante.get(entity.id) ?? [];
+        return estudiante;
+      }),
       totalRows,
     };
   }
