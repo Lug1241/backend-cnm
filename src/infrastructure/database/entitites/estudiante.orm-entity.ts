@@ -3,6 +3,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import {
@@ -12,6 +13,7 @@ import {
   NivelEstudiante,
 } from '../../../domain/entities/estudiante.entity';
 import { RepresentanteOrmEntity } from './representante.orm-entity';
+import { MatriculaOrmEntity } from './matricula.orm-entity';
 
 @Entity('estudiantes')
 export class EstudianteOrmEntity {
@@ -155,6 +157,9 @@ export class EstudianteOrmEntity {
     referencedColumnName: 'nroCedula',
   })
   representante!: RepresentanteOrmEntity;
+
+  @OneToMany(() => MatriculaOrmEntity, (matricula) => matricula.estudiante)
+  matriculas!: MatriculaOrmEntity[];
 
   @Column({
     name: 'createdAt',
