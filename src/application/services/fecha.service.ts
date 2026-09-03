@@ -13,7 +13,7 @@ import {
   FechaProceso,
   TipoProceso,
 } from '../../domain/entities/fecha-proceso.entity';
-import { UpdateFechaProcesoDto } from '@application/dtos/update-fecha.dto';
+import { UpdateFechaProcesoDto } from '@application/dtos/fecha/update-fecha.dto';
 
 @Injectable()
 export class FechaProcesoService {

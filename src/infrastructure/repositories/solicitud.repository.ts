@@ -4,13 +4,13 @@ import { Repository, IsNull } from 'typeorm';
 import {
   ISolicitudRepository,
   SolicitudDuplicateCriteria,
-} from '../../../domain/interfaces/solicitud.repository.interface';
+} from '../../domain/interfaces/solicitud.repository.interface';
 import {
   Solicitud,
   EstadoSolicitud,
-} from '../../../domain/entities/solicitud.entity';
-import { SolicitudOrmEntity } from '../entitites/solicitud.orm-entity';
-import { Docente } from '../../../domain/entities/docente.entity';
+} from '../../domain/entities/solicitud.entity';
+import { SolicitudOrmEntity } from '../database/entitites/solicitud.orm-entity';
+import { Docente } from '../../domain/entities/docente.entity';
 
 @Injectable()
 export class SolicitudRepository implements ISolicitudRepository {

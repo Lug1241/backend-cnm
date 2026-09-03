@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MateriaOrmEntity } from '@infrastructure/database/entitites/materia.orm-entity';
 import { MateriaController } from './materia.controller';
 import { MateriaService } from '@application/services/materia.service';
-import { MateriaRepository } from '@infrastructure/database/repositories/materia.repository';
+import { MateriaRepository } from '@infrastructure/repositories/materia.repository';
 import { I_MATERIA_REPOSITORY } from '../domain/interfaces/materia.repository.interface';
 
 @Module({

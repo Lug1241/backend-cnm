@@ -10,7 +10,7 @@ import {
   I_REPRESENTANTE_REPOSITORY,
 } from '@domain/interfaces/representante.repository.interface';
 import { Representante } from '@domain/entities/representante.entity';
-import { CreateRepresentanteDto } from '../dtos/create-representante.dto';
+import { CreateRepresentanteDto } from '../dtos/representante/create-representante.dto';
 import { UpdateRepresentanteDto } from '../dtos/update-representante.dto';
 import {
   ocultarDatosSensibles,

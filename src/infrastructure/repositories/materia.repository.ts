@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
-import { IMateriaRepository } from '../../../domain/interfaces/materia.repository.interface';
+import { IMateriaRepository } from '../../domain/interfaces/materia.repository.interface';
 import {
   Materia,
   NivelMateria,
   TipoMateria,
-} from '../../../domain/entities/materia.entity';
-import { MateriaOrmEntity } from '../entitites/materia.orm-entity';
+} from '../../domain/entities/materia.entity';
+import { MateriaOrmEntity } from '../database/entitites/materia.orm-entity';
 
 @Injectable()
 export class MateriaRepository implements IMateriaRepository {

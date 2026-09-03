@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { MatriculaService } from '@application/services/matricula.service';
-import { CreateMatriculaDto } from '@application/dtos/create-matricula.dto';
+import { CreateMatriculaDto } from '@application/dtos/matricula/create-matricula.dto';
 import { UpdateMatriculaDto } from '@application/dtos/update-matricula.dto';
 
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))

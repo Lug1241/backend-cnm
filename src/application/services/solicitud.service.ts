@@ -14,7 +14,7 @@ import {
   Solicitud,
 } from '../../domain/entities/solicitud.entity';
 import { CreateSolicitudDto } from '../dtos/create-solicitud.dto';
-import { UpdateSolicitudDto } from '../dtos/update-solicitud.dto';
+import { UpdateSolicitudDto } from '../dtos/solicitud/update-solicitud.dto';
 
 @Injectable()
 export class SolicitudService {

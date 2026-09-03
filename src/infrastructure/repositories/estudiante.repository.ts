@@ -6,7 +6,7 @@ import {
   Estudiante,
   type NivelEstudiante,
 } from '@domain/entities/estudiante.entity';
-import { EstudianteOrmEntity } from '../entitites/estudiante.orm-entity';
+import { EstudianteOrmEntity } from '@infrastructure/database/entitites/estudiante.orm-entity';
 import { Representante } from '@domain/entities/representante.entity';
 @Injectable()
 export class EstudianteRepository implements IEstudianteRepository {

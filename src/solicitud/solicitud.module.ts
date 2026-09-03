@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SolicitudOrmEntity } from '@infrastructure/database/entitites/solicitud.orm-entity';
 import { SolicitudController } from './solicitud.controller';
 import { SolicitudService } from '@application/services/solicitud.service';
-import { SolicitudRepository } from '@infrastructure/database/repositories/solicitud.repository';
+import { SolicitudRepository } from '@infrastructure/repositories/solicitud.repository';
 import { I_SOLICITUD_REPOSITORY } from '@domain/interfaces/solicitud.repository.interface';
 
 @Module({

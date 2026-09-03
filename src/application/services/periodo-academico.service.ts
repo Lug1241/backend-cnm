@@ -13,7 +13,7 @@ import {
   PeriodoAcademico,
   EstadoPeriodo,
 } from '../../domain/entities/periodo-academico.entity';
-import { CreatePeriodoDto } from '../dtos/create-periodo.dto';
+import { CreatePeriodoDto } from '../dtos/periodo/create-periodo.dto';
 import { UpdatePeriodoDto } from '../dtos/update-periodo.dto';
 
 @Injectable()

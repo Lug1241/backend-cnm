@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IFechaProcesoRepository } from '../../../domain/interfaces/fecha-proceso.repository.interface';
+import { IFechaProcesoRepository } from '../../domain/interfaces/fecha-proceso.repository.interface';
 import {
   FechaProceso,
   TipoProceso,
-} from '../../../domain/entities/fecha-proceso.entity';
-import { FechaProcesoOrmEntity } from '../entitites/fecha-proceso.orm-entity';
+} from '../../domain/entities/fecha-proceso.entity';
+import { FechaProcesoOrmEntity } from '../database/entitites/fecha-proceso.orm-entity';
 
 @Injectable()
 export class FechaProcesoRepository implements IFechaProcesoRepository {

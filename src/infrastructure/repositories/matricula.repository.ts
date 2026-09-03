@@ -7,9 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { Matricula } from '@domain/entities/matricula.entity';
 import { type IMatriculaRepository } from '@domain/interfaces/matricula.repository.interface';
-import { MatriculaOrmEntity } from '../entitites/matricula.orm-entity';
-import { EstudianteOrmEntity } from '../entitites/estudiante.orm-entity';
-import { PeriodoAcademicoOrmEntity } from '../entitites/periodo-academico.orm-entity';
+import { MatriculaOrmEntity } from '../database/entitites/matricula.orm-entity';
+import { EstudianteOrmEntity } from '../database/entitites/estudiante.orm-entity';
+import { PeriodoAcademicoOrmEntity } from '../database/entitites/periodo-academico.orm-entity';
 
 @Injectable()
 export class MatriculaRepository implements IMatriculaRepository {

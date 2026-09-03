@@ -10,7 +10,7 @@ import {
   I_DOCENTE_REPOSITORY,
 } from '@domain/interfaces/docente.repository.interface';
 import { Docente } from '@domain/entities/docente.entity';
-import { CreateDocenteDto } from '../dtos/create-docente.dto';
+import { CreateDocenteDto } from '../dtos/docente/create-docente.dto';
 import { UpdateDocenteDto } from '../dtos/update-docente.dto';
 import {
   generarPasswordFuerte,

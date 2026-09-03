@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { PeriodoAcademicoService } from '@application/services/periodo-academico.service';
-import { CreatePeriodoDto } from '@application/dtos/create-periodo.dto';
+import { CreatePeriodoDto } from '@application/dtos/periodo/create-periodo.dto';
 import { UpdatePeriodoDto } from '@application/dtos/update-periodo.dto';
 
 @Controller('api/periodo_academico')

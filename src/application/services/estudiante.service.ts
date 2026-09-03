@@ -21,7 +21,7 @@ import {
   Estudiante,
   type NivelEstudiante,
 } from '@domain/entities/estudiante.entity';
-import { CreateEstudianteDto } from '../dtos/create-estudiante.dto';
+import { CreateEstudianteDto } from '../dtos/estudiante/create-estudiante.dto';
 import { UpdateEstudianteDto } from '../dtos/update-estudiante.dto';
 
 @Injectable()

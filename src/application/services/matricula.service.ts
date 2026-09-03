@@ -10,7 +10,7 @@ import {
   I_MATRICULA_REPOSITORY,
   type IMatriculaRepository,
 } from '@domain/interfaces/matricula.repository.interface';
-import { CreateMatriculaDto } from '../dtos/create-matricula.dto';
+import { CreateMatriculaDto } from '../dtos/matricula/create-matricula.dto';
 import { UpdateMatriculaDto } from '../dtos/update-matricula.dto';
 
 @Injectable()

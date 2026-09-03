@@ -14,7 +14,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { RepresentanteService } from '@application/services/representante.service';
-import { CreateRepresentanteDto } from '@application/dtos/create-representante.dto';
+import { CreateRepresentanteDto } from '@application/dtos/representante/create-representante.dto';
 import { UpdateRepresentanteDto } from '@application/dtos/update-representante.dto';
 
 @UsePipes(

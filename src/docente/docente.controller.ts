@@ -10,7 +10,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { DocenteService } from '@application/services/docente.service';
-import { CreateDocenteDto } from '@application/dtos/create-docente.dto';
+import { CreateDocenteDto } from '@application/dtos/docente/create-docente.dto';
 import { UpdateDocenteDto } from '@application/dtos/update-docente.dto';
 
 @Controller('api/docentes')

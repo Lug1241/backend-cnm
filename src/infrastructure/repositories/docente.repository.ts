@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { type IDocenteRepository } from '@domain/interfaces/docente.repository.interface';
 import { Docente } from '@domain/entities/docente.entity';
-import { DocenteOrmEntity } from '../entitites/docente.orm-entity';
+import { DocenteOrmEntity } from '../database/entitites/docente.orm-entity';
 
 @Injectable()
 export class DocenteRepository implements IDocenteRepository {
@@ -13,7 +13,7 @@ export class DocenteRepository implements IDocenteRepository {
   ) {}
 
   async findByID(id: number): Promise<Docente | null> {
-    const ormEntity = await this.ormRepository.findOne({ where: {id} })
+    const ormEntity = await this.ormRepository.findOne({ where: { id } });
     if (!ormEntity) return null;
 
     return this.toDomain(ormEntity);

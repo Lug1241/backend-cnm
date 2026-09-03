@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MatriculaService } from '@application/services/matricula.service';
 import { I_MATRICULA_REPOSITORY } from '@domain/interfaces/matricula.repository.interface';
 import { MatriculaOrmEntity } from '@infrastructure/database/entitites/matricula.orm-entity';
-import { MatriculaRepository } from '@infrastructure/database/repositories/matricula.repository';
+import { MatriculaRepository } from '@infrastructure/repositories/matricula.repository';
 import { MatriculaController } from './matricula.controller';
 
 @Module({

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
-import { IPeriodoAcademicoRepository } from '../../../domain/interfaces/periodo-academico.repository.interface';
+import { IPeriodoAcademicoRepository } from '../../domain/interfaces/periodo-academico.repository.interface';
 import {
   PeriodoAcademico,
   EstadoPeriodo,
-} from '../../../domain/entities/periodo-academico.entity';
-import { PeriodoAcademicoOrmEntity } from '../entitites/periodo-academico.orm-entity';
+} from '../../domain/entities/periodo-academico.entity';
+import { PeriodoAcademicoOrmEntity } from '../database/entitites/periodo-academico.orm-entity';
 
 @Injectable()
 export class PeriodoAcademicoRepository implements IPeriodoAcademicoRepository {

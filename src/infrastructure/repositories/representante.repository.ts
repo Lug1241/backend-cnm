@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { type IRepresentanteRepository } from '@domain/interfaces/representante.repository.interface';
 import { Representante } from '@domain/entities/representante.entity';
-import { RepresentanteOrmEntity } from '../entitites/representante.orm-entity';
+import { RepresentanteOrmEntity } from '../database/entitites/representante.orm-entity';
 
 @Injectable()
 export class RepresentanteRepository implements IRepresentanteRepository {

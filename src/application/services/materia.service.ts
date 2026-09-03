@@ -14,7 +14,7 @@ import {
   NivelMateria,
   TipoMateria,
 } from '../../domain/entities/materia.entity';
-import { CreateMateriaDto } from '../dtos/create-materia.dto';
+import { CreateMateriaDto } from '../dtos/materia/create-materia.dto';
 import { UpdateMateriaDto } from '../dtos/update-materia.dto';
 
 @Injectable()
