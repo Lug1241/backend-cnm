@@ -253,13 +253,17 @@ export class EstudianteRepository implements IEstudianteRepository {
 
     const paginado = page !== undefined && limit !== undefined;
 
+    let entities: EstudianteOrmEntity[];
+    let totalRows: number;
+
     if (paginado) {
       query.skip((page - 1) * limit).take(limit);
+      [entities, totalRows] = await query.getManyAndCount();
     } else {
       query.addSelect(['representante.cedulaPdf', 'representante.croquisPdf']);
+      entities = await query.getMany();
+      totalRows = entities.length;
     }
-
-    const [entities, totalRows] = await query.getManyAndCount();
 
     return {
       data: entities.map((entity) => this.toDomain(entity, !paginado)!),
