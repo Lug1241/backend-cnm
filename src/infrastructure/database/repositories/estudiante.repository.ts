@@ -64,6 +64,13 @@ export class EstudianteRepository implements IEstudianteRepository {
               croquisPdf: ormEntity.representante.croquisPdf,
             })
           : undefined,
+      matriculas: ormEntity.matriculas?.map(
+        ({ id, nivel, periodoAcademicoId }) => ({
+          id,
+          nivel,
+          periodoAcademicoId,
+        }),
+      ),
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     });
@@ -231,61 +238,35 @@ export class EstudianteRepository implements IEstudianteRepository {
     page?: number,
     limit?: number,
   ): Promise<{ data: Estudiante[]; totalRows: number }> {
-    // Se consulta la tabla existente mientras se migra el módulo de matrículas.
     const query = this.consultaEstudiantes()
-      .innerJoin(
-        'matriculas',
-        'matricula',
-        'matricula.ID_estudiante = estudiante.id',
-      )
+      .innerJoin('estudiante.matriculas', 'matricula')
       .where('matricula.nivel = :nivel', { nivel })
-      .andWhere('matricula.ID_periodo_academico = :idPeriodo', { idPeriodo })
-      .addSelect('matricula.ID', 'matricula_id')
-      .addSelect('matricula.ID_estudiante', 'matricula_estudianteId')
-      .addSelect('matricula.nivel', 'matricula_nivel')
-      .addSelect('matricula.ID_periodo_academico', 'matricula_periodoId')
-      .distinct(true)
+      .andWhere('matricula.periodoAcademicoId = :idPeriodo', { idPeriodo })
+      .addSelect([
+        'matricula.id',
+        'matricula.nivel',
+        'matricula.periodoAcademicoId',
+      ])
       .orderBy('estudiante.primerApellido', 'ASC')
       .addOrderBy('estudiante.primerNombre', 'ASC')
       .addOrderBy('estudiante.id', 'ASC');
 
     const paginado = page !== undefined && limit !== undefined;
 
+    let entities: EstudianteOrmEntity[];
+    let totalRows: number;
+
     if (paginado) {
       query.skip((page - 1) * limit).take(limit);
+      [entities, totalRows] = await query.getManyAndCount();
     } else {
       query.addSelect(['representante.cedulaPdf', 'representante.croquisPdf']);
-    }
-
-    const { entities, raw } = await query.getRawAndEntities<{
-      matricula_id: number;
-      matricula_estudianteId: number;
-      matricula_nivel: NivelEstudiante;
-      matricula_periodoId: number;
-    }>();
-    const totalRows = paginado ? await query.getCount() : entities.length;
-    const matriculasPorEstudiante = new Map<
-      number,
-      NonNullable<Estudiante['matriculas']>
-    >();
-
-    for (const fila of raw) {
-      const matriculas =
-        matriculasPorEstudiante.get(fila.matricula_estudianteId) ?? [];
-      matriculas.push({
-        id: fila.matricula_id,
-        nivel: fila.matricula_nivel,
-        periodoAcademicoId: fila.matricula_periodoId,
-      });
-      matriculasPorEstudiante.set(fila.matricula_estudianteId, matriculas);
+      entities = await query.getMany();
+      totalRows = entities.length;
     }
 
     return {
-      data: entities.map((entity) => {
-        const estudiante = this.toDomain(entity, !paginado)!;
-        estudiante.matriculas = matriculasPorEstudiante.get(entity.id) ?? [];
-        return estudiante;
-      }),
+      data: entities.map((entity) => this.toDomain(entity, !paginado)!),
       totalRows,
     };
   }

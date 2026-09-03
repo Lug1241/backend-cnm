@@ -35,7 +35,7 @@ export class MatriculaOrmEntity {
   @Column({ name: 'ID_periodo_academico', type: 'int' })
   periodoAcademicoId!: number;
 
-  @ManyToOne(() => EstudianteOrmEntity, {
+  @ManyToOne(() => EstudianteOrmEntity, (estudiante) => estudiante.matriculas, {
     nullable: false,
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',

@@ -1,4 +1,5 @@
 import { Representante } from './representante.entity';
+import { type Matricula } from './matricula.entity';
 export enum GeneroEstudiante {
   MASCULINO = 'Masculino',
   FEMENINO = 'Femenino',
@@ -55,11 +56,7 @@ export class Estudiante {
   representanteId!: number;
   representanteCedula!: string;
   representante?: Representante;
-  matriculas?: {
-    id: number;
-    nivel: NivelEstudiante;
-    periodoAcademicoId: number;
-  }[];
+  matriculas?: Pick<Matricula, 'id' | 'nivel' | 'periodoAcademicoId'>[];
   createdAt?: Date;
   updatedAt?: Date;
 
