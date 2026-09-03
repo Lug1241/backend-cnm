@@ -12,6 +12,13 @@ export class DocenteRepository implements IDocenteRepository {
     private readonly ormRepository: Repository<DocenteOrmEntity>,
   ) {}
 
+  async findByID(id: number): Promise<Docente | null> {
+    const ormEntity = await this.ormRepository.findOne({ where: {id} })
+    if (!ormEntity) return null;
+
+    return this.toDomain(ormEntity);
+  }
+
   private toDomain(ormEntity: DocenteOrmEntity | null): Docente | null {
     if (!ormEntity) return null;
     return new Docente({

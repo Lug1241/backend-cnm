@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DocenteService } from '@application/services/docente.service';
 import { CreateDocenteDto } from '@application/dtos/create-docente.dto';
@@ -27,6 +28,11 @@ export class DocenteController {
     @Body() updateDto: UpdateDocenteDto,
   ) {
     return this.docenteService.update(cedula, updateDto);
+  }
+
+  @Get('obtener/:id')
+  async getDocenteByID(@Param('id', ParseIntPipe) id: number) {
+    return this.docenteService.getByID(id);
   }
 
   @Get('obtener/:cedula')
