@@ -42,6 +42,10 @@ export class AsignacionOrmEntity {
     @JoinColumn({name: 'ID_periodo_academico'})
     periodoAcademico!: PeriodoAcademicoOrmEntity;
 
+    // TODO: Agregar relación OneToMany hacia InscripcionOrmEntity cuando el módulo esté listo
+    // @OneToMany(() => InscripcionOrmEntity, inscripcion => inscripcion.asignacion)
+    // inscripciones!: InscripcionOrmEntity[];
+
     @CreateDateColumn()
     createdAt!: Date;
 

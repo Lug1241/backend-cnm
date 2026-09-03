@@ -142,36 +142,39 @@ export class AsignacionRepository implements IAsignacionRepository {
     docente: Docente,
     periodo: PeriodoAcademico,
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
-    //TODO: QueryBuilder usado porque aún no existe la relación "matriculas" en AsignacionOrmEntity
+    // TODO: Implementar cuando InscripcionOrmEntity exista.
+    // Un "docente sin matrícula" en realidad significa una asignación sin inscripciones.
+    /*
     const [ormEntities, totalRows] = await this.ormRepository
-      .createQueryBuilder('asignacion')
       .leftJoinAndSelect('asignacion.docente', 'docente')
       .leftJoinAndSelect('asignacion.materia', 'materia')
       .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
-      .leftJoin('asignacion.matriculas', 'matricula') //TODO: Esta relación deberá agregarse luego
+      .leftJoin('asignacion.inscripciones', 'inscripcion') //TODO: Esta relación deberá agregarse luego
       .where('docente.id = :docenteId', { docenteId: docente.id })
-      .andWhere('matricula.id IS NULL')
+      .andWhere('inscripcion.id IS NULL')
       .andWhere('materia.tipo = :tipo', { tipo: 'individual' })
       .getManyAndCount();
 
     return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
-  }
+    */
+    return { data: [], totalRows: 0}
+    }
 
-  async findBySinMatricula(): Promise<{
-    data: Asignacion[];
-    totalRows: number;
-  }> {
-    const [ormEntities, totalRows] = await this.ormRepository
-      .createQueryBuilder('asignacion')
-      .leftJoinAndSelect('asignacion.docente', 'docente')
-      .leftJoinAndSelect('asignacion.materia', 'materia')
-      .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
-      .leftJoin('asignacion.matriculas', 'matricula')
-      .where('matricula.id IS NULL')
-      .getManyAndCount();
+  async findBySinMatricula(): Promise<{ data: Asignacion[]; totalRows: number; }> {
+        // TODO: Implementar cuando InscripcionOrmEntity exista.
+        /*
+        const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('asignacion')
+            .leftJoinAndSelect('asignacion.docente', 'docente')
+            .leftJoinAndSelect('asignacion.materia', 'materia')
+            .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
+            .leftJoin('asignacion.inscripciones', 'inscripcion') 
+            .where('inscripcion.id IS NULL')
+            .getManyAndCount();
 
-    return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
-  }
+        return { data: ormEntities.map(e => this.toDomain(e)!), totalRows };
+        */
+        return { data: [], totalRows: 0 };
+    }
 
   async delete(id: number): Promise<void> {
     const result = await this.ormRepository.delete(id);
