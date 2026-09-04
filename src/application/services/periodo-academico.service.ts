@@ -14,7 +14,7 @@ import {
   EstadoPeriodo,
 } from '../../domain/entities/periodo-academico.entity';
 import { CreatePeriodoDto } from '../dtos/periodo/create-periodo.dto';
-import { UpdatePeriodoDto } from '../dtos/update-periodo.dto';
+import { UpdatePeriodoDto } from '../dtos/periodo/update-periodo.dto';
 
 @Injectable()
 export class PeriodoAcademicoService {

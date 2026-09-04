@@ -8,7 +8,7 @@ import {
   Length,
   IsString,
 } from 'class-validator';
-import { DescripcionSolicitud } from '../../domain/entities/solicitud.entity';
+import { DescripcionSolicitud } from '@domain/entities/solicitud.entity';
 
 export class CreateSolicitudDto {
   @IsNumber()

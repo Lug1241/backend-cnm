@@ -11,7 +11,7 @@ import {
 } from '@domain/interfaces/representante.repository.interface';
 import { Representante } from '@domain/entities/representante.entity';
 import { CreateRepresentanteDto } from '../dtos/representante/create-representante.dto';
-import { UpdateRepresentanteDto } from '../dtos/update-representante.dto';
+import { UpdateRepresentanteDto } from '../dtos/representante/update-representante.dto';
 import {
   ocultarDatosSensibles,
   generarPasswordFuerte,

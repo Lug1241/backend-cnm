@@ -11,7 +11,7 @@ import {
   type IMatriculaRepository,
 } from '@domain/interfaces/matricula.repository.interface';
 import { CreateMatriculaDto } from '../dtos/matricula/create-matricula.dto';
-import { UpdateMatriculaDto } from '../dtos/update-matricula.dto';
+import { UpdateMatriculaDto } from '../dtos/matricula/update-matricula.dto';
 
 @Injectable()
 export class MatriculaService {

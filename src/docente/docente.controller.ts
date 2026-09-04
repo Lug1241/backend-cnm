@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { DocenteService } from '@application/services/docente.service';
 import { CreateDocenteDto } from '@application/dtos/docente/create-docente.dto';
-import { UpdateDocenteDto } from '@application/dtos/update-docente.dto';
+import { UpdateDocenteDto } from '@application/dtos/docente/update-docente.dto';
 
 @Controller('api/docentes')
 export class DocenteController {

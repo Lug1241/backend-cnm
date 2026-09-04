@@ -1,5 +1,5 @@
 import { CreateAsignacionDto } from '@application/dtos/asignacion/create-asignacion.dto';
-import { UpdateAsignacionDto } from '@application/dtos/update-asignacion.dto';
+import { UpdateAsignacionDto } from '@application/dtos/asignacion/update-asignacion.dto';
 import { AsignacionService } from '@application/services/asignacion.service';
 import {
   Controller,

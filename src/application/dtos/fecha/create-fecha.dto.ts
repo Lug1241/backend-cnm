@@ -6,7 +6,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TipoProceso } from '../../domain/entities/fecha-proceso.entity';
+import { TipoProceso } from '@domain/entities/fecha-proceso.entity';
 
 export class CreateFechaProcesoDto {
   @IsNotEmpty({

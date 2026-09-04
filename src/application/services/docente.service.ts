@@ -11,7 +11,7 @@ import {
 } from '@domain/interfaces/docente.repository.interface';
 import { Docente } from '@domain/entities/docente.entity';
 import { CreateDocenteDto } from '../dtos/docente/create-docente.dto';
-import { UpdateDocenteDto } from '../dtos/update-docente.dto';
+import { UpdateDocenteDto } from '../dtos/docente/update-docente.dto';
 import {
   generarPasswordFuerte,
   ocultarDatosSensibles,

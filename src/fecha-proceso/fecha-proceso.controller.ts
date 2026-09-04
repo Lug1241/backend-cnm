@@ -11,7 +11,7 @@ import {
   DefaultValuePipe,
 } from '@nestjs/common';
 import { FechaProcesoService } from '../application/services/fecha.service';
-import { CreateFechaProcesoDto } from '../application/dtos/create-fecha.dto';
+import { CreateFechaProcesoDto } from '@application/dtos/fecha/create-fecha.dto';
 import { TipoProceso } from '@domain/entities/fecha-proceso.entity';
 import { UpdateFechaProcesoDto } from '@application/dtos/fecha/update-fecha.dto';
 

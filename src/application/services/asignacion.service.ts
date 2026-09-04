@@ -1,5 +1,5 @@
 import { CreateAsignacionDto } from '@application/dtos/asignacion/create-asignacion.dto';
-import { UpdateAsignacionDto } from '@application/dtos/update-asignacion.dto';
+import { UpdateAsignacionDto } from '@application/dtos/asignacion/update-asignacion.dto';
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import {
   I_ASIGNACION_REPOSITORY,
@@ -23,8 +23,6 @@ export class AsignacionService {
   ) {}
 
   async create(dto: CreateAsignacionDto): Promise<Asignacion> {
-    //TODO: Se creó un método para encontrar por ID dado el cambio que se ejecutó antes en la BD
-    //      de ser necesario se puede volver a cambiar el método para usar la cédula del docente
     const docente = (await this.docenteService.getByID(
       Number(dto.ID_docente),
     )) as Docente | null;

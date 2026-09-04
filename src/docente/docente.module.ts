@@ -16,6 +16,6 @@ import { I_DOCENTE_REPOSITORY } from '@domain/interfaces/docente.repository.inte
       useClass: DocenteRepository,
     },
   ],
-  exports: [I_DOCENTE_REPOSITORY],
+  exports: [I_DOCENTE_REPOSITORY, DocenteService],
 })
 export class DocenteModule {}

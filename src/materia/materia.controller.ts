@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { MateriaService } from '@application/services/materia.service';
 import { CreateMateriaDto } from '@application/dtos/materia/create-materia.dto';
-import { UpdateMateriaDto } from '@application/dtos/update-materia.dto';
+import { UpdateMateriaDto } from '@application/dtos/materia/update-materia.dto';
 import { NivelMateria, TipoMateria } from '@domain/entities/materia.entity';
 
 @Controller('api/materia')

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { PeriodoAcademicoService } from '@application/services/periodo-academico.service';
 import { CreatePeriodoDto } from '@application/dtos/periodo/create-periodo.dto';
-import { UpdatePeriodoDto } from '@application/dtos/update-periodo.dto';
+import { UpdatePeriodoDto } from '@application/dtos/periodo/update-periodo.dto';
 
 @Controller('api/periodo_academico')
 export class PeriodoAcademicoController {
