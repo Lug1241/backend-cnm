@@ -8,7 +8,9 @@ import { I_ASIGNACION_REPOSITORY } from '@domain/interfaces/asignacion.repositor
 import { DocenteModule } from 'src/docente/docente.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AsignacionOrmEntity]), DocenteModule],
+  imports: [TypeOrmModule.forFeature([AsignacionOrmEntity]),
+  DocenteModule
+  ],
   controllers: [AsignacionController],
   providers: [
     AsignacionService,
