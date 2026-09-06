@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { SolicitudService } from '@application/services/solicitud.service';
-import { CreateSolicitudDto } from '@application/dtos/create-solicitud.dto';
+import { CreateSolicitudDto } from '@application/dtos/solicitud/create-solicitud.dto';
 import { UpdateSolicitudDto } from '@application/dtos/solicitud/update-solicitud.dto';
 
 @Controller('api/solicitudes')
