@@ -1,4 +1,4 @@
-import { Asignacion } from "@domain/entities/asignacion.entity"; // Ajustar rutas
+import { Asignacion } from "@domain/entities/asignacion.entity"; 
 import { Matricula } from "@domain/entities/matricula.entity";
 
 export class Inscripcion {
