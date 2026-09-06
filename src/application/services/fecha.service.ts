@@ -8,7 +8,7 @@ import {
   type IFechaProcesoRepository,
   I_FECHA_PROCESO_REPOSITORY,
 } from '../../domain/interfaces/fecha-proceso.repository.interface';
-import { CreateFechaProcesoDto } from '../dtos/create-fecha.dto';
+import { CreateFechaProcesoDto } from '../dtos/fecha/create-fecha.dto';
 import {
   FechaProceso,
   TipoProceso,

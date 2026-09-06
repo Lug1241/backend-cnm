@@ -15,7 +15,7 @@ import {
   TipoMateria,
 } from '../../domain/entities/materia.entity';
 import { CreateMateriaDto } from '../dtos/materia/create-materia.dto';
-import { UpdateMateriaDto } from '../dtos/update-materia.dto';
+import { UpdateMateriaDto } from '../dtos/materia/update-materia.dto';
 
 @Injectable()
 export class MateriaService {

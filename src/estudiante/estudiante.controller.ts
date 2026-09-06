@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { EstudianteService } from '@application/services/estudiante.service';
 import { CreateEstudianteDto } from '@application/dtos/estudiante/create-estudiante.dto';
-import { UpdateEstudianteDto } from '@application/dtos/update-estudiante.dto';
+import { UpdateEstudianteDto } from '@application/dtos/estudiante/update-estudiante.dto';
 import { NivelEstudiante } from '@domain/entities/estudiante.entity';
 
 @UsePipes(
