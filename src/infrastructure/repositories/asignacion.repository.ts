@@ -185,6 +185,25 @@ export class AsignacionRepository implements IAsignacionRepository {
     }
   }
 
+  async decrementarCupo(id: number): Promise<boolean> {
+    const result = await this.ormRepository.createQueryBuilder()
+      .update(AsignacionOrmEntity)
+      .set({ cupos: () => 'cupos - 1' })
+      .where('id = :id', { id })
+      .andWhere('cupos > 0')
+      .execute();
+    return (result.affected ?? 0) > 0;
+  }
+  
+  async incrementarCupo(id: number): Promise<boolean> {
+    const result = await this.ormRepository.createQueryBuilder()
+        .update(AsignacionOrmEntity)
+        .set({ cupos: () => 'cupos + 1' })
+        .where('id = :id', { id })
+        .execute();
+    return (result.affected ?? 0) > 0;
+  }
+
   private toDomain(ormEntity: AsignacionOrmEntity | null): Asignacion | null {
     if (!ormEntity) return null;
 

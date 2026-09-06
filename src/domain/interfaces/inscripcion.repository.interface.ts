@@ -16,4 +16,5 @@ export interface IInscripcionRepository {
     
     checkInscripcionDuplicada(idAsignacion: number, idMatricula: number): Promise<boolean>;
     checkInscripcionMateriaOtroDocente(idMateria: number, idMatricula: number): Promise<boolean>;
+
 }
