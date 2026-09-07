@@ -11,21 +11,26 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { DocenteService } from './docente.service';
-import { Docente } from '@domain/entities/docente.entity';
+import { I_DOCENTE_REPOSITORY,
+  type IDocenteRepository
+ } from '@domain/interfaces/docente.repository.interface';
 
 @Injectable()
 export class AsignacionService {
   constructor(
     @Inject(I_ASIGNACION_REPOSITORY)
     private readonly asignacionRepository: IAsignacionRepository,
-    private readonly docenteService: DocenteService,
+
+    @Inject(I_DOCENTE_REPOSITORY)
+    private readonly docenteRepository: IDocenteRepository,
   ) {}
 
   async create(dto: CreateAsignacionDto): Promise<Asignacion> {
-    const docente = (await this.docenteService.getByID(
-      Number(dto.ID_docente),
-    )) as Docente | null;
+    //TODO: Se creó un método para encontrar por ID dado el cambio que se ejecutó antes en la BD
+    //      de ser necesario se puede volver a cambiar el método para usar la cédula del docente
+    const docente = (await this.docenteRepository.findByID(
+      Number(dto.ID_docente)
+    ));
     if (!docente) {
       throw new NotFoundException('Docente no encontrado');
     }
@@ -117,9 +122,9 @@ export class AsignacionService {
   async update(id: number, dto: UpdateAsignacionDto): Promise<Asignacion> {
     const asignacionActual = await this.getById(id);
 
-    const docente = (await this.docenteService.getByID(
+    const docente = (await this.docenteRepository.findByID(
       Number(dto.ID_docente),
-    )) as Docente | null;
+    ));
     if (!docente) {
       throw new NotFoundException('Docente no encontrado');
     }
@@ -180,9 +185,9 @@ export class AsignacionService {
   }
 
   async getByDocente(id_docente: number) {
-    const docente = (await this.docenteService.getByID(
+    const docente = (await this.docenteRepository.findByID(
       id_docente,
-    )) as Docente | null;
+    ));
     if (!docente) {
       throw new NotFoundException('Docente no encontrado');
     }
@@ -226,9 +231,9 @@ export class AsignacionService {
 
   //TODO: modificar la firma al incluir la entidad matricula y sus relaciones
   async getByDocenteSinMatricula(id_docente: number, id_periodo: number) {
-    const docente = (await this.docenteService.getByID(
+    const docente = (await this.docenteRepository.findByID(
       id_docente,
-    )) as Docente | null;
+    ));
     if (!docente) {
       throw new NotFoundException('Docente no encontrado');
     }

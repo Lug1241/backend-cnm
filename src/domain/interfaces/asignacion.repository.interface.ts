@@ -27,4 +27,7 @@ export interface IAsignacionRepository {
     findByDocenteSinMatricula(docente: Docente, periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number }>;
     findBySinMatricula(/*matricula: Matricula*/): Promise<{ data: Asignacion[]; totalRows: number }>;
     delete(id: number): Promise<void>;
+    
+    decrementarCupo(id: number): Promise<boolean>;
+    incrementarCupo(id: number): Promise<boolean>;
 }

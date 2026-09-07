@@ -12,6 +12,7 @@ import { FechaProcesoModule } from './fecha-proceso/fecha-proceso.module';
 import { AsignacionModule } from './asignacion/asignacion.module';
 import { MatriculaModule } from './matricula/matricula.module';
 import { AuthModule } from './auth/auth.module';
+import { InscripcionModule } from './inscripcion/inscripcion.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
     AsignacionModule,
     MatriculaModule,
     AuthModule,
+    InscripcionModule,
   ],
 })
 export class AppModule {}
