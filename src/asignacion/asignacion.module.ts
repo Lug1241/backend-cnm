@@ -19,5 +19,8 @@ import { DocenteModule } from 'src/docente/docente.module';
       useClass: AsignacionRepository,
     },
   ],
+  exports: [
+    I_ASIGNACION_REPOSITORY,
+  ],
 })
 export class AsignacionModule {}
