@@ -10,7 +10,9 @@ export class CreatePeriodoDto {
   })
   descripcion!: string;
 
-  @IsEnum(EstadoPeriodo)
+  @IsEnum(EstadoPeriodo, {
+    message: 'El estado del periodo debe ser "Activo" o "Finalizado"',
+  })
   estado!: EstadoPeriodo;
 
   @Type(() => Date)

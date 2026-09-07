@@ -43,7 +43,6 @@ export class AuthService {
 
     let user: Docente | Representante | null = null;
     let rol: string | null = null;
-    let subRol: string | null = null;
 
     if (type === 'representante') {
       const representante =
@@ -56,14 +55,13 @@ export class AuthService {
       const docente = await this.docenteRepository.findByCedula(nroCedula);
       if (docente) {
         user = docente;
-        rol = 'docente';
-        subRol = docente.rol;
+        rol = docente.rol;
       }
     }
 
     if (!user) {
       this.logger.warn(
-        `Fallo de login - Cédula no encontrada para el rol ${type}: ${nroCedula}`,
+        `Fallo de login - Cédula no encontrada para el tipo ${type}: ${nroCedula}`,
       );
       throw new NotFoundException('Credenciales o tipo de usuario incorrectos');
     }
@@ -83,10 +81,10 @@ export class AuthService {
     }
 
     this.logger.log(
-      `Login exitoso - Cédula: ${nroCedula} | Rol: ${rol}${subRol ? ` | SubRol: ${subRol}` : ''}`,
+      `Login exitoso - Cédula: ${nroCedula} | Rol: ${rol} | Tipo: ${type}`,
     );
 
-    const payload = { id: user.nroCedula, rol, type, subRol };
+    const payload = { id: user.nroCedula, rol, type };
     const token = this.jwtService.sign(payload);
 
     const usuarioSeguro = ocultarDatosSensibles(user);
@@ -94,7 +92,6 @@ export class AuthService {
     return {
       ...usuarioSeguro,
       rol,
-      subRol,
       type,
       token,
     };
