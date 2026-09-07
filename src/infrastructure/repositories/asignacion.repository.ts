@@ -142,36 +142,32 @@ export class AsignacionRepository implements IAsignacionRepository {
     docente: Docente,
     periodo: PeriodoAcademico,
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
-    //TODO: QueryBuilder usado porque aún no existe la relación "matriculas" en AsignacionOrmEntity
-    const [ormEntities, totalRows] = await this.ormRepository
-      .createQueryBuilder('asignacion')
-      .leftJoinAndSelect('asignacion.docente', 'docente')
-      .leftJoinAndSelect('asignacion.materia', 'materia')
-      .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
-      .leftJoin('asignacion.matriculas', 'matricula') //TODO: Esta relación deberá agregarse luego
-      .where('docente.id = :docenteId', { docenteId: docente.id })
-      .andWhere('matricula.id IS NULL')
-      .andWhere('materia.tipo = :tipo', { tipo: 'individual' })
-      .getManyAndCount();
+        const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('asignacion')
+          .leftJoinAndSelect('asignacion.docente', 'docente')
+          .leftJoinAndSelect('asignacion.materia', 'materia')
+          .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
+          .leftJoin('asignacion.inscripciones', 'inscripcion') 
+          .where('docente.id = :docenteId', { docenteId: docente.id })
+          .andWhere('inscripcion.id IS NULL')
+          .andWhere('materia.tipo = :tipo', { tipo: 'individual' })
+          .getManyAndCount();
 
     return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
-  }
+    
+    }
 
-  async findBySinMatricula(): Promise<{
-    data: Asignacion[];
-    totalRows: number;
-  }> {
-    const [ormEntities, totalRows] = await this.ormRepository
-      .createQueryBuilder('asignacion')
-      .leftJoinAndSelect('asignacion.docente', 'docente')
-      .leftJoinAndSelect('asignacion.materia', 'materia')
-      .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
-      .leftJoin('asignacion.matriculas', 'matricula')
-      .where('matricula.id IS NULL')
-      .getManyAndCount();
+  async findBySinMatricula(): Promise<{ data: Asignacion[]; totalRows: number; }> {
+        
+        const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('asignacion')
+            .leftJoinAndSelect('asignacion.docente', 'docente')
+            .leftJoinAndSelect('asignacion.materia', 'materia')
+            .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
+            .leftJoin('asignacion.inscripciones', 'inscripcion') 
+            .where('inscripcion.id IS NULL')
+            .getManyAndCount();
 
-    return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
-  }
+        return { data: ormEntities.map(e => this.toDomain(e)!), totalRows };
+    }
 
   async delete(id: number): Promise<void> {
     const result = await this.ormRepository.delete(id);
@@ -180,6 +176,25 @@ export class AsignacionRepository implements IAsignacionRepository {
         `No se puede eliminar: la asignación con ID ${id} no existe.`,
       );
     }
+  }
+
+  async decrementarCupo(id: number): Promise<boolean> {
+    const result = await this.ormRepository.createQueryBuilder()
+      .update(AsignacionOrmEntity)
+      .set({ cupos: () => 'cupos - 1' })
+      .where('id = :id', { id })
+      .andWhere('cupos > 0')
+      .execute();
+    return (result.affected ?? 0) > 0;
+  }
+  
+  async incrementarCupo(id: number): Promise<boolean> {
+    const result = await this.ormRepository.createQueryBuilder()
+        .update(AsignacionOrmEntity)
+        .set({ cupos: () => 'cupos + 1' })
+        .where('id = :id', { id })
+        .execute();
+    return (result.affected ?? 0) > 0;
   }
 
   private toDomain(ormEntity: AsignacionOrmEntity | null): Asignacion | null {

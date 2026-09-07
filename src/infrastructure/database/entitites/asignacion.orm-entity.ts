@@ -1,8 +1,16 @@
 import { DiaSemana } from "@domain/entities/asignacion.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, 
+    CreateDateColumn, 
+    Entity, 
+    JoinColumn, 
+    ManyToOne, 
+    OneToMany, 
+    PrimaryGeneratedColumn, 
+    UpdateDateColumn } from "typeorm";
 import { DocenteOrmEntity } from "./docente.orm-entity";
 import { MateriaOrmEntity } from "./materia.orm-entity";
 import { PeriodoAcademicoOrmEntity } from "./periodo-academico.orm-entity";
+import { InscripcionOrmEntity } from "./inscripcion.orm-entity";
 
 @Entity('Asignaciones')
 export class AsignacionOrmEntity {
@@ -41,6 +49,9 @@ export class AsignacionOrmEntity {
     @ManyToOne(() => PeriodoAcademicoOrmEntity)
     @JoinColumn({name: 'ID_periodo_academico'})
     periodoAcademico!: PeriodoAcademicoOrmEntity;
+
+    @OneToMany(() => InscripcionOrmEntity, inscripcion => inscripcion.asignacion)
+    inscripciones!: InscripcionOrmEntity[];
 
     @CreateDateColumn()
     createdAt!: Date;
