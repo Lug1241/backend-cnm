@@ -12,7 +12,7 @@ import { MateriaOrmEntity } from "./materia.orm-entity";
 import { PeriodoAcademicoOrmEntity } from "./periodo-academico.orm-entity";
 import { InscripcionOrmEntity } from "./inscripcion.orm-entity";
 
-@Entity('Asignaciones')
+@Entity('asignaciones')
 export class AsignacionOrmEntity {
     @PrimaryGeneratedColumn({ name: 'ID' })
     id!: number;
