@@ -30,6 +30,15 @@ export class DocenteController {
     return this.docenteService.update(cedula, updateDto);
   }
 
+  @Get('obtener')
+  async getDocentes(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search: string = '',
+  ) {
+    return this.docenteService.getAll(+page, +limit, search);
+  }
+
   @Get('obtener/:id')
   async getDocenteByID(@Param('id', ParseIntPipe) id: number) {
     return this.docenteService.getByID(id);
@@ -38,15 +47,6 @@ export class DocenteController {
   @Get('obtener/:cedula')
   async getDocente(@Param('cedula') cedula: string) {
     return this.docenteService.getByCedula(cedula);
-  }
-
-  @Get('obtener')
-  async getDocentes(
-    @Query('page') page: string = '1',
-    @Query('limit') limit: string = '10',
-    @Query('search') search: string = '',
-  ) {
-    return this.docenteService.getAll(+page, +limit, search);
   }
 
   @Delete('eliminar/:cedula')

@@ -109,6 +109,6 @@ export class DocenteRepository implements IDocenteRepository {
   }
 
   async delete(nroCedula: string): Promise<void> {
-    await this.ormRepository.delete(nroCedula);
+    await this.ormRepository.delete({ nroCedula });
   }
 }
