@@ -11,8 +11,10 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  ParseEnumPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
+import { NivelMateria } from '@domain/entities/materia.entity';
 
 @Controller('api/asignaciones')
 export class AsignacionController {
@@ -50,10 +52,10 @@ export class AsignacionController {
 
   @Get('nivel/:nivel/:periodo')
   async getAsignacionesPorNivel(
-    @Param('nivel') nivel: string,
+    @Param('nivel', new ParseEnumPipe(NivelMateria)) nivel: NivelMateria,
     @Param('periodo', ParseIntPipe) periodo: number,
   ) {
-    return this.asignacionService.getByNivelMateria(nivel as any, periodo);
+    return this.asignacionService.getByNivelMateria(nivel, periodo);
   }
 
   @Get('obtener/periodo/:periodo')
