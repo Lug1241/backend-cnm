@@ -5,7 +5,7 @@ export class DocenteOrmEntity {
   @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 20, unique: true})
   nroCedula!: string;
 
   @Column({ name: 'primer_nombre', type: 'varchar', length: 50 })
