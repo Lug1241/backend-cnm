@@ -277,11 +277,17 @@ export class EstudianteService {
     };
   }
 
-  async getAll(page: number, limit: number, search: string) {
+  async getAll(
+    page: number,
+    limit: number,
+    search: string,
+    nivel?: NivelEstudiante,
+  ) {
     const { data, totalRows } = await this.estudianteRepository.findAll(
       page,
       limit,
       search,
+      nivel,
     );
 
     return {

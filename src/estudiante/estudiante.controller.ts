@@ -57,6 +57,9 @@ export class EstudianteController {
 
     @Query('search')
     search: string = '',
+
+    @Query('nivel')
+    nivel?: string,
   ) {
     if (page < 1 || limit < 1) {
       throw new BadRequestException(
@@ -64,7 +67,15 @@ export class EstudianteController {
       );
     }
 
-    return this.estudianteService.getAll(page, limit, search);
+    let nivelValidado: NivelEstudiante | undefined;
+    if (nivel) {
+      if (!Object.values(NivelEstudiante).includes(nivel as NivelEstudiante)) {
+        throw new BadRequestException('El nivel no es válido');
+      }
+      nivelValidado = nivel as NivelEstudiante;
+    }
+
+    return this.estudianteService.getAll(page, limit, search, nivelValidado);
   }
 
   @Get('representante/:cedula')
