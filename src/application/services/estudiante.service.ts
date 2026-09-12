@@ -184,6 +184,34 @@ export class EstudianteService {
     };
   }
 
+  async getArchivosPorNivel(
+    nivel: NivelEstudiante,
+    tipo:
+      | 'cedulas-representantes'
+      | 'croquis'
+      | 'cedulas-estudiantes'
+      | 'matriculas-ier',
+  ) {
+    const { data } = await this.estudianteRepository.findByNivel(nivel);
+
+    const rutas = data
+      .map((estudiante) => {
+        switch (tipo) {
+          case 'cedulas-representantes':
+            return estudiante.representante?.cedulaPdf;
+          case 'croquis':
+            return estudiante.representante?.croquisPdf;
+          case 'cedulas-estudiantes':
+            return estudiante.cedulaPdf;
+          case 'matriculas-ier':
+            return estudiante.matriculaIerPdf;
+        }
+      })
+      .filter((ruta): ruta is string => Boolean(ruta?.trim()));
+
+    return [...new Set(rutas)];
+  }
+
   async getByNivel(nivel: NivelEstudiante, page?: number, limit?: number) {
     const { data, totalRows } = await this.estudianteRepository.findByNivel(
       nivel,
