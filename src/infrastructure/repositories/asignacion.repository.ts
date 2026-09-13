@@ -56,41 +56,43 @@ export class AsignacionRepository implements IAsignacionRepository {
     return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
   }
 
-  async findByNivelMateria(
-    nivel: NivelMateria,
-    periodo: PeriodoAcademico,
-  ): Promise<{ data: Asignacion[]; totalRows: number }> {
-    const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
-      where: {
-        periodoAcademico: { id: periodo.id },
-        materia: { nivel: nivel, tipo: Not(TipoMateria.INDIVIDUAL) },
-      },
-      relations: { docente: true, materia: true, periodoAcademico: true },
-    });
-    return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
-  }
-
-  async findAll(
-    page: number,
+  async findAllPaginated(
+    skip: number,
     limit: number,
     search: string,
     periodo: PeriodoAcademico,
+    grupo: NivelMateria[],
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
-    const whereCondition: any = {
-      periodoAcademico: { id: periodo.id },
-    };
+    
+    // 1. Iniciamos la construcción de la consulta
+    const query = this.ormRepository.createQueryBuilder('asignacion')
+      .leftJoinAndSelect('asignacion.materia', 'materia')
+      .leftJoinAndSelect('asignacion.docente', 'docente')
+      // Se extrae el ID del objeto PeriodoAcademico que llega por parámetro
+      .where('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
 
-    if (search && search.trim() !== '') {
-      whereCondition.materia = { nombre: ILike(`%${search}%`) };
+    // 2. Filtro estricto usando el arreglo del enum NivelMateria
+    if (grupo && grupo.length > 0) {
+      query.andWhere('materia.nivel IN (:...grupo)', { grupo });
     }
 
-    const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
-      where: whereCondition,
-      relations: { docente: true, materia: true, periodoAcademico: true },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-    return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
+    // 3. Filtro de búsqueda por texto
+    if (search) {
+      const searchLower = search.toLowerCase(); // Normalización preventiva
+      query.andWhere(
+        '(LOWER(materia.nombre) LIKE :search OR LOWER(docente.primer_nombre) LIKE :search OR LOWER(docente.primer_apellido) LIKE :search)',
+        { search: `%${searchLower}%` }
+      );
+    }
+
+    // 4. Ejecución paginada
+    const [data, totalRows] = await query
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    // 5. Mapeo de la respuesta
+    return { data, totalRows };
   }
 
   async findByPeriodo(
@@ -141,33 +143,44 @@ export class AsignacionRepository implements IAsignacionRepository {
   async findByDocenteSinMatricula(
     docente: Docente,
     periodo: PeriodoAcademico,
+    skip: number,
+    limit: number
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
-        const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('asignacion')
-          .leftJoinAndSelect('asignacion.docente', 'docente')
-          .leftJoinAndSelect('asignacion.materia', 'materia')
-          .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
-          .leftJoin('asignacion.inscripciones', 'inscripcion') 
-          .where('docente.id = :docenteId', { docenteId: docente.id })
-          .andWhere('inscripcion.id IS NULL')
-          .andWhere('materia.tipo = :tipo', { tipo: 'individual' })
-          .getManyAndCount();
-
-    return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
     
-    }
+    const query = this.ormRepository.createQueryBuilder('asignacion')
+      .leftJoinAndSelect('asignacion.materia', 'materia')
+      .leftJoinAndSelect('asignacion.docente', 'docente_relacion')
+      .leftJoin('asignacion.inscripciones', 'inscripcion')
+      .where('inscripcion.id IS NULL')
+      .andWhere('asignacion.docente = :docenteId', { docenteId: docente.id })
+      .andWhere('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
 
-  async findBySinMatricula(): Promise<{ data: Asignacion[]; totalRows: number; }> {
-        
-        const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('asignacion')
-            .leftJoinAndSelect('asignacion.docente', 'docente')
-            .leftJoinAndSelect('asignacion.materia', 'materia')
-            .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
-            .leftJoin('asignacion.inscripciones', 'inscripcion') 
-            .where('inscripcion.id IS NULL')
-            .getManyAndCount();
+    const [data, totalRows] = await query
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
-        return { data: ormEntities.map(e => this.toDomain(e)!), totalRows };
-    }
+    return { data, totalRows };
+  }
+
+  async findBySinMatricula(
+    skip: number,
+    limit: number
+  ): Promise<{ data: Asignacion[]; totalRows: number }> {
+    
+    const query = this.ormRepository.createQueryBuilder('asignacion')
+      .leftJoinAndSelect('asignacion.materia', 'materia')
+      .leftJoinAndSelect('asignacion.docente', 'docente')
+      .leftJoin('asignacion.inscripciones', 'inscripcion')
+      .where('inscripcion.id IS NULL');
+
+    const [data, totalRows] = await query
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return { data, totalRows };
+  }
 
   async delete(id: number): Promise<void> {
     const result = await this.ormRepository.delete(id);
