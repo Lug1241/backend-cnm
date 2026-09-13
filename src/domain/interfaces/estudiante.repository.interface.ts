@@ -14,6 +14,8 @@ export interface IEstudianteRepository {
 
   findByRepresentanteCedula(nroCedula: string): Promise<Estudiante[]>;
 
+  findByIds(ids: number[]): Promise<Estudiante[]>;
+
   findByApellido(
     apellido: string,
     page: number,
