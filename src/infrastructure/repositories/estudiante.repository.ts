@@ -132,8 +132,13 @@ export class EstudianteRepository implements IEstudianteRepository {
     page: number,
     limit: number,
     search: string,
+    nivel?: NivelEstudiante,
   ): Promise<{ data: Estudiante[]; totalRows: number }> {
     const query = this.consultaEstudiantes();
+
+    if (nivel) {
+      query.andWhere('estudiante.nivel = :nivel', { nivel });
+    }
 
     const terms = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
 

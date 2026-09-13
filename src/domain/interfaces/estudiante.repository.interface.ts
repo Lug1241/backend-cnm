@@ -37,6 +37,7 @@ export interface IEstudianteRepository {
     page: number,
     limit: number,
     search: string,
+    nivel?: NivelEstudiante,
   ): Promise<{ data: Estudiante[]; totalRows: number }>;
 
   delete(nroCedula: string): Promise<void>;
