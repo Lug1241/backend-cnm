@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
 import {
@@ -27,6 +32,11 @@ export class ArchivoService {
       for (const [campo, lista] of Object.entries(archivos)) {
         const archivo = lista[0];
         if (!archivo) continue;
+        if (!archivo.buffer.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
+          throw new BadRequestException(
+            'El contenido del archivo no es un PDF',
+          );
+        }
 
         const nombre = this.crearNombreArchivo(identificador, campo, archivo);
         const directorio = resolve(this.uploadRoot, carpeta);
@@ -106,9 +116,10 @@ export class ArchivoService {
     const campoSeguro = this.limpiarSegmento(campo);
     const nombreOriginal = this.limpiarSegmento(
       basename(archivo.originalname, '.pdf'),
-    );
+    ).slice(0, 100);
+    const sufijo = randomUUID().slice(0, 8);
 
-    return `${identificadorSeguro}_${campoSeguro}_${Date.now()}_${nombreOriginal}.pdf`;
+    return `${identificadorSeguro}_${campoSeguro}_${Date.now()}_${sufijo}_${nombreOriginal}.pdf`;
   }
 
   private limpiarSegmento(valor: string): string {
