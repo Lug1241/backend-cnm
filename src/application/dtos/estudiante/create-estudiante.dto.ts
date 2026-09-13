@@ -17,6 +17,7 @@ import {
   JornadaEstudiante,
   NivelEstudiante,
 } from '@domain/entities/estudiante.entity';
+import { Type } from 'class-transformer';
 
 export class CreateEstudianteDto {
   @IsString()
@@ -82,6 +83,7 @@ export class CreateEstudianteDto {
   genero!: GeneroEstudiante;
 
   @IsInt({ message: 'El año de matrícula debe ser un número entero' })
+  @Type(() => Number)
   @Min(1900, {
     message: 'El año de matrícula no es válido',
   })
@@ -114,6 +116,7 @@ export class CreateEstudianteDto {
 
   @IsOptional()
   @IsInt({ message: 'El número de matrícula debe ser un número entero' })
+  @Type(() => Number)
   @Min(1, {
     message: 'El número de matrícula debe ser mayor o igual a 1',
   })
@@ -156,6 +159,7 @@ export class CreateEstudianteDto {
   nivel!: NivelEstudiante;
 
   @IsNumber()
+  @Type(() => Number)
   @IsNotEmpty({ message: 'El ID del representante no puede estar vacío' })
   ID_representante!: number;
 }

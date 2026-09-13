@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  MaxLength,
   Matches,
 } from 'class-validator';
 
@@ -85,4 +86,18 @@ export class CreateRepresentanteDto {
       'El contacto de emergencia debe contener entre 7 y 10 dígitos numéricos',
   })
   emergencia!: string;
+
+  @IsOptional()
+  @IsString({ message: 'La cédula PDF debe ser una cadena de texto' })
+  @MaxLength(255, {
+    message: 'La ruta de la cédula PDF no puede superar 255 caracteres',
+  })
+  cedulaPdf?: string | null;
+
+  @IsOptional()
+  @IsString({ message: 'El croquis PDF debe ser una cadena de texto' })
+  @MaxLength(255, {
+    message: 'La ruta del croquis PDF no puede superar 255 caracteres',
+  })
+  croquisPdf?: string | null;
 }
