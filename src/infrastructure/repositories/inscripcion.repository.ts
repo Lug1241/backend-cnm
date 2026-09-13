@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { IInscripcionRepository } from '@domain/interfaces/inscripcion.repository.interface';
 import { Inscripcion } from '@domain/entities/inscripcion.entity';
 import { InscripcionOrmEntity } from '@infrastructure/database/entitites/inscripcion.orm-entity';
+import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
+import { skip } from 'node:test';
+import { NivelMateria } from '@domain/entities/materia.entity';
 
 @Injectable()
 export class InscripcionRepository implements IInscripcionRepository {
@@ -80,14 +83,15 @@ export class InscripcionRepository implements IInscripcionRepository {
         return count > 0;
     }
 
-    async findByAsignacion(idAsignacion: number): Promise<any[]> {
-        const ormEntities = await this.ormRepository.createQueryBuilder('inscripcion')
-            .leftJoinAndSelect('inscripcion.matricula', 'matricula')
-            .leftJoinAndSelect('matricula.estudiante', 'estudiante') 
-            .where('inscripcion.asignacion = :idAsignacion', { idAsignacion })
-            .getMany();
+    async findByAsignacion(idAsignacion: number): Promise<Inscripcion[]> {
+        const ormEntities = await this.ormRepository.find({
+            where: {asignacion: { id: idAsignacion } },
+            relations: {
+                matricula: true,
+            },
+        })
         
-        return ormEntities; 
+        return ormEntities.map(e => this.toDomain(e)); 
     }
 
     async findByMatricula(idMatricula: number): Promise<Inscripcion[]> {
@@ -104,31 +108,41 @@ export class InscripcionRepository implements IInscripcionRepository {
         return ormEntities.map(e => this.toDomain(e));
     }
 
-    async findIndividualesByDocente(idDocente: string, idPeriodo: number, page: number, limit: number): Promise<{ data: Inscripcion[]; totalRows: number }> {
+    async findIndividualesByDocente(
+        idDocente: string, 
+        periodo: PeriodoAcademico, 
+        skip: number, 
+        limit: number
+    ): Promise<{ data: Inscripcion[]; totalRows: number }> {
         const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('inscripcion')
             .leftJoinAndSelect('inscripcion.asignacion', 'asignacion')
             .leftJoinAndSelect('asignacion.materia', 'materia')
             .leftJoinAndSelect('asignacion.docente', 'docente')
             .leftJoinAndSelect('inscripcion.matricula', 'matricula')
             .leftJoinAndSelect('matricula.estudiante', 'estudiante')
-            .where('docente.nroCedula = :idDocente', { idDocente }) // Asumiendo que usas nroCedula aquí como en el original
+            .where('docente.nroCedula = :idDocente', { idDocente }) 
             .andWhere('materia.tipo = :tipo', { tipo: 'individual' })
-            .andWhere('matricula.periodoAcademico = :idPeriodo', { idPeriodo })
-            .skip((page - 1) * limit)
+            .andWhere('matricula.periodoAcademico = :idPeriodo', { idPeriodo: periodo.id })
+            .skip(skip)
             .take(limit)
             .getManyAndCount();
 
         return { data: ormEntities.map(e => this.toDomain(e)), totalRows };
     }
 
-    async findIndividualesByNivel(nivel: string, idPeriodo: number, page: number, limit: number): Promise<{ data: Inscripcion[]; totalRows: number }> {
+    async findIndividualesByNivel(
+        nivel: NivelMateria[], 
+        periodo: PeriodoAcademico, 
+        skip: number, 
+        limit: number
+    ): Promise<{ data: Inscripcion[]; totalRows: number }> {
         const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('inscripcion')
             .innerJoinAndSelect('inscripcion.asignacion', 'asignacion')
-            .innerJoinAndSelect('asignacion.materia', 'materia', 'materia.nivel = :nivel AND materia.tipo = :tipo', { nivel, tipo: 'individual' })
+            .innerJoinAndSelect('asignacion.materia', 'materia', 'materia.nivel IN (:...nivel) AND materia.tipo = :tipo', { nivel, tipo: 'individual'})
             .leftJoinAndSelect('asignacion.docente', 'docente')
-            .innerJoinAndSelect('inscripcion.matricula', 'matricula', 'matricula.periodoAcademico = :idPeriodo', { idPeriodo })
+            .innerJoinAndSelect('inscripcion.matricula', 'matricula', 'matricula.periodoAcademico = :idPeriodo', { idPeriodo: periodo.id })
             .leftJoinAndSelect('matricula.estudiante', 'estudiante')
-            .skip((page - 1) * limit)
+            .skip(skip)
             .take(limit)
             .getManyAndCount();
 

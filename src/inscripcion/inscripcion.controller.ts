@@ -7,7 +7,8 @@ import {
     Body, 
     Param, 
     Query, 
-    ParseIntPipe, 
+    ParseIntPipe,
+    DefaultValuePipe, 
     Req,
 } from '@nestjs/common';
 import { InscripcionService } from '@application/services/inscripcion.service';
@@ -72,14 +73,14 @@ export class InscripcionController {
     async getInscripcionesIndividualesDocente(
         @Param('docente') docente: string,
         @Param('periodo', ParseIntPipe) periodo: number,
-        @Query('page') page: string = '1',
-        @Query('limit') limit: string = '10'
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     ) {
         return await this.inscripcionService.getInscripcionesIndividualesDocente(
             docente, 
             periodo, 
-            parseInt(page, 10), 
-            parseInt(limit, 10)
+            page,
+            limit,
         );
     }
 
@@ -87,14 +88,14 @@ export class InscripcionController {
     async getInscripcionesIndividualesByNivel(
         @Param('periodo', ParseIntPipe) periodo: number,
         @Param('nivel') nivel: string,
-        @Query('page') page: string = '1',
-        @Query('limit') limit: string = '10'
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number 
     ) {
         return await this.inscripcionService.getInscripcionesIndividualesByNivel(
             nivel, 
-            periodo, 
-            parseInt(page, 10), 
-            parseInt(limit, 10)
+            periodo,
+            page,
+            limit
         );
     }
 }

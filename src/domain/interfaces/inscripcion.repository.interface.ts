@@ -1,4 +1,6 @@
 import { Inscripcion } from "../entities/inscripcion.entity";
+import { PeriodoAcademico } from "@domain/entities/periodo-academico.entity";
+import { NivelMateria } from "@domain/entities/materia.entity";
 
 export const I_INSCRIPCION_REPOSITORY = 'I_INSCRIPCION_REPOSITORY';
 
@@ -8,11 +10,22 @@ export interface IInscripcionRepository {
     findById(id: number): Promise<Inscripcion | null>;
     delete(id: number): Promise<void>;
 
-    findByAsignacion(idAsignacion: number): Promise<any[]>; // Para getEstudiantesPorAsignacion
+    findByAsignacion(idAsignacion: number): Promise<Inscripcion[]>; // Para getEstudiantesPorAsignacion
     findByMatricula(idMatricula: number): Promise<Inscripcion[]>; // Para getInscripcionesByMatricula
     
-    findIndividualesByDocente(idDocente: string, idPeriodo: number, page: number, limit: number): Promise<{ data: Inscripcion[]; totalRows: number }>;
-    findIndividualesByNivel(nivel: string, idPeriodo: number, page: number, limit: number): Promise<{ data: Inscripcion[]; totalRows: number }>;
+    findIndividualesByDocente(
+        idDocente: string, 
+        periodo: PeriodoAcademico, 
+        skip: number, 
+        limit: number
+    ): Promise<{ data: Inscripcion[]; totalRows: number }>;
+    
+    findIndividualesByNivel(
+        niveles: NivelMateria[], 
+        periodo: PeriodoAcademico, 
+        skip: number, 
+        limit: number
+    ): Promise<{ data: Inscripcion[]; totalRows: number }>;
     
     checkInscripcionDuplicada(idAsignacion: number, idMatricula: number): Promise<boolean>;
     checkInscripcionMateriaOtroDocente(idMateria: number, idMatricula: number): Promise<boolean>;

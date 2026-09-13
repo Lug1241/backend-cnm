@@ -6,10 +6,12 @@ import { InscripcionService } from "@application/services/inscripcion.service";
 import { I_INSCRIPCION_REPOSITORY } from "@domain/interfaces/inscripcion.repository.interface";
 import { InscripcionRepository } from "@infrastructure/repositories/inscripcion.repository";
 import { AsignacionModule } from "src/asignacion/asignacion.module";
+import { EstudianteModule } from "src/estudiante/estudiante.module";
 
 @Module({
     imports: [TypeOrmModule.forFeature([InscripcionOrmEntity]),
         AsignacionModule,
+        EstudianteModule,
     ],
     controllers: [InscripcionController],
     providers: [
