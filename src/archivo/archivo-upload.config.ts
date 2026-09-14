@@ -11,6 +11,11 @@ export function ArchivosPdfInterceptor(campos: string[]) {
       storage: memoryStorage(),
       limits: { fileSize: MAX_PDF_SIZE },
       fileFilter: (_request, file, callback) => {
+        if (!file.originalname?.trim()) {
+          callback(null, false);
+          return;
+        }
+
         if (file.mimetype !== 'application/pdf') {
           callback(
             new BadRequestException('Solo se permiten archivos PDF'),

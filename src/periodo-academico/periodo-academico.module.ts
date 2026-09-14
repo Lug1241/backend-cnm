@@ -16,6 +16,6 @@ import { I_PERIODO_REPOSITORY } from '../domain/interfaces/periodo-academico.rep
       useClass: PeriodoAcademicoRepository,
     },
   ],
-  exports: [I_PERIODO_REPOSITORY],
+  exports: [I_PERIODO_REPOSITORY, PeriodoAcademicoService],
 })
 export class PeriodoAcademicoModule {}

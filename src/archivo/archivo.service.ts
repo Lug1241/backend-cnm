@@ -3,14 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
-import {
-  type ArchivoPdfSubido,
-  type ArchivosPdfSubidos,
-  CarpetaArchivo,
-} from './archivo.types';
+import { type ArchivosPdfSubidos, CarpetaArchivo } from './archivo.types';
 
 @Injectable()
 export class ArchivoService {
@@ -21,40 +17,56 @@ export class ArchivoService {
   async guardarArchivos(
     carpeta: CarpetaArchivo,
     identificador: string,
+    anioLectivo: string,
     archivos: ArchivosPdfSubidos | undefined,
   ): Promise<Record<string, string>> {
     if (!archivos) return {};
 
     const resultado: Record<string, string> = {};
-    const archivosGuardados: string[] = [];
+    const archivosNuevos: string[] = [];
 
     try {
       for (const [campo, lista] of Object.entries(archivos)) {
         const archivo = lista[0];
+
         if (!archivo) continue;
+
         if (!archivo.buffer.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
           throw new BadRequestException(
             'El contenido del archivo no es un PDF',
           );
         }
 
-        const nombre = this.crearNombreArchivo(identificador, campo, archivo);
+        const nombre = this.crearNombreArchivo(
+          identificador,
+          campo,
+          anioLectivo,
+        );
+
         const directorio = resolve(this.uploadRoot, carpeta);
         const rutaAbsoluta = resolve(directorio, nombre);
 
         await mkdir(directorio, { recursive: true });
-        await writeFile(rutaAbsoluta, archivo.buffer, { flag: 'wx' });
+
+        const existiaAntes = existsSync(rutaAbsoluta);
+
+        await writeFile(rutaAbsoluta, archivo.buffer);
 
         const rutaGuardada = `uploads/${carpeta}/${nombre}`;
+
         resultado[campo] = rutaGuardada;
-        archivosGuardados.push(rutaGuardada);
+
+        if (!existiaAntes) {
+          archivosNuevos.push(rutaGuardada);
+        }
       }
 
       return resultado;
     } catch (error) {
       await Promise.all(
-        archivosGuardados.map((ruta) => this.eliminarArchivo(ruta)),
+        archivosNuevos.map((ruta) => this.eliminarArchivo(ruta)),
       );
+
       throw error;
     }
   }
@@ -110,16 +122,13 @@ export class ArchivoService {
   private crearNombreArchivo(
     identificador: string,
     campo: string,
-    archivo: ArchivoPdfSubido,
+    anioLectivo: string,
   ): string {
     const identificadorSeguro = this.limpiarSegmento(identificador);
     const campoSeguro = this.limpiarSegmento(campo);
-    const nombreOriginal = this.limpiarSegmento(
-      basename(archivo.originalname, '.pdf'),
-    ).slice(0, 100);
-    const sufijo = randomUUID().slice(0, 8);
+    const anioLectivoSeguro = this.limpiarSegmento(anioLectivo);
 
-    return `${identificadorSeguro}_${campoSeguro}_${Date.now()}_${sufijo}_${nombreOriginal}.pdf`;
+    return `${identificadorSeguro}_${campoSeguro}_${anioLectivoSeguro}.pdf`;
   }
 
   private limpiarSegmento(valor: string): string {

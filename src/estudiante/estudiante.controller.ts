@@ -27,6 +27,7 @@ import { ZipArchive } from 'archiver';
 import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
 import { ArchivoService } from '../archivo/archivo.service';
+import { PeriodoAcademicoService } from '@application/services/periodo-academico.service';
 import { ArchivosPdfInterceptor } from '../archivo/archivo-upload.config';
 import {
   type ArchivosPdfSubidos,
@@ -44,6 +45,7 @@ export class EstudianteController {
   constructor(
     private readonly estudianteService: EstudianteService,
     private readonly archivoService: ArchivoService,
+    private readonly periodoAcademicoService: PeriodoAcademicoService,
   ) {}
 
   @Post('crear')
@@ -52,9 +54,18 @@ export class EstudianteController {
     @Body() createDto: CreateEstudianteDto,
     @UploadedFiles() archivos?: ArchivosPdfSubidos,
   ) {
+    if (!archivos?.copiaCedula?.[0] || !archivos?.matricula_IER?.[0]) {
+      throw new BadRequestException(
+        'Falta cargar uno o más archivos PDF requeridos',
+      );
+    }
+
+    const anioLectivo = await this.obtenerAnioLectivo();
+
     const rutas = await this.archivoService.guardarArchivos(
       CarpetaArchivo.ESTUDIANTES,
       createDto.nroCedula,
+      anioLectivo,
       archivos,
     );
 
@@ -78,9 +89,12 @@ export class EstudianteController {
     @UploadedFiles() archivos?: ArchivosPdfSubidos,
   ) {
     const anterior = await this.estudianteService.getByCedula(cedula);
+    const anioLectivo = await this.obtenerAnioLectivo();
+
     const rutas = await this.archivoService.guardarArchivos(
       CarpetaArchivo.ESTUDIANTES,
       updateDto.nroCedula ?? cedula,
+      anioLectivo,
       archivos,
     );
 
@@ -90,13 +104,36 @@ export class EstudianteController {
 
     try {
       const resultado = await this.estudianteService.update(cedula, updateDto);
-      if (rutas.copiaCedula)
+
+      if (
+        rutas.copiaCedula &&
+        anterior.cedulaPdf &&
+        rutas.copiaCedula !== anterior.cedulaPdf
+      ) {
         await this.archivoService.eliminarArchivo(anterior.cedulaPdf);
-      if (rutas.matricula_IER)
+      }
+
+      if (
+        rutas.matricula_IER &&
+        anterior.matriculaIerPdf &&
+        rutas.matricula_IER !== anterior.matriculaIerPdf
+      ) {
         await this.archivoService.eliminarArchivo(anterior.matriculaIerPdf);
+      }
+
       return resultado;
     } catch (error) {
-      await this.eliminarRutas(Object.values(rutas));
+      const rutasNuevas = [
+        rutas.copiaCedula && rutas.copiaCedula !== anterior.cedulaPdf
+          ? rutas.copiaCedula
+          : null,
+
+        rutas.matricula_IER && rutas.matricula_IER !== anterior.matriculaIerPdf
+          ? rutas.matricula_IER
+          : null,
+      ].filter((ruta): ruta is string => Boolean(ruta));
+
+      await this.eliminarRutas(rutasNuevas);
       throw error;
     }
   }
@@ -310,6 +347,22 @@ export class EstudianteController {
       ),
     );
     return estudiante;
+  }
+
+  private async obtenerAnioLectivo(): Promise<string> {
+    const periodoActivo = await this.periodoAcademicoService.getActive();
+
+    const anioLectivo = periodoActivo.descripcion
+      .replace(/^Periodo\s*/i, '')
+      .trim();
+
+    if (!anioLectivo) {
+      throw new BadRequestException(
+        'El período académico activo no tiene una descripción válida',
+      );
+    }
+
+    return anioLectivo;
   }
 
   private parsePaginacion(

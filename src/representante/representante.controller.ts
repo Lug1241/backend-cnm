@@ -19,6 +19,7 @@ import { RepresentanteService } from '@application/services/representante.servic
 import { CreateRepresentanteDto } from '@application/dtos/representante/create-representante.dto';
 import { UpdateRepresentanteDto } from '@application/dtos/representante/update-representante.dto';
 import { ArchivoService } from '../archivo/archivo.service';
+import { PeriodoAcademicoService } from '@application/services/periodo-academico.service';
 import { ArchivosPdfInterceptor } from '../archivo/archivo-upload.config';
 import {
   type ArchivosPdfSubidos,
@@ -36,6 +37,7 @@ export class RepresentanteController {
   constructor(
     private readonly representanteService: RepresentanteService,
     private readonly archivoService: ArchivoService,
+    private readonly periodoAcademicoService: PeriodoAcademicoService,
   ) {}
 
   @Post('crear')
@@ -44,9 +46,16 @@ export class RepresentanteController {
     @Body() createDto: CreateRepresentanteDto,
     @UploadedFiles() archivos?: ArchivosPdfSubidos,
   ) {
+    if (!archivos?.copiaCedula?.[0] || !archivos?.croquis?.[0]) {
+      throw new BadRequestException(
+        'Falta cargar uno o más archivos PDF requeridos',
+      );
+    }
+    const anioLectivo = await this.obtenerAnioLectivo();
     const rutas = await this.archivoService.guardarArchivos(
       CarpetaArchivo.REPRESENTANTES,
       createDto.nroCedula,
+      anioLectivo,
       archivos,
     );
 
@@ -69,9 +78,12 @@ export class RepresentanteController {
     @UploadedFiles() archivos?: ArchivosPdfSubidos,
   ) {
     const anterior = await this.representanteService.getByCedula(cedula);
+    const anioLectivo = await this.obtenerAnioLectivo();
+
     const rutas = await this.archivoService.guardarArchivos(
       CarpetaArchivo.REPRESENTANTES,
       updateDto.nroCedula ?? cedula,
+      anioLectivo,
       archivos,
     );
 
@@ -83,13 +95,34 @@ export class RepresentanteController {
         cedula,
         updateDto,
       );
-      if (rutas.copiaCedula)
+      if (
+        rutas.copiaCedula &&
+        anterior.cedulaPdf &&
+        rutas.copiaCedula !== anterior.cedulaPdf
+      ) {
         await this.archivoService.eliminarArchivo(anterior.cedulaPdf);
-      if (rutas.croquis)
+      }
+
+      if (
+        rutas.croquis &&
+        anterior.croquisPdf &&
+        rutas.croquis !== anterior.croquisPdf
+      ) {
         await this.archivoService.eliminarArchivo(anterior.croquisPdf);
+      }
       return resultado;
     } catch (error) {
-      await this.eliminarRutas(Object.values(rutas));
+      const rutasNuevas = [
+        rutas.copiaCedula && rutas.copiaCedula !== anterior.cedulaPdf
+          ? rutas.copiaCedula
+          : null,
+
+        rutas.croquis && rutas.croquis !== anterior.croquisPdf
+          ? rutas.croquis
+          : null,
+      ].filter((ruta): ruta is string => Boolean(ruta));
+
+      await this.eliminarRutas(rutasNuevas);
       throw error;
     }
   }
@@ -119,6 +152,21 @@ export class RepresentanteController {
     return this.representanteService.getAll(page, limit, search);
   }
 
+  private async obtenerAnioLectivo(): Promise<string> {
+    const periodoActivo = await this.periodoAcademicoService.getActive();
+
+    const anioLectivo = periodoActivo.descripcion
+      .replace(/^Periodo\s*/i, '')
+      .trim();
+
+    if (!anioLectivo) {
+      throw new BadRequestException(
+        'El período académico activo no tiene una descripción válida',
+      );
+    }
+
+    return anioLectivo;
+  }
   @Delete('eliminar/:cedula')
   async eliminarRepresentante(@Param('cedula') cedula: string) {
     const representante = await this.representanteService.delete(cedula);
