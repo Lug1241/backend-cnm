@@ -17,11 +17,6 @@ import { Matricula } from '@domain/entities/matricula.entity';
 import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import { NivelMateria } from '@domain/entities/materia.entity';
 
-interface RangoHorario {
-    inicio: number | null;
-    fin: number | null;
-}
-
 @Injectable()
 export class InscripcionService {
     constructor(
@@ -36,50 +31,36 @@ export class InscripcionService {
     ) {}
 
     async create(dto: CreateInscripcionDto, rolUsuario: string): Promise<Inscripcion> {
-        const existeDuplicado = await this.inscripcionRepository.checkInscripcionDuplicada(dto.ID_asignacion, dto.ID_matricula);
-        if (existeDuplicado) {
-            throw new BadRequestException('El estudiante ya está inscrito en esta materia');
-        }
-
         const asignacionActual = await this.asignacionRepository.findById(dto.ID_asignacion);
         if (!asignacionActual) {
             throw new NotFoundException('Asignación no encontrada');
         }
-
+        
         const materiaId = asignacionActual.materia?.id;
         if (materiaId == null) {
             throw new BadRequestException('La asignación no tiene una materia asociada');
         }
 
-        const inscritoEnMateria = await this.inscripcionRepository.checkInscripcionMateriaOtroDocente(
-            materiaId,
-            dto.ID_matricula
-        );
-        if (inscritoEnMateria) {
-            throw new BadRequestException('El estudiante ya está inscrito en esta materia con otro profesor');
+        const inscripcionesPrevias = await this.inscripcionRepository.findByMatricula(dto.ID_matricula);
+        
+        const nuevaInscripcion = new Inscripcion({
+                asignacion: { id: dto.ID_asignacion } as Asignacion,
+                matricula: { id: dto.ID_matricula } as Matricula
+        });
+
+        if (nuevaInscripcion.esDuplicada(inscripcionesPrevias)) {
+            throw new BadRequestException("El estudiante ya está inscrito en esta materia");
+        }
+
+        const asignacionesPrevias = inscripcionesPrevias.map(insc => insc.asignacion);
+        const conflicto = asignacionesPrevias.some(asig => asig.tieneConflictoCon(asignacionActual));
+        if (conflicto) {
+            throw new BadRequestException('Inscripción no válida por cruce de horarios');
         }
 
         const nombreMateria = asignacionActual.materia.nombre.toLowerCase();
         if (rolUsuario === 'representante' && this.esMateriaAgrupacion(nombreMateria)) {
             throw new BadRequestException('No se puede inscribir en esta materia, administración les asignará cupo después');
-        }
-
-        const inscripcionesPrevias = await this.inscripcionRepository.findByMatricula(dto.ID_matricula);
-        const asignacionesPrevias = inscripcionesPrevias.map(insc => insc.asignacion);
-
-        const conflicto = asignacionesPrevias.some(asig => {
-            return asignacionActual.dias.some((dia: DiaSemana) => {
-                if (!asig.dias.includes(dia)) return false;
-
-                const rangoNueva = this.obtenerRangoPorDia(asignacionActual, dia);
-                const rangoExistente = this.obtenerRangoPorDia(asig, dia);
-
-                return this.tienenHorariosSolapados(rangoNueva, rangoExistente);
-            });
-        });
-
-        if (conflicto) {
-            throw new BadRequestException('Inscripción no válida por cruce de horarios');
         }
 
         const cupoDescontado = await this.asignacionRepository.decrementarCupo(dto.ID_asignacion);
@@ -88,11 +69,6 @@ export class InscripcionService {
         }
 
         try {
-            const nuevaInscripcion = new Inscripcion({
-                asignacion: { id: dto.ID_asignacion } as Asignacion,
-                matricula: { id: dto.ID_matricula } as Matricula
-            });
-
             return await this.inscripcionRepository.create(nuevaInscripcion);
         } catch (error) {
             await this.asignacionRepository.incrementarCupo(dto.ID_asignacion);
@@ -300,42 +276,6 @@ export class InscripcionService {
       };
     }
 
-    private toMin(hora: string | undefined): number | null {
-        if (!hora) return null;
-        const [h, m] = hora.split(":").map(Number);
-        return h * 60 + m;
-    }
-
-    private obtenerRangoPorDia(asignacion: Asignacion, dia: DiaSemana): RangoHorario | null {
-        const index = asignacion.dias.indexOf(dia);
-        if (index === -1) return null;
-
-        const tieneSegundoHorario = asignacion.hora1 && asignacion.hora2;
-
-        if (!tieneSegundoHorario || index === 0) {
-            return {
-                inicio: this.toMin(asignacion.horaInicio),
-                fin: this.toMin(asignacion.horaFin)
-            };
-        }
-
-        if (index === 1) {
-            return {
-                inicio: this.toMin(asignacion.hora1),
-                fin: this.toMin(asignacion.hora2)
-            };
-        }
-
-        return null;
-    }
-
-    private tienenHorariosSolapados(rangoA: RangoHorario | null, rangoB: RangoHorario | null): boolean {
-        if (!rangoA || !rangoB) return false;
-        if (rangoA.inicio == null || rangoA.fin == null) return false;
-        if (rangoB.inicio == null || rangoB.fin == null) return false;
-
-        return rangoA.inicio < rangoB.fin && rangoA.fin > rangoB.inicio;
-    }
 
     private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
         if(!nombreMateria) return false;

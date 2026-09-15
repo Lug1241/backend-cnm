@@ -58,31 +58,6 @@ export class InscripcionRepository implements IInscripcionRepository {
         await this.ormRepository.delete(id);
     }
 
-    async checkInscripcionDuplicada(idAsignacion: number, idMatricula: number): Promise<boolean> {
-        const count = await this.ormRepository.count({
-            where: {
-                asignacion: { id: idAsignacion },
-                matricula: { id: idMatricula }
-            }
-        });
-        return count > 0;
-    }
-
-    async checkInscripcionMateriaOtroDocente(idMateria: number, idMatricula: number): Promise<boolean> {
-        const count = await this.ormRepository.count({
-            where: {
-                matricula: { id: idMatricula },
-                asignacion: { materia: { id: idMateria } }
-            },
-            relations: {
-                asignacion: {
-                    materia: true,
-                }
-            }
-        });
-        return count > 0;
-    }
-
     async findByAsignacion(idAsignacion: number): Promise<Inscripcion[]> {
         const ormEntities = await this.ormRepository.find({
             where: {asignacion: { id: idAsignacion } },

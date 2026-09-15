@@ -11,4 +11,15 @@ export class Inscripcion {
     constructor(partial: Partial<Inscripcion>) {
         Object.assign(this, partial);
     }
+
+    public esDuplicada(inscripcionesPrevias: Inscripcion[]): boolean {
+        if (!inscripcionesPrevias || inscripcionesPrevias.length === 0) return false;
+
+        const materiaActual = this.asignacion?.materia?.id;
+        if (!materiaActual) return false;
+
+        return inscripcionesPrevias.some(insc =>
+            insc.asignacion?.materia?.id === materiaActual
+        );
+    }
 }

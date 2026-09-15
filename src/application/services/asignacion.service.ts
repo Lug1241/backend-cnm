@@ -44,23 +44,6 @@ export class AsignacionService {
       (asig) => asig.periodoAcademico?.id === dto.ID_periodo_academico,
     );
 
-    const conflicto = asignacionesDelPeriodo.some((asig) => {
-      return dto.dias.some((dia) => {
-        if (!asig.dias.includes(dia)) return false;
-
-        const rangoNueva = this.obtenerRangoPorDia(dto, dia);
-        const rangoExistente = this.obtenerRangoPorDia(asig, dia);
-
-        return this.tienenHorariosSolapados(rangoNueva, rangoExistente);
-      });
-    });
-
-    if (conflicto) {
-      throw new BadRequestException(
-        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
-      );
-    }
-
     const nuevaAsignacion = new Asignacion({
       paralelo: dto.paralelo,
       horaInicio: dto.horaInicio,
@@ -74,51 +57,19 @@ export class AsignacionService {
       periodoAcademico: { id: dto.ID_periodo_academico } as any,
     });
 
+    if (!nuevaAsignacion.tieneRangoHorarioValido()) {
+      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio.');
+    }
+
+    const conflicto = asignacionesDelPeriodo.some(asig => asig.tieneConflictoCon(nuevaAsignacion));
+
+    if (conflicto) {
+      throw new BadRequestException(
+        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
+      );
+    }
+
     return this.asignacionRepository.create(nuevaAsignacion);
-  }
-
-  private toMin(hora: string | undefined): number | null {
-    if (!hora) return null;
-    const [h, m] = hora.split(':').map(Number);
-    return h * 60 + m;
-  }
-
-  private obtenerRangoPorDia(asignacion: any, dia: string) {
-    const index = asignacion.dias.indexOf(dia);
-    if (index === -1) return null;
-
-    const tieneSegundoHorario = asignacion.hora1 && asignacion.hora2;
-
-    if (!tieneSegundoHorario) {
-      return {
-        inicio: this.toMin(asignacion.horaInicio),
-        fin: this.toMin(asignacion.horaFin),
-      };
-    }
-
-    if (index === 0) {
-      return {
-        inicio: this.toMin(asignacion.horaInicio),
-        fin: this.toMin(asignacion.horaFin),
-      };
-    }
-
-    if (index === 1) {
-      return {
-        inicio: this.toMin(asignacion.hora1),
-        fin: this.toMin(asignacion.hora2),
-      };
-    }
-
-    return null;
-  }
-
-  private tienenHorariosSolapados(rangoA: any, rangoB: any): boolean {
-    if (!rangoA || !rangoB) return false;
-    if (rangoA.inicio == null || rangoA.fin == null) return false;
-    if (rangoB.inicio == null || rangoB.fin == null) return false;
-
-    return rangoA.inicio < rangoB.fin && rangoA.fin > rangoB.inicio;
   }
 
   async update(id: number, dto: UpdateAsignacionDto): Promise<Asignacion> {
@@ -139,23 +90,6 @@ export class AsignacionService {
         asig.id !== id,
     );
 
-    const conflicto = asignacionesDelPeriodo.some((asig) => {
-      return dto.dias!.some((dia) => {
-        if (!asig.dias.includes(dia)) return false;
-
-        const rangoNueva = this.obtenerRangoPorDia(dto, dia);
-        const rangoExistente = this.obtenerRangoPorDia(asig, dia);
-
-        return this.tienenHorariosSolapados(rangoNueva, rangoExistente);
-      });
-    });
-
-    if (conflicto) {
-      throw new BadRequestException(
-        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
-      );
-    }
-
     const asignacionActualizada = new Asignacion({
       ...asignacionActual,
       paralelo: dto.paralelo,
@@ -169,6 +103,18 @@ export class AsignacionService {
       materia: { id: dto.ID_materia } as any,
       periodoAcademico: { id: dto.ID_periodo_academico } as any,
     });
+
+    if (!asignacionActualizada.tieneRangoHorarioValido()) {
+      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio.');
+    }
+
+    const conflicto = asignacionesDelPeriodo.some(asig => asig.tieneConflictoCon(asignacionActualizada));
+
+    if (conflicto) {
+      throw new BadRequestException(
+        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
+      );
+    }
 
     return this.asignacionRepository.update(id, asignacionActualizada);
   }

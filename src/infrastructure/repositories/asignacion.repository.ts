@@ -86,13 +86,18 @@ export class AsignacionRepository implements IAsignacionRepository {
     }
 
     // 4. Ejecución paginada
-    const [data, totalRows] = await query
+    const [ormEntities, totalRows] = await query
       .skip(skip)
       .take(limit)
       .getManyAndCount();
 
     // 5. Mapeo de la respuesta
-    return { data, totalRows };
+    return { 
+      data: ormEntities
+        .map(entity => this.toDomain(entity))
+        .filter((entity): entity is Asignacion => entity != null),
+      totalRows 
+    };
   }
 
   async findByPeriodo(
@@ -155,12 +160,17 @@ export class AsignacionRepository implements IAsignacionRepository {
       .andWhere('asignacion.docente = :docenteId', { docenteId: docente.id })
       .andWhere('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
 
-    const [data, totalRows] = await query
+    const [ormEntities, totalRows] = await query
       .skip(skip)
       .take(limit)
       .getManyAndCount();
 
-    return { data, totalRows };
+    return { 
+      data: ormEntities
+        .map(entity => this.toDomain(entity))
+        .filter((entity): entity is Asignacion => entity != null),
+      totalRows 
+    };
   }
 
   async findBySinMatricula(
@@ -174,12 +184,17 @@ export class AsignacionRepository implements IAsignacionRepository {
       .leftJoin('asignacion.inscripciones', 'inscripcion')
       .where('inscripcion.id IS NULL');
 
-    const [data, totalRows] = await query
+    const [ormEntities, totalRows] = await query
       .skip(skip)
       .take(limit)
       .getManyAndCount();
 
-    return { data, totalRows };
+    return { 
+      data: ormEntities
+        .map(entity => this.toDomain(entity))
+        .filter((entity): entity is Asignacion => entity != null),
+      totalRows 
+    };
   }
 
   async delete(id: number): Promise<void> {

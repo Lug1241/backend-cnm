@@ -27,7 +27,4 @@ export interface IInscripcionRepository {
         limit: number
     ): Promise<{ data: Inscripcion[]; totalRows: number }>;
     
-    checkInscripcionDuplicada(idAsignacion: number, idMatricula: number): Promise<boolean>;
-    checkInscripcionMateriaOtroDocente(idMateria: number, idMatricula: number): Promise<boolean>;
-
 }
