@@ -13,6 +13,7 @@ import { AsignacionModule } from './asignacion/asignacion.module';
 import { MatriculaModule } from './matricula/matricula.module';
 import { AuthModule } from './auth/auth.module';
 import { InscripcionModule } from './inscripcion/inscripcion.module';
+import { ArchivoModule } from './archivo/archivo.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { InscripcionModule } from './inscripcion/inscripcion.module';
     MatriculaModule,
     AuthModule,
     InscripcionModule,
+    ArchivoModule,
   ],
 })
 export class AppModule {}

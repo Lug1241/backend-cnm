@@ -15,6 +15,8 @@ import {
   Query,
   Res,
   NotFoundException,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { EstudianteService } from '@application/services/estudiante.service';
 import { CreateEstudianteDto } from '@application/dtos/estudiante/create-estudiante.dto';
@@ -23,7 +25,14 @@ import { NivelEstudiante } from '@domain/entities/estudiante.entity';
 import type { Response } from 'express';
 import { ZipArchive } from 'archiver';
 import { existsSync } from 'node:fs';
-import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
+import { basename } from 'node:path';
+import { ArchivoService } from '../archivo/archivo.service';
+import { PeriodoAcademicoService } from '@application/services/periodo-academico.service';
+import { ArchivosPdfInterceptor } from '../archivo/archivo-upload.config';
+import {
+  type ArchivosPdfSubidos,
+  CarpetaArchivo,
+} from '../archivo/archivo.types';
 
 @UsePipes(
   new ValidationPipe({
@@ -33,19 +42,100 @@ import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
 )
 @Controller('api/estudiantes')
 export class EstudianteController {
-  constructor(private readonly estudianteService: EstudianteService) {}
+  constructor(
+    private readonly estudianteService: EstudianteService,
+    private readonly archivoService: ArchivoService,
+    private readonly periodoAcademicoService: PeriodoAcademicoService,
+  ) {}
 
   @Post('crear')
-  async createEstudiante(@Body() createDto: CreateEstudianteDto) {
-    return this.estudianteService.create(createDto);
+  @UseInterceptors(ArchivosPdfInterceptor(['copiaCedula', 'matricula_IER']))
+  async createEstudiante(
+    @Body() createDto: CreateEstudianteDto,
+    @UploadedFiles() archivos?: ArchivosPdfSubidos,
+  ) {
+    if (!archivos?.copiaCedula?.[0] || !archivos?.matricula_IER?.[0]) {
+      throw new BadRequestException(
+        'Falta cargar uno o más archivos PDF requeridos',
+      );
+    }
+
+    const anioLectivo = await this.obtenerAnioLectivo();
+
+    const rutas = await this.archivoService.guardarArchivos(
+      CarpetaArchivo.ESTUDIANTES,
+      createDto.nroCedula,
+      anioLectivo,
+      archivos,
+    );
+
+    createDto.cedulaPdf = rutas.copiaCedula ?? createDto.cedulaPdf;
+    createDto.matriculaIerPdf =
+      rutas.matricula_IER ?? createDto.matriculaIerPdf;
+
+    try {
+      return await this.estudianteService.create(createDto);
+    } catch (error) {
+      await this.eliminarRutas(Object.values(rutas));
+      throw error;
+    }
   }
 
   @Put('editar/:cedula')
+  @UseInterceptors(ArchivosPdfInterceptor(['copiaCedula', 'matricula_IER']))
   async editEstudiante(
     @Param('cedula') cedula: string,
     @Body() updateDto: UpdateEstudianteDto,
+    @UploadedFiles() archivos?: ArchivosPdfSubidos,
   ) {
-    return this.estudianteService.update(cedula, updateDto);
+    const anterior = await this.estudianteService.getByCedula(cedula);
+    const anioLectivo = await this.obtenerAnioLectivo();
+
+    const rutas = await this.archivoService.guardarArchivos(
+      CarpetaArchivo.ESTUDIANTES,
+      updateDto.nroCedula ?? cedula,
+      anioLectivo,
+      archivos,
+    );
+
+    updateDto.cedulaPdf = rutas.copiaCedula ?? updateDto.cedulaPdf;
+    updateDto.matriculaIerPdf =
+      rutas.matricula_IER ?? updateDto.matriculaIerPdf;
+
+    try {
+      const resultado = await this.estudianteService.update(cedula, updateDto);
+
+      if (
+        rutas.copiaCedula &&
+        anterior.cedulaPdf &&
+        rutas.copiaCedula !== anterior.cedulaPdf
+      ) {
+        await this.archivoService.eliminarArchivo(anterior.cedulaPdf);
+      }
+
+      if (
+        rutas.matricula_IER &&
+        anterior.matriculaIerPdf &&
+        rutas.matricula_IER !== anterior.matriculaIerPdf
+      ) {
+        await this.archivoService.eliminarArchivo(anterior.matriculaIerPdf);
+      }
+
+      return resultado;
+    } catch (error) {
+      const rutasNuevas = [
+        rutas.copiaCedula && rutas.copiaCedula !== anterior.cedulaPdf
+          ? rutas.copiaCedula
+          : null,
+
+        rutas.matricula_IER && rutas.matricula_IER !== anterior.matriculaIerPdf
+          ? rutas.matricula_IER
+          : null,
+      ].filter((ruta): ruta is string => Boolean(ruta));
+
+      await this.eliminarRutas(rutasNuevas);
+      throw error;
+    }
   }
 
   @Get('obtener/:cedula')
@@ -144,14 +234,11 @@ export class EstudianteController {
       );
     }
 
-    const uploadRoot = resolve(
-      process.env.UPLOADS_ROOT ?? resolve(process.cwd(), 'uploads'),
-    );
     const disponibles: { ruta: string; nombre: string }[] = [];
     const faltantes: string[] = [];
 
     for (const rutaGuardada of rutasGuardadas) {
-      const ruta = this.resolveStoredUploadPath(uploadRoot, rutaGuardada);
+      const ruta = this.archivoService.resolverRutaGuardada(rutaGuardada);
       if (!ruta || !existsSync(ruta)) {
         faltantes.push(basename(rutaGuardada.replace(/\\/g, '/')));
         continue;
@@ -253,34 +340,29 @@ export class EstudianteController {
 
   @Delete('eliminar/:cedula')
   async eliminarEstudiante(@Param('cedula') cedula: string) {
-    return this.estudianteService.delete(cedula);
+    const estudiante = await this.estudianteService.delete(cedula);
+    await this.eliminarRutas(
+      [estudiante.cedulaPdf, estudiante.matriculaIerPdf].filter(
+        (ruta): ruta is string => Boolean(ruta),
+      ),
+    );
+    return estudiante;
   }
 
-  private resolveStoredUploadPath(
-    uploadRoot: string,
-    storedPath: string,
-  ): string | null {
-    const segments = storedPath.replace(/\\/g, '/').split('/').filter(Boolean);
-    const uploadsIndex = segments.findIndex(
-      (segment) => segment.toLowerCase() === 'uploads',
-    );
-    const relativeSegments =
-      uploadsIndex >= 0 ? segments.slice(uploadsIndex + 1) : segments;
+  private async obtenerAnioLectivo(): Promise<string> {
+    const periodoActivo = await this.periodoAcademicoService.getActive();
 
-    if (relativeSegments.length === 0) return null;
+    const anioLectivo = periodoActivo.descripcion
+      .replace(/^Periodo\s*/i, '')
+      .trim();
 
-    const candidate = resolve(uploadRoot, ...relativeSegments);
-    const relativePath = relative(uploadRoot, candidate);
-    if (
-      relativePath === '' ||
-      relativePath === '..' ||
-      relativePath.startsWith(`..${sep}`) ||
-      isAbsolute(relativePath)
-    ) {
-      return null;
+    if (!anioLectivo) {
+      throw new BadRequestException(
+        'El período académico activo no tiene una descripción válida',
+      );
     }
 
-    return candidate;
+    return anioLectivo;
   }
 
   private parsePaginacion(
@@ -327,5 +409,11 @@ export class EstudianteController {
     }
 
     return { page: pageNumber, limit: limitNumber };
+  }
+
+  private async eliminarRutas(rutas: string[]) {
+    await Promise.all(
+      rutas.map((ruta) => this.archivoService.eliminarArchivo(ruta)),
+    );
   }
 }
