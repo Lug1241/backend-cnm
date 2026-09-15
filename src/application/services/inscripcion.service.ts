@@ -9,14 +9,13 @@ import { UpdateInscripcionDto } from '@application/dtos/inscripcion/update-inscr
 import { Inscripcion } from '@domain/entities/inscripcion.entity';
 import { I_ASIGNACION_REPOSITORY, 
     type IAsignacionRepository } from '@domain/interfaces/asignacion.repository.interface';
+import { I_ESTUDIANTE_REPOSITORY,
+    type IEstudianteRepository } from '@domain/interfaces/estudiante.repository.interface';
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import { DiaSemana } from '@domain/entities/asignacion.entity';
 import { Matricula } from '@domain/entities/matricula.entity';
-
-interface RangoHorario {
-    inicio: number | null;
-    fin: number | null;
-}
+import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
+import { NivelMateria } from '@domain/entities/materia.entity';
 
 @Injectable()
 export class InscripcionService {
@@ -25,55 +24,43 @@ export class InscripcionService {
         private readonly inscripcionRepository: IInscripcionRepository,
         
         @Inject(I_ASIGNACION_REPOSITORY)
-        private readonly asignacionRepository: IAsignacionRepository
+        private readonly asignacionRepository: IAsignacionRepository,
+
+        @Inject(I_ESTUDIANTE_REPOSITORY)
+        private readonly estudianteRepository: IEstudianteRepository,
     ) {}
 
     async create(dto: CreateInscripcionDto, rolUsuario: string): Promise<Inscripcion> {
-        const existeDuplicado = await this.inscripcionRepository.checkInscripcionDuplicada(dto.ID_asignacion, dto.ID_matricula);
-        if (existeDuplicado) {
-            throw new BadRequestException('El estudiante ya está inscrito en esta materia');
-        }
-
         const asignacionActual = await this.asignacionRepository.findById(dto.ID_asignacion);
         if (!asignacionActual) {
             throw new NotFoundException('Asignación no encontrada');
         }
-
+        
         const materiaId = asignacionActual.materia?.id;
         if (materiaId == null) {
             throw new BadRequestException('La asignación no tiene una materia asociada');
         }
 
-        const inscritoEnMateria = await this.inscripcionRepository.checkInscripcionMateriaOtroDocente(
-            materiaId,
-            dto.ID_matricula
-        );
-        if (inscritoEnMateria) {
-            throw new BadRequestException('El estudiante ya está inscrito en esta materia con otro profesor');
+        const inscripcionesPrevias = await this.inscripcionRepository.findByMatricula(dto.ID_matricula);
+        
+        const nuevaInscripcion = new Inscripcion({
+                asignacion: { id: dto.ID_asignacion } as Asignacion,
+                matricula: { id: dto.ID_matricula } as Matricula
+        });
+
+        if (nuevaInscripcion.esDuplicada(inscripcionesPrevias)) {
+            throw new BadRequestException("El estudiante ya está inscrito en esta materia");
+        }
+
+        const asignacionesPrevias = inscripcionesPrevias.map(insc => insc.asignacion);
+        const conflicto = asignacionesPrevias.some(asig => asig.tieneConflictoCon(asignacionActual));
+        if (conflicto) {
+            throw new BadRequestException('Inscripción no válida por cruce de horarios');
         }
 
         const nombreMateria = asignacionActual.materia.nombre.toLowerCase();
-        const esMateriaAgrupacion = /ensamble|coro|banda|big band/.test(nombreMateria);
-        if (rolUsuario === 'representante' && esMateriaAgrupacion) {
+        if (rolUsuario === 'representante' && this.esMateriaAgrupacion(nombreMateria)) {
             throw new BadRequestException('No se puede inscribir en esta materia, administración les asignará cupo después');
-        }
-
-        const inscripcionesPrevias = await this.inscripcionRepository.findByMatricula(dto.ID_matricula);
-        const asignacionesPrevias = inscripcionesPrevias.map(insc => insc.asignacion);
-
-        const conflicto = asignacionesPrevias.some(asig => {
-            return asignacionActual.dias.some((dia: DiaSemana) => {
-                if (!asig.dias.includes(dia)) return false;
-
-                const rangoNueva = this.obtenerRangoPorDia(asignacionActual, dia);
-                const rangoExistente = this.obtenerRangoPorDia(asig, dia);
-
-                return this.tienenHorariosSolapados(rangoNueva, rangoExistente);
-            });
-        });
-
-        if (conflicto) {
-            throw new BadRequestException('Inscripción no válida por cruce de horarios');
         }
 
         const cupoDescontado = await this.asignacionRepository.decrementarCupo(dto.ID_asignacion);
@@ -82,11 +69,6 @@ export class InscripcionService {
         }
 
         try {
-            const nuevaInscripcion = new Inscripcion({
-                asignacion: { id: dto.ID_asignacion } as Asignacion,
-                matricula: { id: dto.ID_matricula } as Matricula
-            });
-
             return await this.inscripcionRepository.create(nuevaInscripcion);
         } catch (error) {
             await this.asignacionRepository.incrementarCupo(dto.ID_asignacion);
@@ -116,9 +98,8 @@ export class InscripcionService {
         }
 
         const nombreMateria = asignacionNueva.materia?.nombre?.toLowerCase() || '';
-        const esMateriaAgrupacion = /ensamble|coro|banda|big band/.test(nombreMateria);
         
-        if (rolUsuario === 'representante' && esMateriaAgrupacion) {
+        if (rolUsuario === 'representante' && this.esMateriaAgrupacion(nombreMateria)) {
             throw new BadRequestException('No se puede cambiar a esta materia, administración les asignará cupo después');
         }
 
@@ -160,9 +141,8 @@ export class InscripcionService {
         }
 
         const nombreMateria = inscripcion.asignacion?.materia?.nombre || "";
-        const esMateriaAgrupacion = /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(nombreMateria);
 
-        if (rolUsuario === 'representante' && esMateriaAgrupacion) {
+        if (rolUsuario === 'representante' && this.esMateriaAgrupacion(nombreMateria)) {
             throw new BadRequestException('No se puede borrar inscripciones de materias de agrupación');
         }
 
@@ -176,38 +156,35 @@ export class InscripcionService {
     async getEstudiantesPorAsignacion(idAsignacion: number) {
         const inscripciones = await this.inscripcionRepository.findByAsignacion(idAsignacion);
 
-        const estudiantes = inscripciones
-            .map((insc: any) => {
-                const est = insc.matricula?.estudiante;
-                if (!est) return null;
+        if (!inscripciones.length) return [];
 
-                const nivel = insc.matricula?.nivel || "";
-                
-                const nombreCompleto = [
-                    est.primer_apellido,
-                    est.segundo_apellido ?? '',
-                    est.primer_nombre,
-                    est.segundo_nombre ?? ''
-                ].join(' ').replace(/\s+/g, ' ').trim();
+        const idsEstudiantes = [...new Set(inscripciones.map(i => i.matricula?.estudianteId).filter(Boolean))];
+        const estudiantesData = await this.estudianteRepository.findByIds(idsEstudiantes);
 
-                return {
-                    idInscripcion: insc.id,
-                    idEstudiante: est.id, 
-                    nombreCompleto,
-                    nivel
-                };
-            })
-            .filter(Boolean)
-            .sort((a, b) => (a?.nombreCompleto || '').localeCompare(b?.nombreCompleto || '')) // Orden alfabético
-            .map((est, index) => ({
-                nro: index + 1, // Asignamos el número de lista después de ordenar
-                idInscripcion: est?.idInscripcion,
-                idEstudiante: est?.idEstudiante,
-                nombre: est?.nombreCompleto,
-                nivel: est?.nivel
-            }));
+        return inscripciones.map(insc => {
+            const estudiante = estudiantesData.find(e => e.id === insc.matricula?.estudianteId);
+            if (!estudiante) return null;
 
-        return estudiantes;
+            const nombreCompleto = [
+                estudiante.primerApellido,
+                estudiante.segundoApellido ?? '',
+                estudiante.primerNombre,
+                estudiante.segundoNombre ?? ''
+            ].join(' ').replace(/\s+/g, ' ').trim();
+
+            return {
+                idInscripcion: insc.id,
+                idEstudiante: estudiante.id,
+                nombreCompleto,
+                nivel: insc.matricula?.nivel || ""
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => (a?.nombreCompleto || '').localeCompare(b?.nombreCompleto || ''))
+        .map((est, index) => ({
+            nro: index + 1,
+            ...est
+        }));
     }
 
     async getInscripcionesByMatricula(idMatricula: number) {
@@ -237,49 +214,72 @@ export class InscripcionService {
         });
     }
 
-    async getInscripcionesIndividualesDocente(idDocente: string, idPeriodo: number, page: number, limit: number) {
-        return this.inscripcionRepository.findIndividualesByDocente(idDocente, idPeriodo, page, limit);
+    async getInscripcionesIndividualesDocente(
+        idDocente: string,
+        idPeriodo: number,
+        page: number, 
+        limit: number
+    ) {
+        const skip = (page - 1) * limit;
+        const periodoDummy = { id: idPeriodo } as PeriodoAcademico;
+
+        const { data, totalRows } = await this.inscripcionRepository.findIndividualesByDocente(
+            idDocente, 
+            periodoDummy, 
+            skip, 
+            limit
+        );
+
+        const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+
+        return {
+            data,
+            totalRows,
+            totalPages,
+            currentPage: page,
+        };
     }
 
-    async getInscripcionesIndividualesByNivel(nivel: string, idPeriodo: number, page: number, limit: number) {
-        return this.inscripcionRepository.findIndividualesByNivel(nivel, idPeriodo, page, limit);
+    async getInscripcionesIndividualesByNivel(
+      nivelStr: string, 
+      periodoId: number, 
+      page: number, 
+      limit: number
+    ) {
+      const skip = (page - 1) * limit;
+
+      const periodoDummy = { id: periodoId } as PeriodoAcademico;
+
+      const nivelesDict: Record<string, NivelMateria[]> = {
+        'BE': [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
+        'BM': [NivelMateria._1RO_BM, NivelMateria._2DO_BM, NivelMateria._3RO_BM],
+        'BS': [NivelMateria._1RO_BS, NivelMateria._2DO_BS, NivelMateria._3RO_BS],
+        'BCH': [NivelMateria._1RO_BCH, NivelMateria._2DO_BCH, NivelMateria._3RO_BCH],
+      };
+
+      const niveles = nivelesDict[nivelStr] || [nivelStr as NivelMateria];
+
+      const { data, totalRows } = await this.inscripcionRepository.findIndividualesByNivel(
+        niveles,
+        periodoDummy,
+        skip,
+        limit
+      );
+
+      const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+
+      return {
+        data,
+        totalRows,
+        totalPages,
+        currentPage: page,
+      };
     }
 
-    private toMin(hora: string | undefined): number | null {
-        if (!hora) return null;
-        const [h, m] = hora.split(":").map(Number);
-        return h * 60 + m;
+
+    private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
+        if(!nombreMateria) return false;
+
+        return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(nombreMateria);
     }
-
-    private obtenerRangoPorDia(asignacion: Asignacion, dia: DiaSemana): RangoHorario | null {
-        const index = asignacion.dias.indexOf(dia);
-        if (index === -1) return null;
-
-        const tieneSegundoHorario = asignacion.hora1 && asignacion.hora2;
-
-        if (!tieneSegundoHorario || index === 0) {
-            return {
-                inicio: this.toMin(asignacion.horaInicio),
-                fin: this.toMin(asignacion.horaFin)
-            };
-        }
-
-        if (index === 1) {
-            return {
-                inicio: this.toMin(asignacion.hora1),
-                fin: this.toMin(asignacion.hora2)
-            };
-        }
-
-        return null;
-    }
-
-    private tienenHorariosSolapados(rangoA: RangoHorario | null, rangoB: RangoHorario | null): boolean {
-        if (!rangoA || !rangoB) return false;
-        if (rangoA.inicio == null || rangoA.fin == null) return false;
-        if (rangoB.inicio == null || rangoB.fin == null) return false;
-
-        return rangoA.inicio < rangoB.fin && rangoA.fin > rangoB.inicio;
-    }
-
 }

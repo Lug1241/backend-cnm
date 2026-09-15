@@ -120,6 +120,17 @@ export class EstudianteRepository implements IEstudianteRepository {
     return (resultado.affected ?? 0) > 0;
   }
 
+  async findByIds(ids: number[]): Promise<Estudiante[]> {
+    if(!ids || ids.length === 0) return [];
+
+    const ormEntities = await this.ormRepository.createQueryBuilder('estudiante')
+      .where('estudiante.id IN (:...ids)', { ids })
+      .getMany();
+    return ormEntities
+      .map(e => this.toDomain(e))
+      .filter((e): e is Estudiante => e !== null);
+  }
+
   async findByCedula(nroCedula: string): Promise<Estudiante | null> {
     const ormEntity = await this.consultaEstudiantes()
       .where('estudiante.nroCedula = :nroCedula', { nroCedula })

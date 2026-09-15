@@ -1,6 +1,8 @@
 import { CreateAsignacionDto } from '@application/dtos/asignacion/create-asignacion.dto';
 import { UpdateAsignacionDto } from '@application/dtos/asignacion/update-asignacion.dto';
 import { Asignacion } from '@domain/entities/asignacion.entity';
+import { NivelMateria } from '@domain/entities/materia.entity';
+import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import {
   I_ASIGNACION_REPOSITORY,
   type IAsignacionRepository,
@@ -42,23 +44,6 @@ export class AsignacionService {
       (asig) => asig.periodoAcademico?.id === dto.ID_periodo_academico,
     );
 
-    const conflicto = asignacionesDelPeriodo.some((asig) => {
-      return dto.dias.some((dia) => {
-        if (!asig.dias.includes(dia)) return false;
-
-        const rangoNueva = this.obtenerRangoPorDia(dto, dia);
-        const rangoExistente = this.obtenerRangoPorDia(asig, dia);
-
-        return this.tienenHorariosSolapados(rangoNueva, rangoExistente);
-      });
-    });
-
-    if (conflicto) {
-      throw new BadRequestException(
-        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
-      );
-    }
-
     const nuevaAsignacion = new Asignacion({
       paralelo: dto.paralelo,
       horaInicio: dto.horaInicio,
@@ -72,51 +57,19 @@ export class AsignacionService {
       periodoAcademico: { id: dto.ID_periodo_academico } as any,
     });
 
+    if (!nuevaAsignacion.tieneRangoHorarioValido()) {
+      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio.');
+    }
+
+    const conflicto = asignacionesDelPeriodo.some(asig => asig.tieneConflictoCon(nuevaAsignacion));
+
+    if (conflicto) {
+      throw new BadRequestException(
+        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
+      );
+    }
+
     return this.asignacionRepository.create(nuevaAsignacion);
-  }
-
-  private toMin(hora: string | undefined): number | null {
-    if (!hora) return null;
-    const [h, m] = hora.split(':').map(Number);
-    return h * 60 + m;
-  }
-
-  private obtenerRangoPorDia(asignacion: any, dia: string) {
-    const index = asignacion.dias.indexOf(dia);
-    if (index === -1) return null;
-
-    const tieneSegundoHorario = asignacion.hora1 && asignacion.hora2;
-
-    if (!tieneSegundoHorario) {
-      return {
-        inicio: this.toMin(asignacion.horaInicio),
-        fin: this.toMin(asignacion.horaFin),
-      };
-    }
-
-    if (index === 0) {
-      return {
-        inicio: this.toMin(asignacion.horaInicio),
-        fin: this.toMin(asignacion.horaFin),
-      };
-    }
-
-    if (index === 1) {
-      return {
-        inicio: this.toMin(asignacion.hora1),
-        fin: this.toMin(asignacion.hora2),
-      };
-    }
-
-    return null;
-  }
-
-  private tienenHorariosSolapados(rangoA: any, rangoB: any): boolean {
-    if (!rangoA || !rangoB) return false;
-    if (rangoA.inicio == null || rangoA.fin == null) return false;
-    if (rangoB.inicio == null || rangoB.fin == null) return false;
-
-    return rangoA.inicio < rangoB.fin && rangoA.fin > rangoB.inicio;
   }
 
   async update(id: number, dto: UpdateAsignacionDto): Promise<Asignacion> {
@@ -137,23 +90,6 @@ export class AsignacionService {
         asig.id !== id,
     );
 
-    const conflicto = asignacionesDelPeriodo.some((asig) => {
-      return dto.dias!.some((dia) => {
-        if (!asig.dias.includes(dia)) return false;
-
-        const rangoNueva = this.obtenerRangoPorDia(dto, dia);
-        const rangoExistente = this.obtenerRangoPorDia(asig, dia);
-
-        return this.tienenHorariosSolapados(rangoNueva, rangoExistente);
-      });
-    });
-
-    if (conflicto) {
-      throw new BadRequestException(
-        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
-      );
-    }
-
     const asignacionActualizada = new Asignacion({
       ...asignacionActual,
       paralelo: dto.paralelo,
@@ -167,6 +103,18 @@ export class AsignacionService {
       materia: { id: dto.ID_materia } as any,
       periodoAcademico: { id: dto.ID_periodo_academico } as any,
     });
+
+    if (!asignacionActualizada.tieneRangoHorarioValido()) {
+      throw new BadRequestException('La hora de fin debe ser posterior a la hora de inicio.');
+    }
+
+    const conflicto = asignacionesDelPeriodo.some(asig => asig.tieneConflictoCon(asignacionActualizada));
+
+    if (conflicto) {
+      throw new BadRequestException(
+        'El docente ya tiene una asignación con cruce de horario en los días seleccionados para este período.',
+      );
+    }
 
     return this.asignacionRepository.update(id, asignacionActualizada);
   }
@@ -194,19 +142,47 @@ export class AsignacionService {
     return this.asignacionRepository.findByDocente(docente);
   }
 
-  async getByNivelMateria(nivel: any, id_periodo: number) {
-    const periodoDummy = { id: id_periodo } as any; // Objeto parcial para satisfacer el tipo
-    return this.asignacionRepository.findByNivelMateria(nivel, periodoDummy);
-  }
+  // Se eliminó getByNivelMateria
 
   async getAll(
     page: number,
     limit: number,
     search: string,
     id_periodo: number,
+    grupo: string = '',
   ) {
-    const periodo = { id: id_periodo } as any;
-    return this.asignacionRepository.findAll(page, limit, search, periodo);
+    const skip = (page - 1) * limit;
+
+    const gruposDict: Record<string, NivelMateria[]> = {
+      'BE': [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
+      'BM': [NivelMateria._1RO_BM, NivelMateria._2DO_BM, NivelMateria._3RO_BM],
+      'BS': [NivelMateria._1RO_BS, NivelMateria._2DO_BS, NivelMateria._3RO_BS],
+      'BCH': [NivelMateria._1RO_BCH, NivelMateria._2DO_BCH, NivelMateria._3RO_BCH],
+      'Agr': [NivelMateria.BM, NivelMateria.BS, NivelMateria.BCH, NivelMateria.BS_BCH,
+        NivelMateria.BE, NivelMateria.BM_BS, NivelMateria.BM_BS_BCH,
+      ],
+    };
+
+    const niveles: NivelMateria[] = grupo && gruposDict[grupo] ? gruposDict[grupo] : [];
+    
+    const periodoDummy = { id: id_periodo } as any; 
+
+    const { data, totalRows } = await this.asignacionRepository.findAllPaginated(
+      skip,
+      limit,
+      search,
+      periodoDummy,
+      niveles
+    );
+
+    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+
+    return {
+      data,
+      totalRows,
+      totalPages,
+      currentPage: page,
+    };
   }
 
   async getByPeriodo(id_periodo: number) {
@@ -229,23 +205,52 @@ export class AsignacionService {
     );
   }
 
-  //TODO: modificar la firma al incluir la entidad matricula y sus relaciones
-  async getByDocenteSinMatricula(id_docente: number, id_periodo: number) {
-    const docente = (await this.docenteRepository.findByID(
-      id_docente,
-    ));
+  async getByDocenteSinMatricula(
+    id_docente: number, 
+    id_periodo: number, 
+    page: number, 
+    limit: number
+  ) {
+    const docente = await this.docenteRepository.findByID(id_docente);
     if (!docente) {
       throw new NotFoundException('Docente no encontrado');
     }
-    const periodo = { id: id_periodo } as any;
-    return this.asignacionRepository.findByDocenteSinMatricula(
+
+    const skip = (page - 1) * limit;
+    const periodoDummy = { id: id_periodo } as PeriodoAcademico;
+
+    const { data, totalRows } = await this.asignacionRepository.findByDocenteSinMatricula(
       docente,
-      periodo,
+      periodoDummy,
+      skip,
+      limit
     );
+
+    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+
+    return {
+      data,
+      totalRows,
+      totalPages,
+      currentPage: page,
+    };
   }
 
-  //TODO: modificar la firma al incluir la entidad matricula y sus relaciones
-  async getSinMatricula() {
-    return this.asignacionRepository.findBySinMatricula();
+  async getSinMatricula(page: number, limit: number) {  
+    const skip = (page - 1) * limit;
+
+    const { data, totalRows } = await this.asignacionRepository.findBySinMatricula(
+      skip,
+      limit
+    );
+
+    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+
+    return {
+      data,
+      totalRows,
+      totalPages,
+      currentPage: page,
+    };
   }
 }

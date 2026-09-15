@@ -59,6 +59,6 @@ export class CreateAsignacionDto {
     ID_materia!: number;
 
     @IsString()
-    @IsNotEmpty()
+    @IsNotEmpty({ message: "El ID del docente es obligatorio" })
     ID_docente!: string; //TODO: se espera que el nuevo front corrija el cambio que se hizo de la cedula por un PK autoincremental
 }

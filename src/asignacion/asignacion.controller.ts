@@ -33,7 +33,8 @@ export class AsignacionController {
 
   @Delete('eliminar/:id')
   async deleteAsignacion(@Param('id', ParseIntPipe) id: number) {
-    return this.asignacionService.delete(id);
+    await this.asignacionService.delete(id);
+    return { success: true, message: 'Asignación eliminada correctamente' };
   }
 
   @Get('obtener/:id')
@@ -48,22 +49,15 @@ export class AsignacionController {
     return this.asignacionService.getByDocente(idDocente);
   }
 
-  @Get('nivel/:nivel/:periodo')
-  async getAsignacionesPorNivel(
-    @Param('nivel') nivel: string,
-    @Param('periodo', ParseIntPipe) periodo: number,
-  ) {
-    return this.asignacionService.getByNivelMateria(nivel as any, periodo);
-  }
-
   @Get('obtener/periodo/:periodo')
   async getAsignaciones(
     @Param('periodo', ParseIntPipe) periodo: number,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(13), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search', new DefaultValuePipe('')) search: string,
+    @Query('grupo', new DefaultValuePipe('')) grupo: string,
   ) {
-    return this.asignacionService.getAll(page, limit, search, periodo);
+    return this.asignacionService.getAll(page, limit, search, periodo, grupo);
   }
 
   @Get('obtener/periodo_academico/:periodo')
@@ -92,12 +86,22 @@ export class AsignacionController {
   async getAsignacionesSinMatriculaPorDocente(
     @Param('id_docente', ParseIntPipe) idDocente: number,
     @Param('periodo', ParseIntPipe) periodo: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return this.asignacionService.getByDocenteSinMatricula(idDocente, periodo);
+    return this.asignacionService.getByDocenteSinMatricula(
+      idDocente, 
+      periodo, 
+      page, 
+      limit
+    );
   }
 
   @Get('sinMatricula')
-  async getAsignacionesSinMatricula() {
-    return this.asignacionService.getSinMatricula();
+  async getAsignacionesSinMatricula(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.asignacionService.getSinMatricula(page, limit);
   }
 }
