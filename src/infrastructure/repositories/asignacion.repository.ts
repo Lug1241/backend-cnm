@@ -66,10 +66,11 @@ export class AsignacionRepository implements IAsignacionRepository {
     
     // 1. Iniciamos la construcción de la consulta
     const query = this.ormRepository.createQueryBuilder('asignacion')
-      .leftJoinAndSelect('asignacion.materia', 'materia')
+      .innerJoinAndSelect('asignacion.materia', 'materia')
       .leftJoinAndSelect('asignacion.docente', 'docente')
       // Se extrae el ID del objeto PeriodoAcademico que llega por parámetro
-      .where('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
+      .where('TRIM(LOWER(materia.tipo)) = :tipoMateria', { tipoMateria: 'grupal'})
+      .andWhere('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
 
     // 2. Filtro estricto usando el arreglo del enum NivelMateria
     if (grupo && grupo.length > 0) {
