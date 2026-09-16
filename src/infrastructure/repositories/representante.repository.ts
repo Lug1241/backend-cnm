@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { type IRepresentanteRepository } from '@domain/interfaces/representante.repository.interface';
 import { Representante } from '@domain/entities/representante.entity';
 import { RepresentanteOrmEntity } from '../database/entitites/representante.orm-entity';
@@ -150,6 +150,20 @@ export class RepresentanteRepository implements IRepresentanteRepository {
   }
 
   async delete(nroCedula: string): Promise<void> {
-    await this.ormRepository.delete({ nroCedula });
+    try {
+      await this.ormRepository.delete({ nroCedula });
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        const { code } = error.driverError as { code?: string };
+
+        if (code === 'ER_ROW_IS_REFERENCED_2') {
+          throw new ConflictException(
+            'No se puede eliminar el representante porque tiene estudiantes asociados',
+          );
+        }
+      }
+
+      throw error;
+    }
   }
 }
