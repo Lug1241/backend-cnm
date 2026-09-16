@@ -82,26 +82,18 @@ export class AsignacionController {
     );
   }
 
-  @Get('obtener/docente/:id_docente/:periodo')
-  async getAsignacionesSinMatriculaPorDocente(
-    @Param('id_docente', ParseIntPipe) idDocente: number,
-    @Param('periodo', ParseIntPipe) periodo: number,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-  ) {
-    return this.asignacionService.getByDocenteSinMatricula(
-      idDocente, 
-      periodo, 
-      page, 
-      limit
-    );
-  }
-
   @Get('sinMatricula')
   async getAsignacionesSinMatricula(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('id_docente') idDocente?: string,
+    @Query('periodo') periodo?: string
   ) {
-    return this.asignacionService.getSinMatricula(page, limit);
+    return this.asignacionService.getSinMatricula(
+      page,
+      limit,
+      idDocente ? +idDocente : undefined,
+      periodo ? +periodo: undefined,
+    );
   }
 }

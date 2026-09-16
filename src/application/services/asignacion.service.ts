@@ -205,43 +205,14 @@ export class AsignacionService {
     );
   }
 
-  async getByDocenteSinMatricula(
-    id_docente: number, 
-    id_periodo: number, 
-    page: number, 
-    limit: number
-  ) {
-    const docente = await this.docenteRepository.findByID(id_docente);
-    if (!docente) {
-      throw new NotFoundException('Docente no encontrado');
-    }
-
-    const skip = (page - 1) * limit;
-    const periodoDummy = { id: id_periodo } as PeriodoAcademico;
-
-    const { data, totalRows } = await this.asignacionRepository.findByDocenteSinMatricula(
-      docente,
-      periodoDummy,
-      skip,
-      limit
-    );
-
-    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
-
-    return {
-      data,
-      totalRows,
-      totalPages,
-      currentPage: page,
-    };
-  }
-
-  async getSinMatricula(page: number, limit: number) {  
+  async getSinMatricula(page: number, limit: number, idDocente?: number, periodo?: number) {  
     const skip = (page - 1) * limit;
 
     const { data, totalRows } = await this.asignacionRepository.findBySinMatricula(
       skip,
-      limit
+      limit,
+      idDocente,
+      periodo,
     );
 
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));

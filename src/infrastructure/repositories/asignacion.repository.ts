@@ -146,37 +146,11 @@ export class AsignacionRepository implements IAsignacionRepository {
     return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
   }
 
-  async findByDocenteSinMatricula(
-    docente: Docente,
-    periodo: PeriodoAcademico,
-    skip: number,
-    limit: number
-  ): Promise<{ data: Asignacion[]; totalRows: number }> {
-    
-    const query = this.ormRepository.createQueryBuilder('asignacion')
-      .leftJoinAndSelect('asignacion.materia', 'materia')
-      .leftJoinAndSelect('asignacion.docente', 'docente_relacion')
-      .leftJoin('asignacion.inscripciones', 'inscripcion')
-      .where('inscripcion.id IS NULL')
-      .andWhere('asignacion.docente = :docenteId', { docenteId: docente.id })
-      .andWhere('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
-
-    const [ormEntities, totalRows] = await query
-      .skip(skip)
-      .take(limit)
-      .getManyAndCount();
-
-    return { 
-      data: ormEntities
-        .map(entity => this.toDomain(entity))
-        .filter((entity): entity is Asignacion => entity != null),
-      totalRows 
-    };
-  }
-
   async findBySinMatricula(
     skip: number,
-    limit: number
+    limit: number,
+    idDocente?: number,
+    periodo?: number,
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
     
     const query = this.ormRepository.createQueryBuilder('asignacion')
@@ -184,6 +158,14 @@ export class AsignacionRepository implements IAsignacionRepository {
       .leftJoinAndSelect('asignacion.docente', 'docente')
       .leftJoin('asignacion.inscripciones', 'inscripcion')
       .where('inscripcion.id IS NULL');
+
+    if (idDocente) {
+      query.andWhere('docente.id = :idDocente', { idDocente });
+    }
+
+    if (periodo) {
+      query.andWhere('asignacion.periodoAcademico = :periodo', { periodo });
+    }
 
     const [ormEntities, totalRows] = await query
       .skip(skip)

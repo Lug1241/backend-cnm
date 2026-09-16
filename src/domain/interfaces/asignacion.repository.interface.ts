@@ -36,15 +36,12 @@ export interface IAsignacionRepository {
         materia: string, 
         jornada: Jornada
     ): Promise<{ data: Asignacion[]; totalRows: number }>;
-    findByDocenteSinMatricula(
-        docente: Docente, 
-        periodo: PeriodoAcademico,
-        skip: number,
-        limit: number,
-    ): Promise<{ data: Asignacion[]; totalRows: number }>;
+    
     findBySinMatricula(
         skip: number,
         limit: number,
+        idDocente?: number,
+        periodo?: number,
     ): Promise<{ data: Asignacion[]; totalRows: number }>;
     
 }
