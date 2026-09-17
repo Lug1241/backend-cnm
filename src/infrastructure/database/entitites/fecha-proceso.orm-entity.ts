@@ -5,21 +5,23 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { TipoProceso } from '../../../domain/entities/fecha-proceso.entity';
 
 @Entity('fechas_procesos')
 export class FechaProcesoOrmEntity {
   @PrimaryGeneratedColumn({ name: 'ID' })
   id!: number;
 
-  @Column({ type: 'date', name: 'fecha_proceso' })
-  fechaProceso!: Date;
+  @Column({ type: 'date', name: 'fecha_inicio' })
+  fechaInicio!: Date;
 
-  @Column({ type: 'enum', enum: TipoProceso })
-  proceso!: TipoProceso;
+  @Column({ type: 'date', name: 'fecha_fin' })
+  fechaFin!: Date;
+
+  @Column({ type: 'varchar', length: 255 })
+  proceso!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  descripcion!: string;
+  descripcion?: string | null;
 
   @CreateDateColumn({ type: 'datetime', name: 'createdAt' })
   createdAt!: Date;

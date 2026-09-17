@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { IFechaProcesoRepository } from '../../domain/interfaces/fecha-proceso.repository.interface';
 import {
   FechaProceso,
@@ -17,7 +17,8 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
 
   async create(fechaProceso: Partial<FechaProceso>): Promise<FechaProceso> {
     const ormEntity = this.ormRepository.create({
-      fechaProceso: fechaProceso.fechaProceso,
+      fechaInicio: fechaProceso.fechaInicio,
+      fechaFin: fechaProceso.fechaFin,
       proceso: fechaProceso.proceso,
       descripcion: fechaProceso.descripcion,
     });
@@ -38,7 +39,9 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
     proceso?: TipoProceso,
   ): Promise<{ data: FechaProceso[]; totalRows: number }> {
     const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
-      where: !proceso ? {} : { proceso },
+      where: !proceso
+        ? {}
+        : { proceso: In(this.obtenerValoresProceso(proceso)) },
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -64,10 +67,52 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
   async findLatestByProceso(
     proceso: TipoProceso,
   ): Promise<FechaProceso | null> {
-    return await this.ormRepository.findOne({
-      where: { proceso },
-      order: { id: 'DESC' },
+    const ormEntity = await this.ormRepository.findOne({
+      where: {
+        proceso: In(this.obtenerValoresProceso(proceso)),
+      },
+      order: {
+        fechaInicio: 'DESC',
+      },
     });
+
+    return this.toDomain(ormEntity);
+  }
+
+  private obtenerValoresProceso(proceso: TipoProceso): string[] {
+    switch (proceso) {
+      case TipoProceso.MATRICULA:
+        return [
+          TipoProceso.MATRICULA,
+          'Matricula',
+          'MATRICULA',
+          'Período de matrícula',
+          'Periodo de matricula',
+        ];
+
+      case TipoProceso.ACTUALIZACION_DATOS:
+        return [
+          TipoProceso.ACTUALIZACION_DATOS,
+          'Actualización de Datos',
+          'Actualización de datos',
+        ];
+
+      case TipoProceso.FECHAS_NOTAS:
+        return [TipoProceso.FECHAS_NOTAS, 'Fechas notas', 'Fechas Notas'];
+
+      default:
+        return [proceso];
+    }
+  }
+
+  private normalizarProceso(proceso: string): TipoProceso {
+    for (const tipo of Object.values(TipoProceso)) {
+      if (this.obtenerValoresProceso(tipo).includes(proceso)) {
+        return tipo;
+      }
+    }
+
+    return proceso as TipoProceso;
   }
 
   private toDomain(
@@ -76,8 +121,9 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
     if (!ormEntity) return null;
     return new FechaProceso({
       id: ormEntity.id,
-      fechaProceso: ormEntity.fechaProceso,
-      proceso: ormEntity.proceso,
+      fechaInicio: ormEntity.fechaInicio,
+      fechaFin: ormEntity.fechaFin,
+      proceso: this.normalizarProceso(ormEntity.proceso),
       descripcion: ormEntity.descripcion,
     });
   }

@@ -1,7 +1,7 @@
 import {
   Injectable,
   Inject,
-  ConflictException,
+  BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -23,40 +23,52 @@ export class FechaProcesoService {
   ) {}
 
   async create(dto: CreateFechaProcesoDto) {
+    this.validarRangoFechas(dto.fechaInicio, dto.fechaFin);
+
     return this.fechaProcesoRepository.create(dto);
   }
 
   async update(id: number, dto: UpdateFechaProcesoDto): Promise<FechaProceso> {
-    await this.getById(id);
+    const actual = await this.getById(id);
+
+    const fechaInicio = dto.fechaInicio ?? actual.fechaInicio;
+    const fechaFin = dto.fechaFin ?? actual.fechaFin;
+
+    this.validarRangoFechas(fechaInicio, fechaFin);
+
     await this.fechaProcesoRepository.update(id, dto);
+
     const actualizado = await this.fechaProcesoRepository.findById(id);
     return actualizado!;
   }
 
   async verificarPeriodoMatricula() {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = this.obtenerFechaActual();
+
     const proceso = await this.fechaProcesoRepository.findLatestByProceso(
       TipoProceso.MATRICULA,
     );
 
     if (!proceso) {
-      return { periodoActivo: false, mensaje: 'No hay matrícula definida.' };
+      return {
+        periodoActivo: false,
+        mensaje: 'No hay matrícula definida.',
+      };
     }
 
-    const fechaProcesoStr =
-      typeof proceso.fechaProceso === 'string'
-        ? proceso.fechaProceso
-        : proceso.fechaProceso.toISOString().split('T')[0];
+    const fechaInicio = this.formatearFecha(proceso.fechaInicio);
+    const fechaFin = this.formatearFecha(proceso.fechaFin);
 
-    const activo = hoy === fechaProcesoStr;
+    const activo = hoy >= fechaInicio && hoy <= fechaFin;
 
     return {
       periodoActivo: activo,
       proceso: proceso.proceso,
-      fechaProceso: fechaProcesoStr,
+      fechaInicio,
+      fechaFin,
       mensaje: activo
-        ? 'La matrícula está activa hoy.'
-        : 'La matrícula no está activa hoy.',
+        ? 'La matrícula está activa.'
+        : 'La matrícula no está activa actualmente.',
     };
   }
 
@@ -86,5 +98,31 @@ export class FechaProcesoService {
     const fechaProceso = await this.getById(id);
     await this.fechaProcesoRepository.delete(id);
     return fechaProceso;
+  }
+
+  private validarRangoFechas(fechaInicio: Date, fechaFin: Date): void {
+    if (new Date(fechaInicio) > new Date(fechaFin)) {
+      throw new BadRequestException(
+        'La fecha de inicio no puede ser mayor que la fecha de fin.',
+      );
+    }
+  }
+
+  private formatearFecha(fecha: Date | string): string {
+    if (typeof fecha === 'string') {
+      return fecha.split('T')[0];
+    }
+
+    return fecha.toISOString().split('T')[0];
+  }
+
+  private obtenerFechaActual(): string {
+    const hoy = new Date();
+
+    const year = hoy.getFullYear();
+    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+    const day = String(hoy.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 }
