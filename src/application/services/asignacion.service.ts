@@ -97,6 +97,14 @@ export class AsignacionService {
 
   async update(id: number, dto: UpdateAsignacionDto): Promise<Asignacion> {
     const asignacionActual = await this.getById(id);
+    if (!asignacionActual) {
+      throw new NotFoundException('La asignación que intenta modificar no existe.');
+    }
+
+    const periodoActivo = await this.periodoRepository.findActive();
+    if (!periodoActivo || asignacionActual.periodoAcademico.id !== periodoActivo?.id) {
+      throw new BadRequestException('No se pueden modificar asignaciones en un período que ya finalizó o está inactivo.')
+    }
 
     const docente = (await this.docenteRepository.findByID(
       Number(dto.ID_docente),
