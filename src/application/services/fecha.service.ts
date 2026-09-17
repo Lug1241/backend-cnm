@@ -2,6 +2,7 @@ import {
   Injectable,
   Inject,
   BadRequestException,
+  ConflictException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -178,7 +179,7 @@ export class FechaProcesoService {
       );
 
     if (existe) {
-      throw new BadRequestException(
+      throw new ConflictException(
         'Ya existe una fecha de notas con esta descripción.',
       );
     }
