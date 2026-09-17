@@ -6,10 +6,12 @@ import { AsignacionService } from '@application/services/asignacion.service';
 import { AsignacionRepository } from '@infrastructure/repositories/asignacion.repository';
 import { I_ASIGNACION_REPOSITORY } from '@domain/interfaces/asignacion.repository.interface';
 import { DocenteModule } from 'src/docente/docente.module';
+import { PeriodoAcademicoModule } from 'src/periodo-academico/periodo-academico.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([AsignacionOrmEntity]),
-  DocenteModule
+  DocenteModule,
+  PeriodoAcademicoModule,
   ],
   controllers: [AsignacionController],
   providers: [
