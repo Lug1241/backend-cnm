@@ -23,12 +23,8 @@ export class FechaProcesoService {
     private readonly fechaProcesoRepository: IFechaProcesoRepository,
   ) {}
 
-  async create(dto: CreateFechaProcesoDto) {
-    this.validarRangoFechas(dto.fechaInicio, dto.fechaFin);
-
-    this.validarDescripcion(dto.proceso, dto.descripcion);
-
-    await this.validarDescripcionUnica(dto.proceso, dto.descripcion);
+  async create(dto: CreateFechaProcesoDto): Promise<FechaProceso> {
+    await this.validarFechaProceso(dto);
 
     return this.fechaProcesoRepository.create(dto);
   }
@@ -36,24 +32,17 @@ export class FechaProcesoService {
   async update(id: number, dto: UpdateFechaProcesoDto): Promise<FechaProceso> {
     const actual = await this.getById(id);
 
-    const fechaInicio = dto.fechaInicio ?? actual.fechaInicio;
-    const fechaFin = dto.fechaFin ?? actual.fechaFin;
+    const datosActualizados = {
+      fechaInicio: dto.fechaInicio ?? actual.fechaInicio,
+      fechaFin: dto.fechaFin ?? actual.fechaFin,
+      proceso: dto.proceso ?? actual.proceso,
+      descripcion:
+        dto.descripcion !== undefined ? dto.descripcion : actual.descripcion,
+    };
 
-    const proceso = dto.proceso ?? actual.proceso;
-    const descripcion =
-      dto.descripcion !== undefined ? dto.descripcion : actual.descripcion;
+    await this.validarFechaProceso(datosActualizados, id);
 
-    this.validarRangoFechas(fechaInicio, fechaFin);
-
-    this.validarDescripcion(proceso, descripcion);
-
-    await this.fechaProcesoRepository.update(id, dto);
-
-    const actualizado = await this.fechaProcesoRepository.findById(id);
-
-    await this.validarDescripcionUnica(proceso, descripcion, id);
-
-    return actualizado!;
+    return this.fechaProcesoRepository.update(id, dto);
   }
 
   async verificarPeriodoMatricula() {
@@ -140,10 +129,27 @@ export class FechaProcesoService {
     return `${year}-${month}-${day}`;
   }
 
-  private validarDescripcion(
+  private async validarFechaProceso(
+    datos: Pick<
+      FechaProceso,
+      'fechaInicio' | 'fechaFin' | 'proceso' | 'descripcion'
+    >,
+    excludeId?: number,
+  ): Promise<void> {
+    this.validarRangoFechas(datos.fechaInicio, datos.fechaFin);
+
+    await this.validarDescripcionFechaNota(
+      datos.proceso,
+      datos.descripcion,
+      excludeId,
+    );
+  }
+
+  private async validarDescripcionFechaNota(
     proceso: TipoProceso,
     descripcion?: string | null,
-  ): void {
+    excludeId?: number,
+  ): Promise<void> {
     if (proceso !== TipoProceso.FECHAS_NOTAS) {
       return;
     }
@@ -162,16 +168,6 @@ export class FechaProcesoService {
       throw new BadRequestException(
         'La descripción de la fecha de notas no es válida.',
       );
-    }
-  }
-
-  private async validarDescripcionUnica(
-    proceso: TipoProceso,
-    descripcion?: string | null,
-    excludeId?: number,
-  ): Promise<void> {
-    if (proceso !== TipoProceso.FECHAS_NOTAS || !descripcion) {
-      return;
     }
 
     const existe =
