@@ -2,7 +2,6 @@ import { CreateAsignacionDto } from '@application/dtos/asignacion/create-asignac
 import { UpdateAsignacionDto } from '@application/dtos/asignacion/update-asignacion.dto';
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import { NivelMateria } from '@domain/entities/materia.entity';
-import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import {
   I_ASIGNACION_REPOSITORY,
   type IAsignacionRepository,
@@ -16,6 +15,11 @@ import {
 import { I_DOCENTE_REPOSITORY,
   type IDocenteRepository
  } from '@domain/interfaces/docente.repository.interface';
+import { I_PERIODO_REPOSITORY,
+  type IPeriodoAcademicoRepository
+ } from '@domain/interfaces/periodo-academico.repository.interface';
+import { dot } from 'node:test/reporters';
+import { Not } from 'typeorm/browser';
 
 @Injectable()
 export class AsignacionService {
@@ -25,11 +29,30 @@ export class AsignacionService {
 
     @Inject(I_DOCENTE_REPOSITORY)
     private readonly docenteRepository: IDocenteRepository,
+
+    @Inject(I_PERIODO_REPOSITORY)
+    private readonly periodoRepository: IPeriodoAcademicoRepository,
   ) {}
 
   async create(dto: CreateAsignacionDto): Promise<Asignacion> {
     //TODO: Se creó un método para encontrar por ID dado el cambio que se ejecutó antes en la BD
     //      de ser necesario se puede volver a cambiar el método para usar la cédula del docente
+    if (!dto.ID_periodo_academico) {
+      throw new BadRequestException('Debe seleccionar un período académico válido');
+    }
+
+    const periodo = await this.periodoRepository.findById(Number(dto.ID_periodo_academico));
+
+    if (!periodo) {
+      throw new NotFoundException('El período académico especificado no existe.')
+    }
+
+    const periodoActivo = await this.periodoRepository.findActive();
+
+    if (!periodoActivo || periodo.id !== periodoActivo?.id) {
+      throw new BadRequestException('No se pueden crear asignaciones en un período que ya finalizó o está inactivo.')
+    }
+
     const docente = (await this.docenteRepository.findByID(
       Number(dto.ID_docente)
     ));
@@ -74,6 +97,14 @@ export class AsignacionService {
 
   async update(id: number, dto: UpdateAsignacionDto): Promise<Asignacion> {
     const asignacionActual = await this.getById(id);
+    if (!asignacionActual) {
+      throw new NotFoundException('La asignación que intenta modificar no existe.');
+    }
+
+    const periodoActivo = await this.periodoRepository.findActive();
+    if (!periodoActivo || asignacionActual.periodoAcademico.id !== periodoActivo?.id) {
+      throw new BadRequestException('No se pueden modificar asignaciones en un período que ya finalizó o está inactivo.')
+    }
 
     const docente = (await this.docenteRepository.findByID(
       Number(dto.ID_docente),
