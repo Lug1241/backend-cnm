@@ -16,4 +16,9 @@ export interface IFechaProcesoRepository {
   ): Promise<FechaProceso>;
   delete(id: number): Promise<void>;
   findLatestByProceso(proceso: TipoProceso): Promise<FechaProceso | null>;
+  existsByProcesoAndDescripcion(
+    proceso: TipoProceso,
+    descripcion: string,
+    excludeId?: number,
+  ): Promise<boolean>;
 }

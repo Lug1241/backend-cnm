@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { IFechaProcesoRepository } from '../../domain/interfaces/fecha-proceso.repository.interface';
 import {
   FechaProceso,
@@ -77,6 +77,27 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
     });
 
     return this.toDomain(ormEntity);
+  }
+
+  async existsByProcesoAndDescripcion(
+    proceso: TipoProceso,
+    descripcion: string,
+    excludeId?: number,
+  ): Promise<boolean> {
+    const where = excludeId
+      ? {
+          proceso: In(this.obtenerValoresProceso(proceso)),
+          descripcion,
+          id: Not(excludeId),
+        }
+      : {
+          proceso: In(this.obtenerValoresProceso(proceso)),
+          descripcion,
+        };
+
+    const existente = await this.ormRepository.findOne({ where });
+
+    return !!existente;
   }
 
   private obtenerValoresProceso(proceso: TipoProceso): string[] {
