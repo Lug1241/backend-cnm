@@ -13,24 +13,41 @@ import {
   EstadoSolicitud,
   Solicitud,
 } from '../../domain/entities/solicitud.entity';
+import { I_DOCENTE_REPOSITORY,
+  type IDocenteRepository
+ } from '@domain/interfaces/docente.repository.interface';
 import { CreateSolicitudDto } from '../dtos/solicitud/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dtos/solicitud/update-solicitud.dto';
+import { notDeepEqual } from 'assert';
 
 @Injectable()
 export class SolicitudService {
   constructor(
     @Inject(I_SOLICITUD_REPOSITORY)
     private readonly solicitudRepository: ISolicitudRepository,
+    
+    @Inject(I_DOCENTE_REPOSITORY)
+    private readonly docenteRepository: IDocenteRepository,
   ) {}
 
   async create(dto: CreateSolicitudDto): Promise<Solicitud> {
+    const docente = await this.docenteRepository.findByCedula(dto.cedula);
+
+    if (!docente) {
+      throw new NotFoundException('No se encontró un docente asociado a esta cédula.');
+    }
+
+    if (docente.id === undefined) {
+      throw new NotFoundException('El docente no tiene un identificador válido.');
+    }
+
     const fechaInicio = dto.fechaInicio ?? null;
     const fechaFin = dto.fechaFin ?? null;
 
     this.validateDateRange(fechaInicio, fechaFin);
 
     const existe = await this.solicitudRepository.findDuplicate({
-      ID_docente: dto.ID_docente,
+      ID_docente: docente.id,
       fechaInicio,
       fechaFin,
       motivo: dto.motivo,
@@ -44,7 +61,10 @@ export class SolicitudService {
     }
 
     const nuevaSolicitud = new Solicitud({
-      ...dto,
+      motivo: dto.motivo,
+      descripcion: dto.descripcion,
+      fechaSolicitud: dto.fechaSolicitud,
+      docente: docente,
       fechaInicio,
       fechaFin,
       estado: EstadoSolicitud.PENDIENTE,
@@ -73,23 +93,26 @@ export class SolicitudService {
 
     return actualizada!;
   }
-
-  async getByDocente(nroCedulaDocente: string): Promise<Solicitud[]> {
-    return this.solicitudRepository.findByDocente(nroCedulaDocente);
-  }
-
+  
   async getAll(): Promise<Solicitud[]> {
     return this.solicitudRepository.findAll();
   }
+  
+  async getByConditions(id?: number, cedula?: string, fechaInicio?: string, fechaFin?: string): Promise<Solicitud[]> {
+    const solicitudes = await this.solicitudRepository.findByConditions(id, cedula, fechaInicio, fechaFin);
 
-  async getLastAcceptedByDocente(nroCedulaDocente: string): Promise<Solicitud> {
-    const solicitud =
-      await this.solicitudRepository.findLastAcceptedByDocente(
-        nroCedulaDocente,
-      );
+    if (!solicitudes || solicitudes.length === 0) {
+      throw new NotFoundException('No se encontraron solicitudes para los criterios especificados.');
+    }
+
+    return solicitudes;
+  }
+
+  async getLastAcceptedByDocente(id?: number, cedula?: string): Promise<Solicitud> {
+    const solicitud = await this.solicitudRepository.findLastAcceptedByDocente(id, cedula);
 
     if (!solicitud) {
-      throw new NotFoundException('No se encontró ninguna solicitud');
+      throw new NotFoundException('No se encontró ninguna solicitud aceptada para este docente.');
     }
 
     return solicitud;
