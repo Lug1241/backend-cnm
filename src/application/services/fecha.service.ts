@@ -84,11 +84,13 @@ export class FechaProcesoService {
     return fechaProceso;
   }
 
-  async getAll(page: number = 1, limit: number = 10, search?: TipoProceso) {
+  async getAll(page: number = 1, limit: number = 10, search?: string) {
+    const procesos = this.parseProcesos(search);
+
     const { data, totalRows } = await this.fechaProcesoRepository.findAll(
       page,
       limit,
-      search,
+      procesos,
     );
     return {
       data,
@@ -102,6 +104,31 @@ export class FechaProcesoService {
     const fechaProceso = await this.getById(id);
     await this.fechaProcesoRepository.delete(id);
     return fechaProceso;
+  }
+
+  private parseProcesos(search?: string): TipoProceso[] | undefined {
+    if (!search?.trim()) {
+      return undefined;
+    }
+
+    const procesos = search
+      .split(',')
+      .map((proceso) => proceso.trim())
+      .filter(Boolean);
+
+    const procesosValidos = Object.values(TipoProceso) as string[];
+
+    const procesosInvalidos = procesos.filter(
+      (proceso) => !procesosValidos.includes(proceso),
+    );
+
+    if (procesosInvalidos.length > 0) {
+      throw new BadRequestException(
+        `Tipo de proceso no válido: ${procesosInvalidos.join(', ')}`,
+      );
+    }
+
+    return [...new Set(procesos)] as TipoProceso[];
   }
 
   private validarRangoFechas(fechaInicio: string, fechaFin: string): void {

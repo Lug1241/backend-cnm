@@ -8,7 +8,7 @@ export interface IFechaProcesoRepository {
   findAll(
     page: number,
     limit: number,
-    proceso?: TipoProceso,
+    procesos?: TipoProceso[],
   ): Promise<{ data: FechaProceso[]; totalRows: number }>;
   update(
     id: number,

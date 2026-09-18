@@ -36,17 +36,23 @@ export class FechaProcesoRepository implements IFechaProcesoRepository {
   async findAll(
     page: number,
     limit: number,
-    proceso?: TipoProceso,
+    procesos?: TipoProceso[],
   ): Promise<{ data: FechaProceso[]; totalRows: number }> {
+    const valoresProceso = procesos?.flatMap((proceso) =>
+      this.obtenerValoresProceso(proceso),
+    );
+
     const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
-      where: !proceso
-        ? {}
-        : { proceso: In(this.obtenerValoresProceso(proceso)) },
+      where:
+        !valoresProceso || valoresProceso.length === 0
+          ? {}
+          : { proceso: In(valoresProceso) },
       skip: (page - 1) * limit,
       take: limit,
     });
 
     const data = ormEntities.map((entity) => this.toDomain(entity)!);
+
     return { data, totalRows };
   }
 
