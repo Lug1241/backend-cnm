@@ -16,8 +16,8 @@ export enum DescripcionFechaNota {
 
 export class FechaProceso {
   id?: number;
-  fechaInicio!: Date;
-  fechaFin!: Date;
+  fechaInicio!: string;
+  fechaFin!: string;
   proceso!: TipoProceso;
   descripcion?: string | null;
 

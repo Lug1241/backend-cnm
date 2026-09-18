@@ -12,10 +12,10 @@ export class FechaProcesoOrmEntity {
   id!: number;
 
   @Column({ type: 'date', name: 'fecha_inicio' })
-  fechaInicio!: Date;
+  fechaInicio!: string;
 
   @Column({ type: 'date', name: 'fecha_fin' })
-  fechaFin!: Date;
+  fechaFin!: string;
 
   @Column({ type: 'varchar', length: 255 })
   proceso!: string;

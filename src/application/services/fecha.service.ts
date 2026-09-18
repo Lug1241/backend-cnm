@@ -104,20 +104,16 @@ export class FechaProcesoService {
     return fechaProceso;
   }
 
-  private validarRangoFechas(fechaInicio: Date, fechaFin: Date): void {
-    if (new Date(fechaInicio) > new Date(fechaFin)) {
+  private validarRangoFechas(fechaInicio: string, fechaFin: string): void {
+    if (fechaInicio > fechaFin) {
       throw new BadRequestException(
         'La fecha de inicio no puede ser mayor que la fecha de fin.',
       );
     }
   }
 
-  private formatearFecha(fecha: Date | string): string {
-    if (typeof fecha === 'string') {
-      return fecha.split('T')[0];
-    }
-
-    return fecha.toISOString().split('T')[0];
+  private formatearFecha(fecha: string): string {
+    return fecha;
   }
 
   private obtenerFechaActual(): string {

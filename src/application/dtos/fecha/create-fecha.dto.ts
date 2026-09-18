@@ -1,27 +1,27 @@
 import {
-  IsDate,
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
   IsNotEmpty,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { TipoProceso } from '@domain/entities/fecha-proceso.entity';
 
 export class CreateFechaProcesoDto {
   @IsNotEmpty({
     message: 'La fecha de inicio no puede estar vacía ni ser nula',
   })
-  @Type(() => Date)
-  @IsDate({ message: 'La fecha de inicio debe tener un formato válido' })
-  fechaInicio!: Date;
+  @IsDateString(
+    {},
+    { message: 'La fecha de inicio debe tener un formato válido' },
+  )
+  fechaInicio!: string;
 
   @IsNotEmpty({
     message: 'La fecha de fin no puede estar vacía ni ser nula',
   })
-  @Type(() => Date)
-  @IsDate({ message: 'La fecha de fin debe tener un formato válido' })
-  fechaFin!: Date;
+  @IsDateString({}, { message: 'La fecha de fin debe tener un formato válido' })
+  fechaFin!: string;
 
   @IsNotEmpty({ message: 'El nombre del proceso no puede estar vacío' })
   @IsEnum(TipoProceso, {
