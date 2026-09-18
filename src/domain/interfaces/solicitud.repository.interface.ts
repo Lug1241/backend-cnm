@@ -17,10 +17,18 @@ export interface ISolicitudRepository {
   findDuplicate(
     criteria: SolicitudDuplicateCriteria,
   ): Promise<Solicitud | null>;
-  findByDocente(nroCedulaDocente: string): Promise<Solicitud[]>;
   findAll(): Promise<Solicitud[]>;
+  findByConditions(
+    id?: number, 
+    cedula?: string, 
+    fechaInicio?: string, 
+    fechaFin?: string
+  ): Promise<Solicitud[]>
+
   findLastAcceptedByDocente(
-    nroCedulaDocente: string,
+    id?: number,
+    cedula?: string,
   ): Promise<Solicitud | null>;
+  
   delete(id: number): Promise<void>;
 }

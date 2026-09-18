@@ -6,7 +6,9 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   ParseIntPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { SolicitudService } from '@application/services/solicitud.service';
 import { CreateSolicitudDto } from '@application/dtos/solicitud/create-solicitud.dto';
@@ -34,14 +36,30 @@ export class SolicitudController {
     return this.solicitudService.getAll();
   }
 
-  @Get('docente/:cedula')
-  async getSolicitudesByDocente(@Param('cedula') cedula: string) {
-    return this.solicitudService.getByDocente(cedula);
+  @Get('docente')
+  async getSolicitudesByDocente(
+    @Query('docenteId') docenteId?: number,
+    @Query('cedula') cedula?: string,
+    @Query('fechaInicio') fechaInicio?: string,
+    @Query('fechaFin') fechaFin?: string,
+  ) {
+    if (!docenteId && !cedula) {
+      throw new BadRequestException('Debe proporcionar un ID o una cédula para buscar las solicitudes');
+    }
+
+    return this.solicitudService.getByConditions(docenteId, cedula, fechaInicio, fechaFin);
   }
 
-  @Get('ultima-aceptada/:cedula')
-  async getUltimaSolicitud(@Param('cedula') cedula: string) {
-    return this.solicitudService.getLastAcceptedByDocente(cedula);
+  @Get('ultima-aceptada')
+  async getUltimaSolicitud(
+    @Query('docenteId') docenteId?: number,
+    @Query('cedula') cedula?: string,
+  ) {
+    if (!docenteId && !cedula) {
+      throw new BadRequestException('Debe proporcionar un ID o una cédula para buscar la última solicitud aprobada.');
+    }
+
+    return this.solicitudService.getLastAcceptedByDocente(docenteId, cedula);
   }
 
   @Delete('eliminar/:id')

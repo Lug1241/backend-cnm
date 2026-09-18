@@ -76,15 +76,7 @@ export class SolicitudRepository implements ISolicitudRepository {
     });
     return this.toDomain(ormEntity);
   }
-
-  async findByDocente(nroCedula: string): Promise<Solicitud[]> {
-    const ormEntities = await this.ormRepository.find({
-      where: { docente: { nroCedula } },
-      relations: { docente: true },
-    });
-    return ormEntities.map((ent) => this.toDomain(ent)!);
-  }
-
+  
   async findAll(): Promise<Solicitud[]> {
     const ormEntities = await this.ormRepository.find({
       relations: { docente: true },
@@ -92,20 +84,48 @@ export class SolicitudRepository implements ISolicitudRepository {
     return ormEntities.map((ent) => this.toDomain(ent)!);
   }
 
+  async findByConditions(
+    id?: number, 
+    cedula?: string, 
+    fechaInicio?: string, 
+    fechaFin?: string
+  ): Promise<Solicitud[]> {
+    const query = this.ormRepository.createQueryBuilder('solicitud')
+    .leftJoinAndSelect('solicitud.docente', 'docente');
+
+    if (id) {
+      query.andWhere('docente.id = :id', { id });
+    } else if (cedula) {
+      query.andWhere('docente.nroCedula = :cedula', { cedula });
+    }
+
+    if (fechaInicio && fechaFin) {
+      query.andWhere('solicitud.fechaSolicitud >= :fechaInicio', { fechaInicio })
+           .andWhere('solicitud.fechaSolicitud <= :fechaFin', { fechaFin });
+    }
+
+    query.orderBy('solicitud.fechaSolicitud', 'DESC');
+    
+    return query.getMany();
+  }
+
   async findLastAcceptedByDocente(
-    nroCedula: string,
+    id?: number,
+    cedula?: string,
   ): Promise<Solicitud | null> {
-    const ormEntity = await this.ormRepository.findOne({
-      where: {
-        docente: { nroCedula },
-        estado: EstadoSolicitud.ACEPTADA,
-      },
-      order: {
-        fechaSolicitud: 'DESC',
-      },
-      relations: { docente: true },
-    });
-    return this.toDomain(ormEntity);
+    const query = this.ormRepository.createQueryBuilder('solicitud')
+      .leftJoinAndSelect('solicitud.docente', 'docente')
+      .where('solicitud.estado = :estado', { estado: EstadoSolicitud.ACEPTADA });
+
+    if (id) {
+      query.andWhere('docente.id = :id', { id });
+    } else if (cedula) {
+      query.andWhere('docente.nroCedula = :cedula', { cedula });
+    }
+
+    query.orderBy('solicitud.fechaSolicitud', 'DESC');
+
+    return query.getOne();
   }
 
   async delete(id: number): Promise<void> {

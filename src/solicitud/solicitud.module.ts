@@ -5,9 +5,12 @@ import { SolicitudController } from './solicitud.controller';
 import { SolicitudService } from '@application/services/solicitud.service';
 import { SolicitudRepository } from '@infrastructure/repositories/solicitud.repository';
 import { I_SOLICITUD_REPOSITORY } from '@domain/interfaces/solicitud.repository.interface';
-
+import { DocenteModule } from 'src/docente/docente.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([SolicitudOrmEntity])],
+  imports: [
+    TypeOrmModule.forFeature([SolicitudOrmEntity]),
+    DocenteModule,
+],
   controllers: [SolicitudController],
   providers: [
     SolicitudService,
