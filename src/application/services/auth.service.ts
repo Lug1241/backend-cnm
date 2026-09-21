@@ -20,6 +20,12 @@ import { Representante } from '@domain/entities/representante.entity';
 import { LoginDto } from '../dtos/auth/login.dto';
 import { ocultarDatosSensibles } from '@infrastructure/utils/security.utils';
 
+type AuthPayload = {
+  id: string;
+  rol: string;
+  type: 'docente' | 'representante';
+};
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -94,6 +100,34 @@ export class AuthService {
       rol,
       type,
       token,
+    };
+  }
+
+  async getCurrentUser(token: string) {
+    let payload: AuthPayload;
+
+    try {
+      payload = await this.jwtService.verifyAsync<AuthPayload>(token);
+    } catch {
+      throw new UnauthorizedException('Token inválido o expirado');
+    }
+
+    let user: Docente | Representante | null = null;
+
+    if (payload.type === 'representante') {
+      user = await this.representanteRepository.findByCedula(payload.id);
+    } else if (payload.type === 'docente') {
+      user = await this.docenteRepository.findByCedula(payload.id);
+    }
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario no autorizado');
+    }
+
+    return {
+      ...ocultarDatosSensibles(user),
+      rol: payload.rol,
+      type: payload.type,
     };
   }
 }
