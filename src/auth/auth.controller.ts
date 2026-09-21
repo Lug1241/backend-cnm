@@ -1,15 +1,18 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Headers,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
+  Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+
 import { AuthService } from '../application/services/auth.service';
 import { LoginDto } from '../application/dtos/auth/login.dto';
+
+import { JwtAuthGuard, type AuthenticatedRequest } from './jwt-auth.guard';
 
 @Controller('api')
 export class AuthController {
@@ -22,13 +25,8 @@ export class AuthController {
   }
 
   @Get('me')
-  async me(@Headers('authorization') authorization?: string) {
-    const [scheme, token] = authorization?.split(' ') ?? [];
-
-    if (scheme !== 'Bearer' || !token) {
-      throw new UnauthorizedException('Token no proporcionado');
-    }
-
-    return this.authService.getCurrentUser(token);
+  @UseGuards(JwtAuthGuard)
+  async me(@Req() request: AuthenticatedRequest) {
+    return this.authService.getCurrentUser(request.user);
   }
 }
