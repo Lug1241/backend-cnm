@@ -7,10 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AsignacionOrmEntity } from '../database/entitites/asignacion.orm-entity';
 import {
   Repository,
-  Not,
-  ILike,
-  MoreThanOrEqual,
-  LessThanOrEqual,
 } from 'typeorm';
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import { Docente } from '@domain/entities/docente.entity';
@@ -116,6 +112,9 @@ export class AsignacionRepository implements IAsignacionRepository {
     nivelMateria: NivelMateria,
     materia: string,
     jornada: Jornada,
+    tipo?: TipoMateria,
+    page = 1,
+    limit = 5,
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
     let inicio = '00:00:00';
     let fin = '23:59:59';
@@ -128,21 +127,33 @@ export class AsignacionRepository implements IAsignacionRepository {
       fin = '19:00:00';
     }
 
-    const whereCondition: any = {
-      periodoAcademico: { id: periodo.id },
-      materia: { nivel: nivelMateria, tipo: Not(TipoMateria.INDIVIDUAL) },
-      horaInicio: MoreThanOrEqual(inicio),
-      horaFin: LessThanOrEqual(fin),
-    };
+    const query = this.ormRepository
+      .createQueryBuilder('asignacion')
+      .innerJoinAndSelect('asignacion.materia', 'materia')
+      .leftJoinAndSelect('asignacion.docente', 'docente')
+      .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
+      .where('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id })
+      .andWhere('materia.nivel = :nivel', { nivel: nivelMateria })
+      .andWhere('TRIM(LOWER(materia.tipo)) = :tipo', {
+        tipo: (tipo ?? TipoMateria.GRUPAL).toLowerCase(),
+      })
+      .andWhere('asignacion.horaInicio >= :inicio', { inicio })
+      .andWhere('asignacion.horaFin <= :fin', { fin })
+      .andWhere('JSON_LENGTH(asignacion.dias) > 0');
 
     if (materia && materia !== 'all') {
-      whereCondition.materia.nombre = ILike(`%${materia}%`);
+      const search = `%${materia.trim().toLowerCase()}%`;
+      query.andWhere(
+        '(LOWER(materia.nombre) LIKE :search OR LOWER(materia.nivel) LIKE :search OR LOWER(docente.primerNombre) LIKE :search OR LOWER(docente.primerApellido) LIKE :search)',
+        { search },
+      );
     }
 
-    const [ormEntities, totalRows] = await this.ormRepository.findAndCount({
-      where: whereCondition,
-      relations: { docente: true, materia: true, periodoAcademico: true },
-    });
+    const [ormEntities, totalRows] = await query
+      .orderBy('asignacion.id', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
     return { data: ormEntities.map((e) => this.toDomain(e)!), totalRows };
   }
 

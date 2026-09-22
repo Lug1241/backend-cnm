@@ -1,6 +1,6 @@
 import { Asignacion } from "@domain/entities/asignacion.entity";
 import { Docente } from "@domain/entities/docente.entity";
-import { NivelMateria } from "@domain/entities/materia.entity";
+import { NivelMateria, TipoMateria } from "@domain/entities/materia.entity";
 import { PeriodoAcademico } from "@domain/entities/periodo-academico.entity";
 import { Matricula } from "@domain/entities/matricula.entity";
 
@@ -34,7 +34,10 @@ export interface IAsignacionRepository {
         periodo: PeriodoAcademico, 
         nivelMateria: NivelMateria, 
         materia: string, 
-        jornada: Jornada
+        jornada: Jornada,
+        tipo?: TipoMateria,
+        page?: number,
+        limit?: number,
     ): Promise<{ data: Asignacion[]; totalRows: number }>;
     
     findBySinMatricula(
