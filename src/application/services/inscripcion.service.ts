@@ -80,7 +80,7 @@ export class InscripcionService {
     async update(id: number, dto: UpdateInscripcionDto, rolUsuario: string): Promise<boolean> {
         const inscripcionActual = await this.inscripcionRepository.findById(id);
         if (!inscripcionActual) {
-            throw new NotFoundException('Inscripción no encontrada');
+            throw new NotFoundException('No se puede actualizar: la inscripción no existe o ya fue eliminada.');
         }
 
         const oldAsignacionId = inscripcionActual.asignacion?.id;
@@ -129,7 +129,7 @@ export class InscripcionService {
     async getById(id: number): Promise<Inscripcion> {
         const inscripcion = await this.inscripcionRepository.findById(id);
         if (!inscripcion) {
-            throw new NotFoundException('Inscripción no encontrada');
+            throw new NotFoundException('No se puede consultar: la inscripción no existe o ya fue eliminada.');
         }
         return inscripcion;
     }
@@ -137,7 +137,7 @@ export class InscripcionService {
     async delete(id: number, rolUsuario: string): Promise<void> {
         const inscripcion = await this.inscripcionRepository.findById(id);
         if (!inscripcion) {
-            throw new NotFoundException('Inscripción no encontrada');
+            throw new NotFoundException('No se puede eliminar: la inscripción no existe o ya fue eliminada.');
         }
 
         const nombreMateria = inscripcion.asignacion?.materia?.nombre || "";

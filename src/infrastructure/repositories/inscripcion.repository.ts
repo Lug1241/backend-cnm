@@ -7,6 +7,7 @@ import { InscripcionOrmEntity } from '@infrastructure/database/entitites/inscrip
 import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import { skip } from 'node:test';
 import { NivelMateria } from '@domain/entities/materia.entity';
+import { Asignacion } from '@domain/entities/asignacion.entity';
 
 @Injectable()
 export class InscripcionRepository implements IInscripcionRepository {
@@ -18,7 +19,21 @@ export class InscripcionRepository implements IInscripcionRepository {
     private toDomain(ormEntity: InscripcionOrmEntity): Inscripcion {
         return new Inscripcion({
             id: ormEntity.id,
-            asignacion: ormEntity.asignacion as any,
+            asignacion: ormEntity.asignacion
+                ? new Asignacion({
+                    id: ormEntity.asignacion.id,
+                    paralelo: ormEntity.asignacion.paralelo,
+                    horaInicio: ormEntity.asignacion.horaInicio,
+                    horaFin: ormEntity.asignacion.horaFin,
+                    hora1: ormEntity.asignacion.hora1,
+                    hora2: ormEntity.asignacion.hora2,
+                    dias: ormEntity.asignacion.dias,
+                    cupos: ormEntity.asignacion.cupos,
+                    docente: ormEntity.asignacion.docente,
+                    materia: ormEntity.asignacion.materia,
+                    periodoAcademico: ormEntity.asignacion.periodoAcademico,
+                })
+                : undefined as any,
             matricula: ormEntity.matricula as any,
             createdAt: ormEntity.createdAt,
             updatedAt: ormEntity.updatedAt
