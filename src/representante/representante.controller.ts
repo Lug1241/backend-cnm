@@ -1,30 +1,41 @@
 import {
-  Controller,
-  Get,
-  UsePipes,
-  ValidationPipe,
   BadRequestException,
+  Body,
+  Controller,
   DefaultValuePipe,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
   ParseIntPipe,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
+  Req,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
+
 import { RepresentanteService } from '@application/services/representante.service';
 import { CreateRepresentanteDto } from '@application/dtos/representante/create-representante.dto';
 import { UpdateRepresentanteDto } from '@application/dtos/representante/update-representante.dto';
+
 import { ArchivoService } from '../archivo/archivo.service';
 import { PeriodoAcademicoService } from '@application/services/periodo-academico.service';
 import { ArchivosPdfInterceptor } from '../archivo/archivo-upload.config';
+
 import {
   type ArchivosPdfSubidos,
   CarpetaArchivo,
 } from '../archivo/archivo.types';
+
+import {
+  type AuthenticatedRequest,
+  JwtAuthGuard,
+} from '../auth/jwt-auth.guard';
 
 @UsePipes(
   new ValidationPipe({
@@ -51,7 +62,9 @@ export class RepresentanteController {
         'Falta cargar uno o más archivos PDF requeridos',
       );
     }
+
     const anioLectivo = await this.obtenerAnioLectivo();
+
     const rutas = await this.archivoService.guardarArchivos(
       CarpetaArchivo.REPRESENTANTES,
       createDto.nroCedula,
@@ -70,6 +83,12 @@ export class RepresentanteController {
     }
   }
 
+  /**
+   * Edición administrativa.
+   *
+   * Mantiene el comportamiento existente: la cédula del representante
+   * a modificar se recibe explícitamente en la URL.
+   */
   @Put('editar/:cedula')
   @UseInterceptors(ArchivosPdfInterceptor(['copiaCedula', 'croquis']))
   async editRepresentante(
@@ -77,54 +96,38 @@ export class RepresentanteController {
     @Body() updateDto: UpdateRepresentanteDto,
     @UploadedFiles() archivos?: ArchivosPdfSubidos,
   ) {
-    const anterior = await this.representanteService.getByCedula(cedula);
-    const anioLectivo = await this.obtenerAnioLectivo();
+    return this.actualizarRepresentante(cedula, updateDto, archivos);
+  }
 
-    const rutas = await this.archivoService.guardarArchivos(
-      CarpetaArchivo.REPRESENTANTES,
-      updateDto.nroCedula ?? cedula,
-      anioLectivo,
-      archivos,
-    );
-
-    updateDto.cedulaPdf = rutas.copiaCedula ?? updateDto.cedulaPdf;
-    updateDto.croquisPdf = rutas.croquis ?? updateDto.croquisPdf;
-
-    try {
-      const resultado = await this.representanteService.update(
-        cedula,
-        updateDto,
+  /**
+   * Edición del perfil propio del representante autenticado.
+   *
+   * La identidad no se obtiene desde una cédula enviada por el frontend,
+   * sino directamente desde el JWT verificado por JwtAuthGuard.
+   */
+  @Put('me')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(ArchivosPdfInterceptor(['copiaCedula', 'croquis']))
+  async editCurrentRepresentante(
+    @Req() request: AuthenticatedRequest,
+    @Body() updateDto: UpdateRepresentanteDto,
+    @UploadedFiles() archivos?: ArchivosPdfSubidos,
+  ) {
+    if (request.user.type !== 'representante') {
+      throw new ForbiddenException(
+        'Solo un representante puede actualizar su propio perfil',
       );
-      if (
-        rutas.copiaCedula &&
-        anterior.cedulaPdf &&
-        rutas.copiaCedula !== anterior.cedulaPdf
-      ) {
-        await this.archivoService.eliminarArchivo(anterior.cedulaPdf);
-      }
-
-      if (
-        rutas.croquis &&
-        anterior.croquisPdf &&
-        rutas.croquis !== anterior.croquisPdf
-      ) {
-        await this.archivoService.eliminarArchivo(anterior.croquisPdf);
-      }
-      return resultado;
-    } catch (error) {
-      const rutasNuevas = [
-        rutas.copiaCedula && rutas.copiaCedula !== anterior.cedulaPdf
-          ? rutas.copiaCedula
-          : null,
-
-        rutas.croquis && rutas.croquis !== anterior.croquisPdf
-          ? rutas.croquis
-          : null,
-      ].filter((ruta): ruta is string => Boolean(ruta));
-
-      await this.eliminarRutas(rutasNuevas);
-      throw error;
     }
+
+    const nroCedula = request.user.id;
+
+    // El perfil propio no debe permitir cambiar la identidad del usuario.
+    updateDto.nroCedula = nroCedula;
+
+    // El cambio de contraseña pertenece a su módulo específico.
+    delete updateDto.password;
+
+    return this.actualizarRepresentante(nroCedula, updateDto, archivos);
   }
 
   @Get('obtener/:cedula')
@@ -152,6 +155,86 @@ export class RepresentanteController {
     return this.representanteService.getAll(page, limit, search);
   }
 
+  @Delete('eliminar/:cedula')
+  async eliminarRepresentante(@Param('cedula') cedula: string) {
+    const representante = await this.representanteService.delete(cedula);
+
+    await this.eliminarRutas(
+      [representante.cedulaPdf, representante.croquisPdf].filter(
+        (ruta): ruta is string => Boolean(ruta),
+      ),
+    );
+
+    return representante;
+  }
+
+  /**
+   * Flujo común de actualización.
+   *
+   * Lo reutilizan tanto el CRUD administrativo como el perfil propio
+   * del representante para evitar duplicar manejo de archivos,
+   * rollback y limpieza de PDFs anteriores.
+   */
+  private async actualizarRepresentante(
+    cedula: string,
+    updateDto: UpdateRepresentanteDto,
+    archivos?: ArchivosPdfSubidos,
+  ) {
+    const anterior = await this.representanteService.getByCedula(cedula);
+
+    const anioLectivo = await this.obtenerAnioLectivo();
+
+    const rutas = await this.archivoService.guardarArchivos(
+      CarpetaArchivo.REPRESENTANTES,
+      updateDto.nroCedula ?? cedula,
+      anioLectivo,
+      archivos,
+    );
+
+    updateDto.cedulaPdf = rutas.copiaCedula ?? updateDto.cedulaPdf;
+
+    updateDto.croquisPdf = rutas.croquis ?? updateDto.croquisPdf;
+
+    try {
+      const resultado = await this.representanteService.update(
+        cedula,
+        updateDto,
+      );
+
+      if (
+        rutas.copiaCedula &&
+        anterior.cedulaPdf &&
+        rutas.copiaCedula !== anterior.cedulaPdf
+      ) {
+        await this.archivoService.eliminarArchivo(anterior.cedulaPdf);
+      }
+
+      if (
+        rutas.croquis &&
+        anterior.croquisPdf &&
+        rutas.croquis !== anterior.croquisPdf
+      ) {
+        await this.archivoService.eliminarArchivo(anterior.croquisPdf);
+      }
+
+      return resultado;
+    } catch (error) {
+      const rutasNuevas = [
+        rutas.copiaCedula && rutas.copiaCedula !== anterior.cedulaPdf
+          ? rutas.copiaCedula
+          : null,
+
+        rutas.croquis && rutas.croquis !== anterior.croquisPdf
+          ? rutas.croquis
+          : null,
+      ].filter((ruta): ruta is string => Boolean(ruta));
+
+      await this.eliminarRutas(rutasNuevas);
+
+      throw error;
+    }
+  }
+
   private async obtenerAnioLectivo(): Promise<string> {
     const periodoActivo = await this.periodoAcademicoService.getActive();
 
@@ -166,16 +249,6 @@ export class RepresentanteController {
     }
 
     return anioLectivo;
-  }
-  @Delete('eliminar/:cedula')
-  async eliminarRepresentante(@Param('cedula') cedula: string) {
-    const representante = await this.representanteService.delete(cedula);
-    await this.eliminarRutas(
-      [representante.cedulaPdf, representante.croquisPdf].filter(
-        (ruta): ruta is string => Boolean(ruta),
-      ),
-    );
-    return representante;
   }
 
   private async eliminarRutas(rutas: string[]) {
