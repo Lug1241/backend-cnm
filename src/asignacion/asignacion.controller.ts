@@ -12,7 +12,9 @@ import {
   Query,
   ParseIntPipe,
   DefaultValuePipe,
+  BadRequestException,
 } from '@nestjs/common';
+import { TipoMateria } from '@domain/entities/materia.entity';
 
 @Controller('api/asignaciones')
 export class AsignacionController {
@@ -67,18 +69,31 @@ export class AsignacionController {
     return this.asignacionService.getByPeriodo(periodo);
   }
 
-  @Get('obtener/materias/:periodo/:nivel/:materia/:jornada')
+  @Get([
+    'obtener/materias/:periodo/:nivel/:materia',
+    'obtener/materias/:periodo/:nivel/:materia/:jornada',
+  ])
   async getAsignacionesPorAsignatura(
     @Param('periodo', ParseIntPipe) periodo: number,
     @Param('nivel') nivel: string,
     @Param('materia') materia: string,
-    @Param('jornada') jornada: string,
+    @Param('jornada') jornadaPath?: string,
+    @Query('jornada', new DefaultValuePipe('')) jornadaQuery: string = '',
+    @Query('tipo') tipo?: TipoMateria,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number = 5,
   ) {
+    if (page < 1 || limit < 1) {
+      throw new BadRequestException('La página y el límite deben ser mayores que cero');
+    }
     return this.asignacionService.getByMateria(
       periodo,
       nivel as any,
       materia,
-      jornada as any,
+      (jornadaPath ?? jornadaQuery) as any,
+      tipo,
+      page,
+      limit,
     );
   }
 

@@ -1,7 +1,7 @@
 import { CreateAsignacionDto } from '@application/dtos/asignacion/create-asignacion.dto';
 import { UpdateAsignacionDto } from '@application/dtos/asignacion/update-asignacion.dto';
 import { Asignacion } from '@domain/entities/asignacion.entity';
-import { NivelMateria } from '@domain/entities/materia.entity';
+import { NivelMateria, TipoMateria } from '@domain/entities/materia.entity';
 import {
   I_ASIGNACION_REPOSITORY,
   type IAsignacionRepository,
@@ -226,14 +226,26 @@ export class AsignacionService {
     nivel: any,
     materia: string,
     jornada: any,
+    tipo?: TipoMateria,
+    page = 1,
+    limit = 5,
   ) {
     const periodoDummy = { id: id_periodo } as any;
-    return this.asignacionRepository.findByMateria(
+    const result = await this.asignacionRepository.findByMateria(
       periodoDummy,
       nivel,
       materia,
       jornada,
+      tipo,
+      page,
+      limit,
     );
+    return {
+      data: result.data,
+      totalPages: Math.ceil(result.totalRows / limit),
+      currentPage: page,
+      totalRows: result.totalRows,
+    };
   }
 
   async getSinMatricula(page: number, limit: number, idDocente?: number, periodo?: number) {  
