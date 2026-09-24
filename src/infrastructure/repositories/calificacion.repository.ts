@@ -48,72 +48,72 @@ export class CalificacionRepository implements ICalificacionRepository {
       };
     }
 
-    const [
-      parciales,
-      quimestrales,
-      finales,
-      parcialesBe,
-      quimestralesBe,
-    ] = await Promise.all([
-      this.parcialRepository.find({ where: { inscripcionId: In(ids) } }),
-      this.quimestralRepository.find({ where: { inscripcionId: In(ids) } }),
-      this.finalRepository.find({ where: { inscripcionId: In(ids) } }),
-      this.parcialBeRepository.find({ where: { inscripcionId: In(ids) } }),
-      this.quimestralBeRepository.find({ where: { inscripcionId: In(ids) } }),
-    ]);
+    const [parciales, quimestrales, finales, parcialesBe, quimestralesBe] =
+      await Promise.all([
+        this.parcialRepository.find({
+          where: { inscripcionId: In(ids) },
+          order: { updatedAt: 'DESC', id: 'DESC' },
+        }),
+        this.quimestralRepository.find({
+          where: { inscripcionId: In(ids) },
+          order: { updatedAt: 'DESC', id: 'DESC' },
+        }),
+        this.finalRepository.find({
+          where: { inscripcionId: In(ids) },
+          order: { updatedAt: 'DESC', id: 'DESC' },
+        }),
+        this.parcialBeRepository.find({
+          where: { inscripcionId: In(ids) },
+          order: { updatedAt: 'DESC', id: 'DESC' },
+        }),
+        this.quimestralBeRepository.find({
+          where: { inscripcionId: In(ids) },
+          order: { updatedAt: 'DESC', id: 'DESC' },
+        }),
+      ]);
 
     return {
-      parciales: parciales.map(
-        (row): CalificacionParcial => ({
-          id: row.id,
-          inscripcionId: row.inscripcionId,
-          insumo1: Number(row.insumo1),
-          insumo2: Number(row.insumo2),
-          evaluacion: Number(row.evaluacion),
-          comportamiento: row.comportamiento,
-          quimestre: row.quimestre,
-          parcial: row.parcial,
-        }),
-      ),
-      quimestrales: quimestrales.map(
-        (row): CalificacionQuimestral => ({
-          id: row.id,
-          inscripcionId: row.inscripcionId,
-          examen: Number(row.examen),
-          quimestre: row.quimestre,
-        }),
-      ),
-      finales: finales.map(
-        (row): CalificacionFinal => ({
-          id: row.id,
-          inscripcionId: row.inscripcionId,
-          examenRecuperacion:
-            row.examenRecuperacion === null
-              ? null
-              : Number(row.examenRecuperacion),
-        }),
-      ),
-      parcialesBe: parcialesBe.map(
-        (row): CalificacionParcialBe => ({
-          id: row.id,
-          inscripcionId: row.inscripcionId,
-          insumo1: Number(row.insumo1),
-          insumo2: Number(row.insumo2),
-          evaluacion: Number(row.evaluacion),
-          mejoramiento:
-            row.mejoramiento === null ? null : Number(row.mejoramiento),
-          quimestre: row.quimestre,
-          parcial: row.parcial,
-        }),
-      ),
-      quimestralesBe: quimestralesBe.map(
-        (row): CalificacionQuimestralBe => ({
-          id: row.id,
-          inscripcionId: row.inscripcionId,
-          examen: Number(row.examen),
-          quimestre: row.quimestre,
-        }),
-      ),
+      parciales: parciales.map((row): CalificacionParcial => ({
+        id: row.id,
+        inscripcionId: row.inscripcionId,
+        insumo1: Number(row.insumo1),
+        insumo2: Number(row.insumo2),
+        evaluacion: Number(row.evaluacion),
+        comportamiento: row.comportamiento,
+        quimestre: row.quimestre,
+        parcial: row.parcial,
+      })),
+      quimestrales: quimestrales.map((row): CalificacionQuimestral => ({
+        id: row.id,
+        inscripcionId: row.inscripcionId,
+        examen: Number(row.examen),
+        quimestre: row.quimestre,
+      })),
+      finales: finales.map((row): CalificacionFinal => ({
+        id: row.id,
+        inscripcionId: row.inscripcionId,
+        examenRecuperacion:
+          row.examenRecuperacion === null
+            ? null
+            : Number(row.examenRecuperacion),
+      })),
+      parcialesBe: parcialesBe.map((row): CalificacionParcialBe => ({
+        id: row.id,
+        inscripcionId: row.inscripcionId,
+        insumo1: Number(row.insumo1),
+        insumo2: Number(row.insumo2),
+        evaluacion: Number(row.evaluacion),
+        mejoramiento:
+          row.mejoramiento === null ? null : Number(row.mejoramiento),
+        quimestre: row.quimestre,
+        parcial: row.parcial,
+      })),
+      quimestralesBe: quimestralesBe.map((row): CalificacionQuimestralBe => ({
+        id: row.id,
+        inscripcionId: row.inscripcionId,
+        examen: Number(row.examen),
+        quimestre: row.quimestre,
+      })),
     };
   }
 }
