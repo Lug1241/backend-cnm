@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
-import { Matricula } from '@domain/entities/matricula.entity';
+import { Matricula, NivelMatricula } from '@domain/entities/matricula.entity';
 import { type IMatriculaRepository } from '@domain/interfaces/matricula.repository.interface';
 import { MatriculaOrmEntity } from '../database/entitites/matricula.orm-entity';
 import { EstudianteOrmEntity } from '../database/entitites/estudiante.orm-entity';
@@ -94,6 +94,24 @@ export class MatriculaRepository implements IMatriculaRepository {
       order: { id: 'ASC' },
     });
     return entidades.map((ent) => this.toDomain(ent)!);
+  }
+
+  async findNivelesByPeriodo(
+    periodoAcademicoId: number,
+  ): Promise<NivelMatricula[]> {
+    const rows = await this.ormRepository
+      .createQueryBuilder('matricula')
+      .select('DISTINCT matricula.nivel', 'nivel')
+      .where('matricula.periodoAcademicoId = :periodoAcademicoId', {
+        periodoAcademicoId,
+      })
+      .getRawMany<{ nivel: NivelMatricula }>();
+
+    return rows
+      .map(({ nivel }) => nivel)
+      .filter((nivel): nivel is NivelMatricula =>
+        Object.values(NivelMatricula).includes(nivel),
+      );
   }
 
   async existeEstudiante(id: number): Promise<boolean> {
