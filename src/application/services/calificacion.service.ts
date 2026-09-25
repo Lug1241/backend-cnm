@@ -200,7 +200,10 @@ export class CalificacionService {
         tipoMateria: curso.tipoMateria,
         tipoCalificacion: curso.tipoCalificacion,
         docente: curso.docente,
+<<<<<<< HEAD
         detalleParciales: curso.detalleParciales,
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
         quimestre1: curso.quimestre1,
         quimestre2: curso.quimestre2,

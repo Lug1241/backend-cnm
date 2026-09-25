@@ -8,6 +8,7 @@ import {
   I_INSCRIPCION_REPOSITORY,
   type IInscripcionRepository,
 } from '@domain/interfaces/inscripcion.repository.interface';
+<<<<<<< HEAD
 import {
   Inject,
   Injectable,
@@ -18,6 +19,8 @@ import {
   I_INSCRIPCION_REPOSITORY,
   type IInscripcionRepository,
 } from '@domain/interfaces/inscripcion.repository.interface';
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 import { CreateInscripcionDto } from '@application/dtos/inscripcion/create-inscripcion.dto';
 import { UpdateInscripcionDto } from '@application/dtos/inscripcion/update-inscripcion.dto';
 import { Inscripcion } from '@domain/entities/inscripcion.entity';
@@ -29,6 +32,7 @@ import {
   I_ESTUDIANTE_REPOSITORY,
   type IEstudianteRepository,
 } from '@domain/interfaces/estudiante.repository.interface';
+<<<<<<< HEAD
 import {
   I_ASIGNACION_REPOSITORY,
   type IAsignacionRepository,
@@ -37,6 +41,8 @@ import {
   I_ESTUDIANTE_REPOSITORY,
   type IEstudianteRepository,
 } from '@domain/interfaces/estudiante.repository.interface';
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import { DiaSemana } from '@domain/entities/asignacion.entity';
 import { Matricula } from '@domain/entities/matricula.entity';
@@ -52,6 +58,7 @@ export class InscripcionService {
 
     @Inject(I_ASIGNACION_REPOSITORY)
     private readonly asignacionRepository: IAsignacionRepository,
+<<<<<<< HEAD
   constructor(
     @Inject(I_INSCRIPCION_REPOSITORY)
     private readonly inscripcionRepository: IInscripcionRepository,
@@ -59,6 +66,9 @@ export class InscripcionService {
     @Inject(I_ASIGNACION_REPOSITORY)
     private readonly asignacionRepository: IAsignacionRepository,
 
+=======
+
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     @Inject(I_ESTUDIANTE_REPOSITORY)
     private readonly estudianteRepository: IEstudianteRepository,
   ) {}
@@ -88,6 +98,7 @@ export class InscripcionService {
       asignacion: { id: dto.ID_asignacion } as Asignacion,
       matricula: { id: dto.ID_matricula } as Matricula,
     });
+<<<<<<< HEAD
     const inscripcionesPrevias =
       await this.inscripcionRepository.findByMatricula(dto.ID_matricula);
 
@@ -95,16 +106,21 @@ export class InscripcionService {
       asignacion: { id: dto.ID_asignacion } as Asignacion,
       matricula: { id: dto.ID_matricula } as Matricula,
     });
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     if (nuevaInscripcion.esDuplicada(inscripcionesPrevias)) {
       throw new BadRequestException(
         'El estudiante ya está inscrito en esta materia',
       );
+<<<<<<< HEAD
     }
     if (nuevaInscripcion.esDuplicada(inscripcionesPrevias)) {
       throw new BadRequestException(
         'El estudiante ya está inscrito en esta materia',
       );
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     }
 
     const asignacionesPrevias = inscripcionesPrevias.map(
@@ -117,6 +133,7 @@ export class InscripcionService {
       throw new BadRequestException(
         'Inscripción no válida por cruce de horarios',
       );
+<<<<<<< HEAD
     }
     const asignacionesPrevias = inscripcionesPrevias.map(
       (insc) => insc.asignacion,
@@ -128,6 +145,8 @@ export class InscripcionService {
       throw new BadRequestException(
         'Inscripción no válida por cruce de horarios',
       );
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     }
 
     const nombreMateria = asignacionActual.materia.nombre.toLowerCase();
@@ -139,6 +158,7 @@ export class InscripcionService {
         'No se puede inscribir en esta materia, administración les asignará cupo después',
       );
     }
+<<<<<<< HEAD
     const nombreMateria = asignacionActual.materia.nombre.toLowerCase();
     if (
       rolUsuario === 'representante' &&
@@ -148,6 +168,8 @@ export class InscripcionService {
         'No se puede inscribir en esta materia, administración les asignará cupo después',
       );
     }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const cupoDescontado = await this.asignacionRepository.decrementarCupo(
       dto.ID_asignacion,
@@ -155,12 +177,15 @@ export class InscripcionService {
     if (!cupoDescontado) {
       throw new BadRequestException('No hay cupos disponibles');
     }
+<<<<<<< HEAD
     const cupoDescontado = await this.asignacionRepository.decrementarCupo(
       dto.ID_asignacion,
     );
     if (!cupoDescontado) {
       throw new BadRequestException('No hay cupos disponibles');
     }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     try {
       return await this.inscripcionRepository.create(nuevaInscripcion);
@@ -169,6 +194,7 @@ export class InscripcionService {
       throw error;
     }
   }
+<<<<<<< HEAD
     try {
       return await this.inscripcionRepository.create(nuevaInscripcion);
     } catch (error) {
@@ -176,6 +202,8 @@ export class InscripcionService {
       throw error;
     }
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async update(
     id: number,
@@ -188,6 +216,7 @@ export class InscripcionService {
         'No se puede actualizar: la inscripción no existe o ya fue eliminada.',
       );
     }
+<<<<<<< HEAD
   async update(
     id: number,
     dto: UpdateInscripcionDto,
@@ -204,6 +233,11 @@ export class InscripcionService {
     const newAsignacionId = dto.ID_asignacion;
     const oldAsignacionId = inscripcionActual.asignacion?.id;
     const newAsignacionId = dto.ID_asignacion;
+=======
+
+    const oldAsignacionId = inscripcionActual.asignacion?.id;
+    const newAsignacionId = dto.ID_asignacion;
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     if (!newAsignacionId || oldAsignacionId === newAsignacionId) {
       return await this.inscripcionRepository.update(id, {
@@ -212,6 +246,7 @@ export class InscripcionService {
           : undefined,
       });
     }
+<<<<<<< HEAD
     if (!newAsignacionId || oldAsignacionId === newAsignacionId) {
       return await this.inscripcionRepository.update(id, {
         matricula: dto.ID_matricula
@@ -219,17 +254,22 @@ export class InscripcionService {
           : undefined,
       });
     }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const asignacionNueva =
       await this.asignacionRepository.findById(newAsignacionId);
     if (!asignacionNueva) {
       throw new NotFoundException('La nueva asignación no existe');
     }
+<<<<<<< HEAD
     const asignacionNueva =
       await this.asignacionRepository.findById(newAsignacionId);
     if (!asignacionNueva) {
       throw new NotFoundException('La nueva asignación no existe');
     }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const nombreMateria = asignacionNueva.materia?.nombre?.toLowerCase() || '';
 
@@ -241,6 +281,7 @@ export class InscripcionService {
         'No se puede cambiar a esta materia, administración les asignará cupo después',
       );
     }
+<<<<<<< HEAD
     const nombreMateria = asignacionNueva.materia?.nombre?.toLowerCase() || '';
 
     if (
@@ -251,6 +292,8 @@ export class InscripcionService {
         'No se puede cambiar a esta materia, administración les asignará cupo después',
       );
     }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const cupoDescontado =
       await this.asignacionRepository.decrementarCupo(newAsignacionId);
@@ -259,6 +302,7 @@ export class InscripcionService {
         'No hay cupos disponibles en la nueva asignación',
       );
     }
+<<<<<<< HEAD
     const cupoDescontado =
       await this.asignacionRepository.decrementarCupo(newAsignacionId);
     if (!cupoDescontado) {
@@ -266,6 +310,8 @@ export class InscripcionService {
         'No hay cupos disponibles en la nueva asignación',
       );
     }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     try {
       const result = await this.inscripcionRepository.update(id, {
@@ -274,6 +320,7 @@ export class InscripcionService {
           ? ({ id: dto.ID_matricula } as Matricula)
           : undefined,
       });
+<<<<<<< HEAD
     try {
       const result = await this.inscripcionRepository.update(id, {
         asignacion: { id: newAsignacionId } as Asignacion,
@@ -281,13 +328,18 @@ export class InscripcionService {
           ? ({ id: dto.ID_matricula } as Matricula)
           : undefined,
       });
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       if (oldAsignacionId) {
         await this.asignacionRepository.incrementarCupo(oldAsignacionId);
       }
+<<<<<<< HEAD
       if (oldAsignacionId) {
         await this.asignacionRepository.incrementarCupo(oldAsignacionId);
       }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       return result;
     } catch (error) {
@@ -295,12 +347,15 @@ export class InscripcionService {
       throw error;
     }
   }
+<<<<<<< HEAD
       return result;
     } catch (error) {
       await this.asignacionRepository.incrementarCupo(newAsignacionId);
       throw error;
     }
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getById(id: number): Promise<Inscripcion> {
     const inscripcion = await this.inscripcionRepository.findById(id);
@@ -311,6 +366,7 @@ export class InscripcionService {
     }
     return inscripcion;
   }
+<<<<<<< HEAD
   async getById(id: number): Promise<Inscripcion> {
     const inscripcion = await this.inscripcionRepository.findById(id);
     if (!inscripcion) {
@@ -320,6 +376,8 @@ export class InscripcionService {
     }
     return inscripcion;
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async delete(id: number, rolUsuario: string): Promise<void> {
     const inscripcion = await this.inscripcionRepository.findById(id);
@@ -328,6 +386,7 @@ export class InscripcionService {
         'No se puede eliminar: la inscripción no existe o ya fue eliminada.',
       );
     }
+<<<<<<< HEAD
   async delete(id: number, rolUsuario: string): Promise<void> {
     const inscripcion = await this.inscripcionRepository.findById(id);
     if (!inscripcion) {
@@ -338,6 +397,10 @@ export class InscripcionService {
 
     const nombreMateria = inscripcion.asignacion?.materia?.nombre || '';
     const nombreMateria = inscripcion.asignacion?.materia?.nombre || '';
+=======
+
+    const nombreMateria = inscripcion.asignacion?.materia?.nombre || '';
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     if (
       rolUsuario === 'representante' &&
@@ -347,6 +410,7 @@ export class InscripcionService {
         'No se puede borrar inscripciones de materias de agrupación',
       );
     }
+<<<<<<< HEAD
     if (
       rolUsuario === 'representante' &&
       this.esMateriaAgrupacion(nombreMateria)
@@ -358,6 +422,10 @@ export class InscripcionService {
 
     await this.inscripcionRepository.delete(id);
     await this.inscripcionRepository.delete(id);
+=======
+
+    await this.inscripcionRepository.delete(id);
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     if (inscripcion.asignacion?.id) {
       await this.asignacionRepository.incrementarCupo(
@@ -365,22 +433,30 @@ export class InscripcionService {
       );
     }
   }
+<<<<<<< HEAD
     if (inscripcion.asignacion?.id) {
       await this.asignacionRepository.incrementarCupo(
         inscripcion.asignacion.id,
       );
     }
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getEstudiantesPorAsignacion(idAsignacion: number) {
     const inscripciones =
       await this.inscripcionRepository.findByAsignacion(idAsignacion);
+<<<<<<< HEAD
   async getEstudiantesPorAsignacion(idAsignacion: number) {
     const inscripciones =
       await this.inscripcionRepository.findByAsignacion(idAsignacion);
 
     if (!inscripciones.length) return [];
     if (!inscripciones.length) return [];
+=======
+
+    if (!inscripciones.length) return [];
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const idsEstudiantes = [
       ...new Set(
@@ -389,6 +465,7 @@ export class InscripcionService {
     ];
     const estudiantesData =
       await this.estudianteRepository.findByIds(idsEstudiantes);
+<<<<<<< HEAD
     const idsEstudiantes = [
       ...new Set(
         inscripciones.map((i) => i.matricula?.estudianteId).filter(Boolean),
@@ -396,6 +473,8 @@ export class InscripcionService {
     ];
     const estudiantesData =
       await this.estudianteRepository.findByIds(idsEstudiantes);
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return inscripciones
       .map((insc) => {
@@ -403,12 +482,15 @@ export class InscripcionService {
           (e) => e.id === insc.matricula?.estudianteId,
         );
         if (!estudiante) return null;
+<<<<<<< HEAD
     return inscripciones
       .map((insc) => {
         const estudiante = estudiantesData.find(
           (e) => e.id === insc.matricula?.estudianteId,
         );
         if (!estudiante) return null;
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
         const nombreCompleto = [
           estudiante.primerApellido,
@@ -419,6 +501,7 @@ export class InscripcionService {
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
+<<<<<<< HEAD
         const nombreCompleto = [
           estudiante.primerApellido,
           estudiante.segundoApellido ?? '',
@@ -428,6 +511,8 @@ export class InscripcionService {
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
         return {
           idInscripcion: insc.id,
@@ -545,6 +630,7 @@ export class InscripcionService {
         ...estudiante,
       }));
   }
+<<<<<<< HEAD
         return {
           idInscripcion: insc.id,
           idEstudiante: estudiante.id,
@@ -661,24 +747,32 @@ export class InscripcionService {
         ...estudiante,
       }));
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getInscripcionesByMatricula(idMatricula: number) {
     const inscripciones =
       await this.inscripcionRepository.findByMatricula(idMatricula);
+<<<<<<< HEAD
   async getInscripcionesByMatricula(idMatricula: number) {
     const inscripciones =
       await this.inscripcionRepository.findByMatricula(idMatricula);
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return inscripciones.map((inscripcion) => {
       const asignacion = inscripcion.asignacion;
       let rangoPorDia:
         | Partial<Record<DiaSemana, { horaInicio: string; horaFin: string }>>
         | undefined = undefined;
+<<<<<<< HEAD
     return inscripciones.map((inscripcion) => {
       const asignacion = inscripcion.asignacion;
       let rangoPorDia:
         | Partial<Record<DiaSemana, { horaInicio: string; horaFin: string }>>
         | undefined = undefined;
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       if (asignacion.dias && asignacion.dias.length === 2) {
         const primerDia = asignacion.dias[0];
@@ -695,6 +789,7 @@ export class InscripcionService {
           },
         };
       }
+<<<<<<< HEAD
       if (asignacion.dias && asignacion.dias.length === 2) {
         const primerDia = asignacion.dias[0];
         const segundoDia = asignacion.dias[1];
@@ -710,6 +805,8 @@ export class InscripcionService {
           },
         };
       }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       return {
         ...inscripcion,
@@ -729,6 +826,7 @@ export class InscripcionService {
   ) {
     const skip = (page - 1) * limit;
     const periodoDummy = { id: idPeriodo } as PeriodoAcademico;
+<<<<<<< HEAD
   async getInscripcionesIndividualesDocente(
     idDocente: string,
     idPeriodo: number,
@@ -737,6 +835,8 @@ export class InscripcionService {
   ) {
     const skip = (page - 1) * limit;
     const periodoDummy = { id: idPeriodo } as PeriodoAcademico;
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const { data, totalRows } =
       await this.inscripcionRepository.findIndividualesByDocente(
@@ -745,6 +845,7 @@ export class InscripcionService {
         skip,
         limit,
       );
+<<<<<<< HEAD
     const { data, totalRows } =
       await this.inscripcionRepository.findIndividualesByDocente(
         idDocente,
@@ -755,6 +856,10 @@ export class InscripcionService {
 
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+=======
+
+    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return {
       data,
@@ -763,6 +868,7 @@ export class InscripcionService {
       currentPage: page,
     };
   }
+<<<<<<< HEAD
     return {
       data,
       totalRows,
@@ -770,6 +876,8 @@ export class InscripcionService {
       currentPage: page,
     };
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getInscripcionesIndividualesByNivel(
     nivelStr: string,
@@ -778,6 +886,7 @@ export class InscripcionService {
     limit: number,
   ) {
     const skip = (page - 1) * limit;
+<<<<<<< HEAD
   async getInscripcionesIndividualesByNivel(
     nivelStr: string,
     periodoId: number,
@@ -788,6 +897,10 @@ export class InscripcionService {
 
     const periodoDummy = { id: periodoId } as PeriodoAcademico;
     const periodoDummy = { id: periodoId } as PeriodoAcademico;
+=======
+
+    const periodoDummy = { id: periodoId } as PeriodoAcademico;
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const nivelesDict: Record<string, NivelMateria[]> = {
       BE: [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
@@ -799,6 +912,7 @@ export class InscripcionService {
         NivelMateria._3RO_BCH,
       ],
     };
+<<<<<<< HEAD
     const nivelesDict: Record<string, NivelMateria[]> = {
       BE: [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
       BM: [NivelMateria._1RO_BM, NivelMateria._2DO_BM, NivelMateria._3RO_BM],
@@ -817,15 +931,28 @@ export class InscripcionService {
       await this.inscripcionRepository.findIndividualesByNivel(
     const { data, totalRows } =
       await this.inscripcionRepository.findIndividualesByNivel(
+=======
+
+    const niveles = nivelesDict[nivelStr] || [nivelStr as NivelMateria];
+
+    const { data, totalRows } =
+      await this.inscripcionRepository.findIndividualesByNivel(
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
         niveles,
         periodoDummy,
         skip,
         limit,
+<<<<<<< HEAD
         limit,
       );
 
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+=======
+      );
+
+    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return {
       data,
@@ -834,6 +961,7 @@ export class InscripcionService {
       currentPage: page,
     };
   }
+<<<<<<< HEAD
     return {
       data,
       totalRows,
@@ -846,14 +974,23 @@ export class InscripcionService {
     if (!nombreMateria) return false;
   private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
     if (!nombreMateria) return false;
+=======
+
+  private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
+    if (!nombreMateria) return false;
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(
       nombreMateria,
     );
   }
+<<<<<<< HEAD
     return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(
       nombreMateria,
     );
   }
 }
 
+=======
+}
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)

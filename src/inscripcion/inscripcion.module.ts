@@ -27,4 +27,7 @@ import { AuthModule } from 'src/auth/auth.module';
   exports: [I_INSCRIPCION_REPOSITORY],
 })
 export class InscripcionModule {}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)

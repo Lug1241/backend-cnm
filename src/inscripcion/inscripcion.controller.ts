@@ -22,7 +22,10 @@ import { SecretariaGuard } from '../auth/secretaria.guard';
 @Controller('api/inscripcion')
 export class InscripcionController {
   constructor(private readonly inscripcionService: InscripcionService) {}
+<<<<<<< HEAD
   constructor(private readonly inscripcionService: InscripcionService) {}
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   @Post('crear')
   async createInscripcion(@Body() dto: CreateInscripcionDto, @Req() req: any) {
@@ -45,10 +48,13 @@ export class InscripcionController {
   async getInscripcion(@Param('id', ParseIntPipe) id: number) {
     return await this.inscripcionService.getById(id);
   }
+<<<<<<< HEAD
   @Get('obtener/:id')
   async getInscripcion(@Param('id', ParseIntPipe) id: number) {
     return await this.inscripcionService.getById(id);
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   @Delete('eliminar/:id')
   async deleteInscripcion(
@@ -112,6 +118,7 @@ export class InscripcionController {
       limit,
     );
   }
+<<<<<<< HEAD
   @Get('obtener/docente/:docente/:periodo')
   async getInscripcionesIndividualesDocente(
     @Param('docente') docente: string,
@@ -126,6 +133,8 @@ export class InscripcionController {
       limit,
     );
   }
+=======
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   @Get('obtener/nivel/:periodo/:nivel')
   async getInscripcionesIndividualesByNivel(
@@ -141,6 +150,7 @@ export class InscripcionController {
       limit,
     );
   }
+<<<<<<< HEAD
   @Get('obtener/nivel/:periodo/:nivel')
   async getInscripcionesIndividualesByNivel(
     @Param('periodo', ParseIntPipe) periodo: number,
@@ -157,3 +167,6 @@ export class InscripcionController {
   }
 }
 
+=======
+}
+>>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
