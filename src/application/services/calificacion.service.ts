@@ -99,6 +99,104 @@ export class CalificacionService {
     };
   }
 
+  async getReporteByAsignaciones(idsAsignacion: number[]) {
+    const ids = [...new Set(idsAsignacion)];
+
+    if (ids.length === 0) {
+      throw new BadRequestException(
+        'Debe proporcionar al menos una asignación',
+      );
+    }
+
+    ids.forEach((id) => this.validarId(id, 'asignación'));
+
+    const gruposInscripciones = await Promise.all(
+      ids.map((idAsignacion) =>
+        this.inscripcionRepository.findByAsignacion(idAsignacion),
+      ),
+    );
+
+    const inscripciones = gruposInscripciones.flat();
+
+    if (inscripciones.length === 0) {
+      return {
+        asignacionIds: ids,
+        estudiantes: [],
+      };
+    }
+
+    const idsInscripcion = inscripciones
+      .map((inscripcion) => inscripcion.id)
+      .filter((id): id is number => typeof id === 'number');
+
+    const calificaciones =
+      await this.calificacionRepository.findByInscripcionIds(idsInscripcion);
+
+    const idsEstudiantes = [
+      ...new Set(
+        inscripciones
+          .map((inscripcion) => inscripcion.matricula?.estudianteId)
+          .filter((id): id is number => typeof id === 'number'),
+      ),
+    ];
+
+    const estudiantes =
+      await this.estudianteRepository.findByIds(idsEstudiantes);
+
+    const estudiantesPorId = new Map(
+      estudiantes.map((estudiante) => [estudiante.id, estudiante]),
+    );
+
+    const filas = inscripciones.map((inscripcion) => {
+      const curso = this.construirReporteCurso(inscripcion, calificaciones);
+
+      const estudiante = inscripcion.matricula?.estudianteId
+        ? estudiantesPorId.get(inscripcion.matricula.estudianteId)
+        : undefined;
+
+      const nombreCompleto = estudiante
+        ? [
+            estudiante.primerApellido,
+            estudiante.segundoApellido,
+            estudiante.primerNombre,
+            estudiante.segundoNombre,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+        : '';
+
+      return {
+        idInscripcion: curso.idInscripcion,
+        idAsignacion: curso.idAsignacion,
+        idMatricula: inscripcion.matricula?.id ?? null,
+        idEstudiante:
+          estudiante?.id ?? inscripcion.matricula?.estudianteId ?? null,
+        nombreCompleto,
+        nivel: inscripcion.matricula?.nivel ?? null,
+
+        asignatura: curso.asignatura,
+        tipoMateria: curso.tipoMateria,
+        tipoCalificacion: curso.tipoCalificacion,
+        docente: curso.docente,
+
+        quimestre1: curso.quimestre1,
+        quimestre2: curso.quimestre2,
+        final: curso.final,
+      };
+    });
+
+    filas.sort((a, b) =>
+      a.nombreCompleto.localeCompare(b.nombreCompleto, 'es'),
+    );
+
+    return {
+      asignacionIds: ids,
+      estudiantes: filas,
+    };
+  }
+
   private construirReporteCurso(
     inscripcion: Inscripcion,
     calificaciones: CalificacionesLote,
@@ -130,16 +228,12 @@ export class CalificacionService {
 
       const q1 = calcularQuimestreBe(
         parciales,
-        quimestrales.find(
-          (row) => row.quimestre === QuimestreCalificacion.Q1,
-        ),
+        quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
         QuimestreCalificacion.Q1,
       );
       const q2 = calcularQuimestreBe(
         parciales,
-        quimestrales.find(
-          (row) => row.quimestre === QuimestreCalificacion.Q2,
-        ),
+        quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
         QuimestreCalificacion.Q2,
       );
 
@@ -177,16 +271,12 @@ export class CalificacionService {
 
     const q1 = calcularQuimestreSuperior(
       parciales,
-      quimestrales.find(
-        (row) => row.quimestre === QuimestreCalificacion.Q1,
-      ),
+      quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
       QuimestreCalificacion.Q1,
     );
     const q2 = calcularQuimestreSuperior(
       parciales,
-      quimestrales.find(
-        (row) => row.quimestre === QuimestreCalificacion.Q2,
-      ),
+      quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
       QuimestreCalificacion.Q2,
     );
 

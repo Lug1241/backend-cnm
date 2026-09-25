@@ -7,11 +7,14 @@ import { AsignacionRepository } from '@infrastructure/repositories/asignacion.re
 import { I_ASIGNACION_REPOSITORY } from '@domain/interfaces/asignacion.repository.interface';
 import { DocenteModule } from 'src/docente/docente.module';
 import { PeriodoAcademicoModule } from 'src/periodo-academico/periodo-academico.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AsignacionOrmEntity]),
-  DocenteModule,
-  PeriodoAcademicoModule,
+  imports: [
+    TypeOrmModule.forFeature([AsignacionOrmEntity]),
+    DocenteModule,
+    PeriodoAcademicoModule,
+    AuthModule,
   ],
   controllers: [AsignacionController],
   providers: [
@@ -21,8 +24,6 @@ import { PeriodoAcademicoModule } from 'src/periodo-academico/periodo-academico.
       useClass: AsignacionRepository,
     },
   ],
-  exports: [
-    I_ASIGNACION_REPOSITORY,
-  ],
+  exports: [I_ASIGNACION_REPOSITORY],
 })
 export class AsignacionModule {}
