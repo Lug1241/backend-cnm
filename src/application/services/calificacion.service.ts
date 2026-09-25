@@ -200,7 +200,6 @@ export class CalificacionService {
         tipoMateria: curso.tipoMateria,
         tipoCalificacion: curso.tipoCalificacion,
         docente: curso.docente,
-        detalleParciales: curso.detalleParciales,
 
         quimestre1: curso.quimestre1,
         quimestre2: curso.quimestre2,
@@ -250,12 +249,10 @@ export class CalificacionService {
       const q1 = calcularQuimestreBe(
         parciales,
         quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
-        quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
         QuimestreCalificacion.Q1,
       );
       const q2 = calcularQuimestreBe(
         parciales,
-        quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
         quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
         QuimestreCalificacion.Q2,
       );
@@ -322,12 +319,10 @@ export class CalificacionService {
     const q1 = calcularQuimestreSuperior(
       parciales,
       quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
-      quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
       QuimestreCalificacion.Q1,
     );
     const q2 = calcularQuimestreSuperior(
       parciales,
-      quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
       quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
       QuimestreCalificacion.Q2,
     );
