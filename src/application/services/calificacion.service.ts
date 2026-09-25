@@ -200,6 +200,7 @@ export class CalificacionService {
         tipoMateria: curso.tipoMateria,
         tipoCalificacion: curso.tipoCalificacion,
         docente: curso.docente,
+        detalleParciales: curso.detalleParciales,
 
         quimestre1: curso.quimestre1,
         quimestre2: curso.quimestre2,
