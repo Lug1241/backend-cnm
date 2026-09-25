@@ -5,9 +5,12 @@ import { FechaProcesoController } from './fecha-proceso.controller';
 import { FechaProcesoService } from '@application/services/fecha.service';
 import { FechaProcesoRepository } from '@infrastructure/repositories/fecha-proceso.repository';
 import { I_FECHA_PROCESO_REPOSITORY } from '../domain/interfaces/fecha-proceso.repository.interface';
+import { FechaNotaOrmEntity } from '@infrastructure/database/entitites/fecha-nota.orm-entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FechaProcesoOrmEntity])],
+  imports: [
+    TypeOrmModule.forFeature([FechaProcesoOrmEntity, FechaNotaOrmEntity]),
+  ],
   controllers: [FechaProcesoController],
   providers: [
     FechaProcesoService,

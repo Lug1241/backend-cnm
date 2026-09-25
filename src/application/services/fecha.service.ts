@@ -31,7 +31,7 @@ export class FechaProcesoService {
   }
 
   async update(id: number, dto: UpdateFechaProcesoDto): Promise<FechaProceso> {
-    const actual = await this.getById(id);
+    const actual = await this.getById(id, dto.proceso);
 
     const datosActualizados = {
       fechaInicio: dto.fechaInicio ?? actual.fechaInicio,
@@ -43,7 +43,7 @@ export class FechaProcesoService {
 
     await this.validarFechaProceso(datosActualizados, id);
 
-    return this.fechaProcesoRepository.update(id, dto);
+    return this.fechaProcesoRepository.update(id, datosActualizados);
   }
 
   async verificarPeriodoMatricula() {
@@ -76,8 +76,11 @@ export class FechaProcesoService {
     };
   }
 
-  async getById(id: number): Promise<FechaProceso> {
-    const fechaProceso = await this.fechaProcesoRepository.findById(id);
+  async getById(id: number, proceso?: TipoProceso): Promise<FechaProceso> {
+    const fechaProceso = await this.fechaProcesoRepository.findById(
+      id,
+      proceso,
+    );
     if (!fechaProceso) {
       throw new NotFoundException('Proceso no encontrado');
     }
@@ -100,9 +103,9 @@ export class FechaProcesoService {
     };
   }
 
-  async delete(id: number): Promise<FechaProceso> {
-    const fechaProceso = await this.getById(id);
-    await this.fechaProcesoRepository.delete(id);
+  async delete(id: number, proceso?: TipoProceso): Promise<FechaProceso> {
+    const fechaProceso = await this.getById(id, proceso);
+    await this.fechaProcesoRepository.delete(id, fechaProceso.proceso);
     return fechaProceso;
   }
 
