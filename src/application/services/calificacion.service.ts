@@ -19,7 +19,10 @@ import {
 import {
   CalificacionParcial,
   CalificacionParcialBe,
+  CalificacionParcial,
+  CalificacionParcialBe,
   CalificacionesLote,
+  ParcialCalificacion,
   ParcialCalificacion,
   QuimestreCalificacion,
 } from '@domain/entities/calificacion.entity';
@@ -28,6 +31,8 @@ import { Inscripcion } from '@domain/entities/inscripcion.entity';
 import {
   calcularFinalBe,
   calcularFinalSuperior,
+  calcularParcialBe,
+  calcularParcialSuperior,
   calcularParcialBe,
   calcularParcialSuperior,
   calcularQuimestreBe,
@@ -200,10 +205,7 @@ export class CalificacionService {
         tipoMateria: curso.tipoMateria,
         tipoCalificacion: curso.tipoCalificacion,
         docente: curso.docente,
-<<<<<<< HEAD
         detalleParciales: curso.detalleParciales,
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
         quimestre1: curso.quimestre1,
         quimestre2: curso.quimestre2,
@@ -304,6 +306,33 @@ export class CalificacionService {
             ),
           },
         },
+        detalleParciales: {
+          q1: {
+            p1: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q1,
+              ParcialCalificacion.P1,
+            ),
+            p2: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q1,
+              ParcialCalificacion.P2,
+            ),
+          },
+
+          q2: {
+            p1: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q2,
+              ParcialCalificacion.P1,
+            ),
+            p2: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q2,
+              ParcialCalificacion.P2,
+            ),
+          },
+        },
         quimestre1: q1,
         quimestre2: q2,
         final: calcularFinalBe(q1, q2),
@@ -374,9 +403,106 @@ export class CalificacionService {
           ),
         },
       },
+      detalleParciales: {
+        q1: {
+          p1: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q1,
+            ParcialCalificacion.P1,
+          ),
+          p2: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q1,
+            ParcialCalificacion.P2,
+          ),
+        },
+
+        q2: {
+          p1: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q2,
+            ParcialCalificacion.P1,
+          ),
+          p2: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q2,
+            ParcialCalificacion.P2,
+          ),
+        },
+      },
       quimestre1: q1,
       quimestre2: q2,
       final: calcularFinalSuperior(q1, q2, finalGuardado),
+    };
+  }
+
+  private construirDetalleParcialSuperior(
+    parciales: CalificacionParcial[],
+    quimestre: QuimestreCalificacion,
+    parcial: ParcialCalificacion,
+  ) {
+    const registro = parciales.find(
+      (row) => row.quimestre === quimestre && row.parcial === parcial,
+    );
+
+    if (!registro) {
+      return null;
+    }
+
+    const resultado = calcularParcialSuperior(registro);
+
+    return {
+      insumo1: registro.insumo1,
+      insumo2: registro.insumo2,
+
+      ponderacion70: resultado.ponderacion70,
+
+      evaluacion: registro.evaluacion,
+
+      ponderacion30: resultado.ponderacion30,
+
+      promedioParcial: resultado.promedioParcial,
+
+      criteriosComportamiento: registro.comportamiento ?? [],
+
+      promedioComportamiento: resultado.comportamiento,
+
+      valoracionComportamiento: resultado.valoracionComportamiento,
+    };
+  }
+
+  private construirDetalleParcialBe(
+    parciales: CalificacionParcialBe[],
+    quimestre: QuimestreCalificacion,
+    parcial: ParcialCalificacion,
+  ) {
+    const registro = parciales.find(
+      (row) => row.quimestre === quimestre && row.parcial === parcial,
+    );
+
+    if (!registro) {
+      return null;
+    }
+
+    const resultado = calcularParcialBe(registro);
+
+    return {
+      insumo1: registro.insumo1,
+      insumo2: registro.insumo2,
+      evaluacion: registro.evaluacion,
+      mejoramiento: registro.mejoramiento,
+
+      promedioInsumos: resultado.promedioInsumos,
+
+      ponderacion70: resultado.ponderacion70,
+
+      promedioMejora: resultado.promedioMejora,
+
+      promedioSumativas: resultado.promedioSumativas,
+
+      ponderacion30: resultado.ponderacion30,
+
+      notaParcial: resultado.notaParcial,
     };
   }
 
