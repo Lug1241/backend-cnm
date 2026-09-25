@@ -14,6 +14,7 @@ function crearDependencias() {
   };
   const inscripcionRepository = {
     findByMatricula: jest.fn(),
+    findByAsignacion: jest.fn(),
   };
   const estudianteRepository = {
     findByIds: jest.fn(),
@@ -24,9 +25,8 @@ function crearDependencias() {
 
   const service = new CalificacionService(
     calificacionRepository,
-    inscripcionRepository as unknown as IInscripcionRepository,
-    estudianteRepository as unknown as IEstudianteRepository,
-    matriculaService as unknown as MatriculaService,
+    inscripcionRepository as any,
+    estudianteRepository as any,
   );
 
   return {
@@ -214,22 +214,75 @@ describe('CalificacionService', () => {
     expect(resultado.cursos[0].final?.estado).toBe('Aprobado');
   });
 
-  it('verifica la pertenencia antes de construir el reporte del representante', async () => {
+  it('combina estudiantes de varias asignaciones para Administración Escolar', async () => {
     const {
       service,
-      matriculaService,
-      inscripcionRepository,
       calificacionRepository,
+      inscripcionRepository,
+      estudianteRepository,
     } = crearDependencias();
 
-    matriculaService.getByIdForRepresentante.mockRejectedValue(
-      new Error('No autorizado'),
-    );
+    inscripcionRepository.findByAsignacion
+      .mockResolvedValueOnce([
+        {
+          id: 100,
+          matricula: {
+            id: 20,
+            nivel: NivelMatricula.PRIMERO_BASICO_MEDIO,
+            estudianteId: 9,
+            periodoAcademicoId: 3,
+          },
+          asignacion: {
+            ...asignacion,
+            id: 50,
+          },
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 101,
+          matricula: {
+            id: 21,
+            nivel: NivelMatricula.PRIMERO_BASICO_MEDIO,
+            estudianteId: 10,
+            periodoAcademicoId: 3,
+          },
+          asignacion: {
+            ...asignacion,
+            id: 51,
+          },
+        },
+      ]);
 
-    await expect(
-      service.getReporteByMatriculaForRepresentante(20, '0000000000'),
-    ).rejects.toThrow('No autorizado');
-    expect(inscripcionRepository.findByMatricula).not.toHaveBeenCalled();
-    expect(calificacionRepository.findByInscripcionIds).not.toHaveBeenCalled();
+    estudianteRepository.findByIds.mockResolvedValue([
+      estudiante,
+      {
+        ...estudiante,
+        id: 10,
+        nroCedula: '0987654321',
+        primerNombre: 'María',
+        primerApellido: 'García',
+        segundoApellido: '',
+      },
+    ]);
+
+    calificacionRepository.findByInscripcionIds.mockResolvedValue({
+      parciales: [],
+      quimestrales: [],
+      finales: [],
+      parcialesBe: [],
+      quimestralesBe: [],
+    });
+
+    const resultado = await service.getReporteByAsignaciones([50, 51]);
+
+    expect(resultado.asignacionIds).toEqual([50, 51]);
+    expect(resultado.estudiantes).toHaveLength(2);
+
+    expect(inscripcionRepository.findByAsignacion).toHaveBeenCalledTimes(2);
+
+    expect(calificacionRepository.findByInscripcionIds).toHaveBeenCalledWith([
+      100, 101,
+    ]);
   });
 });

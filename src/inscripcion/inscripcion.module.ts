@@ -8,7 +8,6 @@ import { InscripcionRepository } from '@infrastructure/repositories/inscripcion.
 import { AsignacionModule } from 'src/asignacion/asignacion.module';
 import { EstudianteModule } from 'src/estudiante/estudiante.module';
 import { AuthModule } from 'src/auth/auth.module';
-import { MatriculaModule } from 'src/matricula/matricula.module';
 
 @Module({
   imports: [
@@ -16,7 +15,6 @@ import { MatriculaModule } from 'src/matricula/matricula.module';
     AsignacionModule,
     EstudianteModule,
     AuthModule,
-    MatriculaModule,
   ],
   controllers: [InscripcionController],
   providers: [
@@ -29,3 +27,4 @@ import { MatriculaModule } from 'src/matricula/matricula.module';
   exports: [I_INSCRIPCION_REPOSITORY],
 })
 export class InscripcionModule {}
+

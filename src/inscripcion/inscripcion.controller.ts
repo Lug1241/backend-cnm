@@ -10,33 +10,22 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
   Req,
+  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
 import { InscripcionService } from '@application/services/inscripcion.service';
 import { CreateInscripcionDto } from '@application/dtos/inscripcion/create-inscripcion.dto';
 import { UpdateInscripcionDto } from '@application/dtos/inscripcion/update-inscripcion.dto';
-import {
-  type AuthenticatedRequest,
-  JwtAuthGuard,
-} from '../auth/jwt-auth.guard';
-import { RepresentanteGuard } from '../auth/representante.guard';
-import { type AuthPayload } from '../auth/auth.types';
-import { type Request } from 'express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SecretariaGuard } from '../auth/secretaria.guard';
 
-interface RequestWithOptionalUser extends Request {
-  user?: Pick<AuthPayload, 'rol'>;
-}
-
-// TODO: implementar JwtAuthGuard cuando exista para usar req.user?.rol
 @Controller('api/inscripcion')
 export class InscripcionController {
   constructor(private readonly inscripcionService: InscripcionService) {}
+  constructor(private readonly inscripcionService: InscripcionService) {}
 
   @Post('crear')
-  async createInscripcion(
-    @Body() dto: CreateInscripcionDto,
-    @Req() req: RequestWithOptionalUser,
-  ) {
+  async createInscripcion(@Body() dto: CreateInscripcionDto, @Req() req: any) {
     const rolUsuario = req.user?.rol || '';
     return await this.inscripcionService.create(dto, rolUsuario);
   }
@@ -45,7 +34,7 @@ export class InscripcionController {
   async updateInscripcion(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateInscripcionDto,
-    @Req() req: RequestWithOptionalUser,
+    @Req() req: any,
   ) {
     const rolUsuario = req.user?.rol || '';
     const result = await this.inscripcionService.update(id, dto, rolUsuario);
@@ -56,11 +45,15 @@ export class InscripcionController {
   async getInscripcion(@Param('id', ParseIntPipe) id: number) {
     return await this.inscripcionService.getById(id);
   }
+  @Get('obtener/:id')
+  async getInscripcion(@Param('id', ParseIntPipe) id: number) {
+    return await this.inscripcionService.getById(id);
+  }
 
   @Delete('eliminar/:id')
   async deleteInscripcion(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: RequestWithOptionalUser,
+    @Req() req: any,
   ) {
     const rolUsuario = req.user?.rol || '';
     await this.inscripcionService.delete(id, rolUsuario);
@@ -76,6 +69,28 @@ export class InscripcionController {
     );
   }
 
+  @Get('asignaciones')
+  @UseGuards(JwtAuthGuard, SecretariaGuard)
+  async getEstudiantesPorAsignaciones(@Query('ids') idsRaw?: string) {
+    if (!idsRaw?.trim()) {
+      throw new BadRequestException(
+        'Debe proporcionar al menos una asignación',
+      );
+    }
+
+    const ids = [
+      ...new Set(idsRaw.split(',').map((value) => Number(value.trim()))),
+    ];
+
+    if (ids.some((id) => !Number.isSafeInteger(id) || id < 1)) {
+      throw new BadRequestException(
+        'Los IDs de asignación deben ser enteros mayores que cero',
+      );
+    }
+
+    return this.inscripcionService.getEstudiantesPorAsignaciones(ids);
+  }
+
   @Get('obtener/matricula/:matricula')
   async getInscripcionesByMatricula(
     @Param('matricula', ParseIntPipe) matricula: number,
@@ -83,18 +98,20 @@ export class InscripcionController {
     return await this.inscripcionService.getInscripcionesByMatricula(matricula);
   }
 
-  @Get('representante/matricula/:matricula')
-  @UseGuards(JwtAuthGuard, RepresentanteGuard)
-  getHorarioByMatriculaForRepresentante(
-    @Param('matricula', ParseIntPipe) matricula: number,
-    @Req() request: AuthenticatedRequest,
+  @Get('obtener/docente/:docente/:periodo')
+  async getInscripcionesIndividualesDocente(
+    @Param('docente') docente: string,
+    @Param('periodo', ParseIntPipe) periodo: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return this.inscripcionService.getHorarioByMatriculaForRepresentante(
-      matricula,
-      request.user.id,
+    return await this.inscripcionService.getInscripcionesIndividualesDocente(
+      docente,
+      periodo,
+      page,
+      limit,
     );
   }
-
   @Get('obtener/docente/:docente/:periodo')
   async getInscripcionesIndividualesDocente(
     @Param('docente') docente: string,
@@ -124,4 +141,19 @@ export class InscripcionController {
       limit,
     );
   }
+  @Get('obtener/nivel/:periodo/:nivel')
+  async getInscripcionesIndividualesByNivel(
+    @Param('periodo', ParseIntPipe) periodo: number,
+    @Param('nivel') nivel: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return await this.inscripcionService.getInscripcionesIndividualesByNivel(
+      nivel,
+      periodo,
+      page,
+      limit,
+    );
+  }
 }
+
