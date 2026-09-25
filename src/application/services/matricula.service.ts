@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Matricula } from '@domain/entities/matricula.entity';
+import { Matricula, NivelMatricula } from '@domain/entities/matricula.entity';
 import {
   I_MATRICULA_REPOSITORY,
   type IMatriculaRepository,
@@ -91,6 +91,24 @@ export class MatriculaService {
       );
     }
     return periodos;
+  }
+
+  async getNivelesByPeriodo(
+    periodoAcademicoId: number,
+  ): Promise<NivelMatricula[]> {
+    this.validarId(periodoAcademicoId);
+
+    if (!(await this.matriculaRepository.existePeriodo(periodoAcademicoId))) {
+      throw new NotFoundException('Período académico no encontrado');
+    }
+
+    const niveles =
+      await this.matriculaRepository.findNivelesByPeriodo(periodoAcademicoId);
+    const ordenAcademico = Object.values(NivelMatricula);
+
+    return [...new Set(niveles)].sort(
+      (a, b) => ordenAcademico.indexOf(a) - ordenAcademico.indexOf(b),
+    );
   }
 
   async delete(id: number): Promise<Matricula> {

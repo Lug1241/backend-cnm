@@ -14,6 +14,7 @@ import { MatriculaModule } from './matricula/matricula.module';
 import { AuthModule } from './auth/auth.module';
 import { InscripcionModule } from './inscripcion/inscripcion.module';
 import { ArchivoModule } from './archivo/archivo.module';
+import { CalificacionModule } from './calificacion/calificacion.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ArchivoModule } from './archivo/archivo.module';
     AuthModule,
     InscripcionModule,
     ArchivoModule,
+    CalificacionModule,
   ],
 })
 export class AppModule {}

@@ -34,6 +34,11 @@ export class MatriculaController {
     return this.matriculaService.update(id, dto);
   }
 
+  @Get('periodo/:periodo/niveles')
+  getNivelesByPeriodo(@Param('periodo', ParseIntPipe) periodo: number) {
+    return this.matriculaService.getNivelesByPeriodo(periodo);
+  }
+
   @Get('obtener/:id')
   getById(@Param('id', ParseIntPipe) id: number) {
     return this.matriculaService.getById(id);
