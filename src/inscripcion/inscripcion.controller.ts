@@ -10,12 +10,13 @@ import {
     ParseIntPipe,
     DefaultValuePipe, 
     Req,
+    BadRequestException,
 } from '@nestjs/common';
 import { InscripcionService } from '@application/services/inscripcion.service';
 import { CreateInscripcionDto } from '@application/dtos/inscripcion/create-inscripcion.dto';
 import { UpdateInscripcionDto } from '@application/dtos/inscripcion/update-inscripcion.dto';
 
-//TODO: implementar JwtAuthGuard cuando exista para usar req.user?.rol
+// TODO: implementar JwtAuthGuard cuando exista para usar req.user?.rol
 @Controller('api/inscripcion')
 export class InscripcionController {
     constructor(private readonly inscripcionService: InscripcionService) {}
@@ -76,6 +77,9 @@ export class InscripcionController {
         @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
         @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     ) {
+        if (page < 1 || limit < 1) {
+            throw new BadRequestException('La página y el límite deben ser mayores que cero');
+        }
         return await this.inscripcionService.getInscripcionesIndividualesDocente(
             docente, 
             periodo, 
