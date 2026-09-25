@@ -15,6 +15,14 @@ import { SecretariaGuard } from '../auth/secretaria.guard';
 export class CalificacionController {
   constructor(private readonly calificacionService: CalificacionService) {}
 
+  @Get('reporte/matricula/:idMatricula')
+  @UseGuards(JwtAuthGuard, SecretariaGuard)
+  getReporteByMatricula(
+    @Param('idMatricula', ParseIntPipe) idMatricula: number,
+  ) {
+    return this.calificacionService.getReporteByMatricula(idMatricula);
+  }
+
   @Get('reporte/asignaciones')
   @UseGuards(JwtAuthGuard, SecretariaGuard)
   getReporteByAsignaciones(@Query('ids') idsRaw?: string) {
@@ -24,7 +32,9 @@ export class CalificacionController {
       );
     }
 
-    const ids = idsRaw.split(',').map((value) => Number(value.trim()));
+    const ids = [
+      ...new Set(idsRaw.split(',').map((value) => Number(value.trim()))),
+    ];
 
     if (ids.some((id) => !Number.isSafeInteger(id) || id < 1)) {
       throw new BadRequestException(
