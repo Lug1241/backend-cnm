@@ -12,6 +12,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { I_DOCENTE_REPOSITORY,
   type IDocenteRepository
  } from '@domain/interfaces/docente.repository.interface';
@@ -32,6 +33,8 @@ export class AsignacionService {
 
     @Inject(I_PERIODO_REPOSITORY)
     private readonly periodoRepository: IPeriodoAcademicoRepository,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(dto: CreateAsignacionDto): Promise<Asignacion> {
@@ -159,8 +162,57 @@ export class AsignacionService {
   }
 
   async delete(id: number): Promise<void> {
-    await this.getById(id); // Valida que exista antes de eliminar
-    await this.asignacionRepository.delete(id);
+    await this.dataSource.transaction(async (manager) => {
+      const asignacion = await manager.findOne('asignaciones', {
+        where: { ID: id },
+      });
+
+      if (!asignacion) {
+        throw new NotFoundException(`Asignación con ID ${id} no encontrada`);
+      }
+
+      const inscripciones = await manager.query(
+        'SELECT ID FROM inscripciones WHERE ID_asignacion = ?',
+        [id],
+      ) as { ID: number }[];
+
+      if (inscripciones.length > 0) {
+        const ids = inscripciones.map(({ ID }) => ID);
+        const placeholders = ids.map(() => '?').join(', ');
+        const tablasCalificaciones = [
+          'calificaciones_finales',
+          'calificaciones_parciales',
+          'calificaciones_parciales_be',
+          'calificaciones_quimestrales',
+          'calificaciones_quimestrales_be',
+        ];
+
+        for (const tabla of tablasCalificaciones) {
+          const rows = await manager.query(
+            `SELECT 1 FROM ${tabla} WHERE ID_inscripcion IN (${placeholders}) LIMIT 1`,
+            ids,
+          );
+
+          if (rows.length > 0) {
+            throw new BadRequestException(
+              'No se puede eliminar la asignación porque tiene calificaciones registradas.',
+            );
+          }
+        }
+
+        await manager.query(
+          `DELETE FROM inscripciones WHERE ID IN (${placeholders})`,
+          ids,
+        );
+
+        await manager.query(
+          'UPDATE asignaciones SET cupos = cupos + ? WHERE ID = ?',
+          [inscripciones.length, id],
+        );
+      }
+
+      await manager.query('DELETE FROM asignaciones WHERE ID = ?', [id]);
+    });
   }
 
   async getByDocente(id_docente: number) {
@@ -212,6 +264,34 @@ export class AsignacionService {
       data,
       totalRows,
       totalPages,
+      currentPage: page,
+    };
+  }
+
+  async getIndividuales(
+    page: number,
+    limit: number,
+    search: string,
+    idPeriodo: number,
+    nivel?: string,
+  ) {
+    const niveles = Object.values(NivelMateria) as string[];
+    if (nivel && !niveles.includes(nivel)) {
+      throw new BadRequestException('El nivel de materia no es válido');
+    }
+
+    const { data, totalRows } = await this.asignacionRepository.findIndividualesPaginated(
+      (page - 1) * limit,
+      limit,
+      search,
+      { id: idPeriodo } as any,
+      nivel as NivelMateria | undefined,
+    );
+
+    return {
+      data,
+      totalRows,
+      totalPages: Math.max(1, Math.ceil(totalRows / limit)),
       currentPage: page,
     };
   }
