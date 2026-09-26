@@ -20,6 +20,10 @@ import {
   type IMailService,
   I_MAIL_SERVICE,
 } from '@domain/interfaces/mail.service.interface';
+import {
+  type IPeriodoAcademicoRepository,
+  I_PERIODO_REPOSITORY,
+} from '@domain/interfaces/periodo-academico.repository.interface';
 
 @Injectable()
 export class RepresentanteService {
@@ -29,6 +33,9 @@ export class RepresentanteService {
 
     @Inject(I_MAIL_SERVICE)
     private readonly mailService: IMailService,
+
+    @Inject(I_PERIODO_REPOSITORY)
+    private readonly periodoRepository: IPeriodoAcademicoRepository,
   ) {}
 
   async create(dto: CreateRepresentanteDto) {
@@ -177,5 +184,50 @@ export class RepresentanteService {
     await this.representanteRepository.delete(nroCedula);
 
     return ocultarDatosSensibles(representante);
+  }
+
+  async verificarDocumentosActualizados(nroCedula: string) {
+    const representante = await this.getByCedula(nroCedula);
+    const periodoActivo = await this.periodoRepository.findActive();
+
+    if (!periodoActivo) {
+      throw new NotFoundException({
+        message: 'No hay un período académico activo',
+        datosActualizados: false,
+      });
+    }
+
+    const anioLectivo = periodoActivo.descripcion
+      .trim()
+      .replace(/^per[ií]odo\s*/i, '')
+      .trim()
+      .toLowerCase();
+
+    const extraerNombre = (ruta: string | null | undefined) =>
+      ruta?.trim().replace(/\\/g, '/').split('/').pop()?.toLowerCase();
+
+    const cedulaValida = Boolean(
+      anioLectivo &&
+        extraerNombre(representante.cedulaPdf)?.endsWith(`_${anioLectivo}.pdf`),
+    );
+
+    const croquisValido = Boolean(
+      anioLectivo &&
+        extraerNombre(representante.croquisPdf)?.endsWith(`_${anioLectivo}.pdf`),
+    );
+
+    const faltantes: string[] = [];
+    if (!cedulaValida) faltantes.push('Copia de cédula');
+    if (!croquisValido) faltantes.push('Croquis de domicilio');
+
+    const datosActualizados = cedulaValida && croquisValido;
+
+    return {
+      datosActualizados,
+      message: datosActualizados
+        ? 'El representante tiene los documentos actualizados'
+        : 'El representante debe actualizar sus documentos (cédula y croquis) para el período activo antes de continuar',
+      faltantes,
+    };
   }
 }
