@@ -5,9 +5,11 @@ import { IInscripcionRepository } from '@domain/interfaces/inscripcion.repositor
 import { Inscripcion } from '@domain/entities/inscripcion.entity';
 import { InscripcionOrmEntity } from '@infrastructure/database/entitites/inscripcion.orm-entity';
 import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
-import { skip } from 'node:test';
 import { NivelMateria } from '@domain/entities/materia.entity';
 import { Asignacion } from '@domain/entities/asignacion.entity';
+import { Matricula } from '@domain/entities/matricula.entity';
+import { Estudiante } from '@domain/entities/estudiante.entity';
+import { MatriculaOrmEntity } from '@infrastructure/database/entitites/matricula.orm-entity';
 
 @Injectable()
 export class InscripcionRepository implements IInscripcionRepository {
@@ -15,6 +17,43 @@ export class InscripcionRepository implements IInscripcionRepository {
         @InjectRepository(InscripcionOrmEntity)
         private readonly ormRepository: Repository<InscripcionOrmEntity>
     ) {}
+
+    private toMatriculaDomain(ormEntity?: MatriculaOrmEntity | null): Matricula | undefined {
+        if (!ormEntity) return undefined;
+
+        return new Matricula({
+            id: ormEntity.id,
+            nivel: ormEntity.nivel,
+            estado: ormEntity.estado,
+            estudianteId: ormEntity.estudianteId,
+            periodoAcademicoId: ormEntity.periodoAcademicoId,
+            estudiante: ormEntity.estudiante
+                ? new Estudiante({
+                    id: ormEntity.estudiante.id,
+                    nroCedula: ormEntity.estudiante.nroCedula,
+                    primerNombre: ormEntity.estudiante.primerNombre,
+                    segundoNombre: ormEntity.estudiante.segundoNombre,
+                    primerApellido: ormEntity.estudiante.primerApellido,
+                    segundoApellido: ormEntity.estudiante.segundoApellido,
+                    genero: ormEntity.estudiante.genero,
+                    anioMatricula: ormEntity.estudiante.anioMatricula,
+                    jornada: ormEntity.estudiante.jornada,
+                    fechaNacimiento: ormEntity.estudiante.fechaNacimiento,
+                    grupoEtnico: ormEntity.estudiante.grupoEtnico,
+                    especialidad: ormEntity.estudiante.especialidad,
+                    nroMatricula: ormEntity.estudiante.nroMatricula,
+                    nacionalidad: ormEntity.estudiante.nacionalidad,
+                    ier: ormEntity.estudiante.ier,
+                    direccion: ormEntity.estudiante.direccion,
+                    nivel: ormEntity.estudiante.nivel,
+                    representanteId: ormEntity.estudiante.representante?.id,
+                    representanteCedula: ormEntity.estudiante.representanteCedula,
+                })
+                : undefined,
+            createdAt: ormEntity.createdAt,
+            updatedAt: ormEntity.updatedAt,
+        });
+    }
 
     private toDomain(ormEntity: InscripcionOrmEntity): Inscripcion {
         return new Inscripcion({
@@ -34,7 +73,7 @@ export class InscripcionRepository implements IInscripcionRepository {
                     periodoAcademico: ormEntity.asignacion.periodoAcademico,
                 })
                 : undefined as any,
-            matricula: ormEntity.matricula as any,
+            matricula: this.toMatriculaDomain(ormEntity.matricula) as Matricula,
             createdAt: ormEntity.createdAt,
             updatedAt: ormEntity.updatedAt
         });

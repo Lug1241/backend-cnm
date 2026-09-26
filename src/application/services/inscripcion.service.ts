@@ -261,8 +261,18 @@ export class InscripcionService {
 
         const totalPages = Math.max(1, Math.ceil(totalRows / limit));
 
+        const rows = data
+            .filter((insc) => insc.asignacion)
+            .map((insc) => {
+                const matricula = insc.matricula as Matricula;
+                return {
+                    ...insc.asignacion,
+                    estudiante: matricula?.estudiante,
+                };
+            });
+
         return {
-            data,
+            data: rows,
             totalRows,
             totalPages,
             currentPage: page,
@@ -297,8 +307,18 @@ export class InscripcionService {
 
       const totalPages = Math.max(1, Math.ceil(totalRows / limit));
 
+      const rows = data
+        .filter((insc) => insc.asignacion)
+        .map((insc) => {
+          const matricula = insc.matricula as Matricula;
+          return {
+            ...insc.asignacion,
+            estudiante: matricula?.estudiante,
+          };
+        });
+
       return {
-        data,
+        data: rows,
         totalRows,
         totalPages,
         currentPage: page,
