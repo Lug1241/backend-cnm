@@ -84,7 +84,9 @@ export class AsignacionController {
     @Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number = 5,
   ) {
     if (page < 1 || limit < 1) {
-      throw new BadRequestException('La página y el límite deben ser mayores que cero');
+      throw new BadRequestException(
+        'La página y el límite deben ser mayores que cero',
+      );
     }
     return this.asignacionService.getByMateria(
       periodo,
@@ -102,13 +104,13 @@ export class AsignacionController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('id_docente') idDocente?: string,
-    @Query('periodo') periodo?: string
+    @Query('periodo') periodo?: string,
   ) {
     return this.asignacionService.getSinMatricula(
       page,
       limit,
       idDocente ? +idDocente : undefined,
-      periodo ? +periodo: undefined,
+      periodo ? +periodo : undefined,
     );
   }
 }

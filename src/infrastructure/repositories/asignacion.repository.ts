@@ -5,9 +5,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AsignacionOrmEntity } from '../database/entitites/asignacion.orm-entity';
-import {
-  Repository,
-} from 'typeorm';
+import { Repository } from 'typeorm';
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import { Docente } from '@domain/entities/docente.entity';
 import { NivelMateria, TipoMateria } from '@domain/entities/materia.entity';
@@ -59,14 +57,18 @@ export class AsignacionRepository implements IAsignacionRepository {
     periodo: PeriodoAcademico,
     grupo: NivelMateria[],
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
-    
     // 1. Iniciamos la construcción de la consulta
-    const query = this.ormRepository.createQueryBuilder('asignacion')
+    const query = this.ormRepository
+      .createQueryBuilder('asignacion')
       .innerJoinAndSelect('asignacion.materia', 'materia')
       .leftJoinAndSelect('asignacion.docente', 'docente')
       // Se extrae el ID del objeto PeriodoAcademico que llega por parámetro
-      .where('TRIM(LOWER(materia.tipo)) = :tipoMateria', { tipoMateria: 'grupal'})
-      .andWhere('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
+      .where('TRIM(LOWER(materia.tipo)) = :tipoMateria', {
+        tipoMateria: 'grupal',
+      })
+      .andWhere('asignacion.periodoAcademico = :periodoId', {
+        periodoId: periodo.id,
+      });
 
     // 2. Filtro estricto usando el arreglo del enum NivelMateria
     if (grupo && grupo.length > 0) {
@@ -78,7 +80,7 @@ export class AsignacionRepository implements IAsignacionRepository {
       const searchLower = search.toLowerCase(); // Normalización preventiva
       query.andWhere(
         '(LOWER(materia.nombre) LIKE :search OR LOWER(docente.primer_nombre) LIKE :search OR LOWER(docente.primer_apellido) LIKE :search)',
-        { search: `%${searchLower}%` }
+        { search: `%${searchLower}%` },
       );
     }
 
@@ -89,11 +91,11 @@ export class AsignacionRepository implements IAsignacionRepository {
       .getManyAndCount();
 
     // 5. Mapeo de la respuesta
-    return { 
+    return {
       data: ormEntities
-        .map(entity => this.toDomain(entity))
+        .map((entity) => this.toDomain(entity))
         .filter((entity): entity is Asignacion => entity != null),
-      totalRows 
+      totalRows,
     };
   }
 
@@ -132,7 +134,9 @@ export class AsignacionRepository implements IAsignacionRepository {
       .innerJoinAndSelect('asignacion.materia', 'materia')
       .leftJoinAndSelect('asignacion.docente', 'docente')
       .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
-      .where('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id })
+      .where('asignacion.periodoAcademico = :periodoId', {
+        periodoId: periodo.id,
+      })
       .andWhere('materia.nivel = :nivel', { nivel: nivelMateria })
       .andWhere('TRIM(LOWER(materia.tipo)) = :tipo', {
         tipo: (tipo ?? TipoMateria.GRUPAL).toLowerCase(),
@@ -163,8 +167,8 @@ export class AsignacionRepository implements IAsignacionRepository {
     idDocente?: number,
     periodo?: number,
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
-    
-    const query = this.ormRepository.createQueryBuilder('asignacion')
+    const query = this.ormRepository
+      .createQueryBuilder('asignacion')
       .leftJoinAndSelect('asignacion.materia', 'materia')
       .leftJoinAndSelect('asignacion.docente', 'docente')
       .leftJoin('asignacion.inscripciones', 'inscripcion')
@@ -183,11 +187,11 @@ export class AsignacionRepository implements IAsignacionRepository {
       .take(limit)
       .getManyAndCount();
 
-    return { 
+    return {
       data: ormEntities
-        .map(entity => this.toDomain(entity))
+        .map((entity) => this.toDomain(entity))
         .filter((entity): entity is Asignacion => entity != null),
-      totalRows 
+      totalRows,
     };
   }
 
@@ -201,7 +205,8 @@ export class AsignacionRepository implements IAsignacionRepository {
   }
 
   async decrementarCupo(id: number): Promise<boolean> {
-    const result = await this.ormRepository.createQueryBuilder()
+    const result = await this.ormRepository
+      .createQueryBuilder()
       .update(AsignacionOrmEntity)
       .set({ cupos: () => 'cupos - 1' })
       .where('id = :id', { id })
@@ -209,13 +214,14 @@ export class AsignacionRepository implements IAsignacionRepository {
       .execute();
     return (result.affected ?? 0) > 0;
   }
-  
+
   async incrementarCupo(id: number): Promise<boolean> {
-    const result = await this.ormRepository.createQueryBuilder()
-        .update(AsignacionOrmEntity)
-        .set({ cupos: () => 'cupos + 1' })
-        .where('id = :id', { id })
-        .execute();
+    const result = await this.ormRepository
+      .createQueryBuilder()
+      .update(AsignacionOrmEntity)
+      .set({ cupos: () => 'cupos + 1' })
+      .where('id = :id', { id })
+      .execute();
     return (result.affected ?? 0) > 0;
   }
 
