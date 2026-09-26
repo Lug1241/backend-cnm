@@ -44,10 +44,17 @@ export class SolicitudController {
     @Query('fechaFin') fechaFin?: string,
   ) {
     if (!docenteId && !cedula) {
-      throw new BadRequestException('Debe proporcionar un ID o una cédula para buscar las solicitudes');
+      throw new BadRequestException(
+        'Debe proporcionar un ID o una cédula para buscar las solicitudes',
+      );
     }
 
-    return this.solicitudService.getByConditions(docenteId, cedula, fechaInicio, fechaFin);
+    return this.solicitudService.getByConditions(
+      docenteId,
+      cedula,
+      fechaInicio,
+      fechaFin,
+    );
   }
 
   @Get('ultima-aceptada')
@@ -56,7 +63,9 @@ export class SolicitudController {
     @Query('cedula') cedula?: string,
   ) {
     if (!docenteId && !cedula) {
-      throw new BadRequestException('Debe proporcionar un ID o una cédula para buscar la última solicitud aprobada.');
+      throw new BadRequestException(
+        'Debe proporcionar un ID o una cédula para buscar la última solicitud aprobada.',
+      );
     }
 
     return this.solicitudService.getLastAcceptedByDocente(docenteId, cedula);

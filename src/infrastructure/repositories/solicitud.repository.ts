@@ -76,7 +76,7 @@ export class SolicitudRepository implements ISolicitudRepository {
     });
     return this.toDomain(ormEntity);
   }
-  
+
   async findAll(): Promise<Solicitud[]> {
     const ormEntities = await this.ormRepository.find({
       relations: { docente: true },
@@ -85,13 +85,14 @@ export class SolicitudRepository implements ISolicitudRepository {
   }
 
   async findByConditions(
-    id?: number, 
-    cedula?: string, 
-    fechaInicio?: string, 
-    fechaFin?: string
+    id?: number,
+    cedula?: string,
+    fechaInicio?: string,
+    fechaFin?: string,
   ): Promise<Solicitud[]> {
-    const query = this.ormRepository.createQueryBuilder('solicitud')
-    .leftJoinAndSelect('solicitud.docente', 'docente');
+    const query = this.ormRepository
+      .createQueryBuilder('solicitud')
+      .leftJoinAndSelect('solicitud.docente', 'docente');
 
     if (id) {
       query.andWhere('docente.id = :id', { id });
@@ -100,12 +101,13 @@ export class SolicitudRepository implements ISolicitudRepository {
     }
 
     if (fechaInicio && fechaFin) {
-      query.andWhere('solicitud.fechaSolicitud >= :fechaInicio', { fechaInicio })
-           .andWhere('solicitud.fechaSolicitud <= :fechaFin', { fechaFin });
+      query
+        .andWhere('solicitud.fechaSolicitud >= :fechaInicio', { fechaInicio })
+        .andWhere('solicitud.fechaSolicitud <= :fechaFin', { fechaFin });
     }
 
     query.orderBy('solicitud.fechaSolicitud', 'DESC');
-    
+
     return query.getMany();
   }
 
@@ -113,9 +115,12 @@ export class SolicitudRepository implements ISolicitudRepository {
     id?: number,
     cedula?: string,
   ): Promise<Solicitud | null> {
-    const query = this.ormRepository.createQueryBuilder('solicitud')
+    const query = this.ormRepository
+      .createQueryBuilder('solicitud')
       .leftJoinAndSelect('solicitud.docente', 'docente')
-      .where('solicitud.estado = :estado', { estado: EstadoSolicitud.ACEPTADA });
+      .where('solicitud.estado = :estado', {
+        estado: EstadoSolicitud.ACEPTADA,
+      });
 
     if (id) {
       query.andWhere('docente.id = :id', { id });
