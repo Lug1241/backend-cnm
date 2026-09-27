@@ -171,6 +171,7 @@ export class EstudianteService {
       segundoNombre: estudiante.segundoNombre,
       primerApellido: estudiante.primerApellido,
       segundoApellido: estudiante.segundoApellido,
+      cedulaPdf: estudiante.cedulaPdf,
       genero: estudiante.genero,
       fechaNacimiento: estudiante.fechaNacimiento,
       grupoEtnico: estudiante.grupoEtnico,
@@ -180,6 +181,7 @@ export class EstudianteService {
       direccion: estudiante.direccion,
       jornada: estudiante.jornada,
       nivel: estudiante.nivel,
+      representanteCedula: estudiante.representanteCedula,
     }));
   }
 
