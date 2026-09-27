@@ -10,6 +10,7 @@ import { type IMatriculaRepository } from '@domain/interfaces/matricula.reposito
 import { MatriculaOrmEntity } from '../database/entitites/matricula.orm-entity';
 import { EstudianteOrmEntity } from '../database/entitites/estudiante.orm-entity';
 import { PeriodoAcademicoOrmEntity } from '../database/entitites/periodo-academico.orm-entity';
+import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 
 @Injectable()
 export class MatriculaRepository implements IMatriculaRepository {
@@ -27,6 +28,15 @@ export class MatriculaRepository implements IMatriculaRepository {
       estado: ormEntity.estado,
       estudianteId: ormEntity.estudianteId,
       periodoAcademicoId: ormEntity.periodoAcademicoId,
+      periodoAcademico: ormEntity.periodoAcademico
+        ? new PeriodoAcademico({
+            id: ormEntity.periodoAcademico.id,
+            descripcion: ormEntity.periodoAcademico.descripcion,
+            estado: ormEntity.periodoAcademico.estado,
+            fechaInicio: ormEntity.periodoAcademico.fechaInicio,
+            fechaFin: ormEntity.periodoAcademico.fechaFin,
+          })
+        : undefined,
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     });
@@ -91,7 +101,11 @@ export class MatriculaRepository implements IMatriculaRepository {
   async findPeriodosByEstudiante(estudianteId: number): Promise<Matricula[]> {
     const entidades = await this.ormRepository.find({
       where: { estudianteId },
-      order: { id: 'ASC' },
+      relations: { periodoAcademico: true },
+      order: {
+        periodoAcademico: { fechaInicio: 'DESC' },
+        id: 'DESC',
+      },
     });
     return entidades.map((ent) => this.toDomain(ent)!);
   }
