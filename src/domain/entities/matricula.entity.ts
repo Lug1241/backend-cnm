@@ -1,5 +1,7 @@
 import { type Estudiante } from './estudiante.entity';
 
+import { type PeriodoAcademico } from './periodo-academico.entity';
+
 export enum NivelMatricula {
   PRIMERO_BASICO_ELEMENTAL = '1ro Básico Elemental',
   SEGUNDO_BASICO_ELEMENTAL = '2do Básico Elemental',
@@ -27,6 +29,7 @@ export class Matricula {
   estudianteId!: number;
   periodoAcademicoId!: number;
   estudiante?: Estudiante;
+  periodoAcademico?: PeriodoAcademico;
   createdAt?: Date;
   updatedAt?: Date;
 
