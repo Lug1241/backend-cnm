@@ -4,6 +4,9 @@ import {
   QuimestreCalificacion,
 } from '@domain/entities/calificacion.entity';
 import { NivelMatricula } from '@domain/entities/matricula.entity';
+import { type IInscripcionRepository } from '@domain/interfaces/inscripcion.repository.interface';
+import { type IEstudianteRepository } from '@domain/interfaces/estudiante.repository.interface';
+import { type MatriculaService } from './matricula.service';
 
 function crearDependencias() {
   const calificacionRepository = {
@@ -15,11 +18,15 @@ function crearDependencias() {
   const estudianteRepository = {
     findByIds: jest.fn(),
   };
+  const matriculaService = {
+    getByIdForRepresentante: jest.fn(),
+  };
 
   const service = new CalificacionService(
-    calificacionRepository as any,
-    inscripcionRepository as any,
-    estudianteRepository as any,
+    calificacionRepository,
+    inscripcionRepository as unknown as IInscripcionRepository,
+    estudianteRepository as unknown as IEstudianteRepository,
+    matriculaService as unknown as MatriculaService,
   );
 
   return {
@@ -27,6 +34,7 @@ function crearDependencias() {
     calificacionRepository,
     inscripcionRepository,
     estudianteRepository,
+    matriculaService,
   };
 }
 
@@ -204,5 +212,24 @@ describe('CalificacionService', () => {
     expect(resultado.cursos[0].tipoCalificacion).toBe('BE');
     expect(resultado.cursos[0].final?.promedioFinal).toBeCloseTo(9);
     expect(resultado.cursos[0].final?.estado).toBe('Aprobado');
+  });
+
+  it('verifica la pertenencia antes de construir el reporte del representante', async () => {
+    const {
+      service,
+      matriculaService,
+      inscripcionRepository,
+      calificacionRepository,
+    } = crearDependencias();
+
+    matriculaService.getByIdForRepresentante.mockRejectedValue(
+      new Error('No autorizado'),
+    );
+
+    await expect(
+      service.getReporteByMatriculaForRepresentante(20, '0000000000'),
+    ).rejects.toThrow('No autorizado');
+    expect(inscripcionRepository.findByMatricula).not.toHaveBeenCalled();
+    expect(calificacionRepository.findByInscripcionIds).not.toHaveBeenCalled();
   });
 });

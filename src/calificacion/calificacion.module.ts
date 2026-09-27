@@ -12,6 +12,7 @@ import { CalificacionQuimestralBeOrmEntity } from '@infrastructure/database/enti
 import { AuthModule } from '../auth/auth.module';
 import { InscripcionModule } from '../inscripcion/inscripcion.module';
 import { EstudianteModule } from '../estudiante/estudiante.module';
+import { MatriculaModule } from '../matricula/matricula.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { EstudianteModule } from '../estudiante/estudiante.module';
     AuthModule,
     InscripcionModule,
     EstudianteModule,
+    MatriculaModule,
   ],
   controllers: [CalificacionController],
   providers: [
