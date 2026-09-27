@@ -28,6 +28,7 @@ import {
   calcularQuimestreBe,
   calcularQuimestreSuperior,
 } from '@domain/services/calificacion-calculator';
+import { MatriculaService } from './matricula.service';
 
 @Injectable()
 export class CalificacionService {
@@ -40,7 +41,21 @@ export class CalificacionService {
 
     @Inject(I_ESTUDIANTE_REPOSITORY)
     private readonly estudianteRepository: IEstudianteRepository,
+
+    private readonly matriculaService: MatriculaService,
   ) {}
+
+  async getReporteByMatriculaForRepresentante(
+    idMatricula: number,
+    representanteCedula: string,
+  ) {
+    await this.matriculaService.getByIdForRepresentante(
+      idMatricula,
+      representanteCedula,
+    );
+
+    return this.getReporteByMatricula(idMatricula);
+  }
 
   async getReporteByMatricula(idMatricula: number) {
     this.validarId(idMatricula, 'matrícula');
@@ -130,16 +145,12 @@ export class CalificacionService {
 
       const q1 = calcularQuimestreBe(
         parciales,
-        quimestrales.find(
-          (row) => row.quimestre === QuimestreCalificacion.Q1,
-        ),
+        quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
         QuimestreCalificacion.Q1,
       );
       const q2 = calcularQuimestreBe(
         parciales,
-        quimestrales.find(
-          (row) => row.quimestre === QuimestreCalificacion.Q2,
-        ),
+        quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
         QuimestreCalificacion.Q2,
       );
 
@@ -177,16 +188,12 @@ export class CalificacionService {
 
     const q1 = calcularQuimestreSuperior(
       parciales,
-      quimestrales.find(
-        (row) => row.quimestre === QuimestreCalificacion.Q1,
-      ),
+      quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q1),
       QuimestreCalificacion.Q1,
     );
     const q2 = calcularQuimestreSuperior(
       parciales,
-      quimestrales.find(
-        (row) => row.quimestre === QuimestreCalificacion.Q2,
-      ),
+      quimestrales.find((row) => row.quimestre === QuimestreCalificacion.Q2),
       QuimestreCalificacion.Q2,
     );
 
