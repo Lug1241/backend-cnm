@@ -1,0 +1,222 @@
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  I_CALIFICACION_REPOSITORY,
+  type ICalificacionRepository,
+} from '@domain/interfaces/calificacion.repository.interface';
+import {
+  I_INSCRIPCION_REPOSITORY,
+  type IInscripcionRepository,
+} from '@domain/interfaces/inscripcion.repository.interface';
+import {
+  I_ESTUDIANTE_REPOSITORY,
+  type IEstudianteRepository,
+} from '@domain/interfaces/estudiante.repository.interface';
+import {
+  CalificacionesLote,
+  QuimestreCalificacion,
+} from '@domain/entities/calificacion.entity';
+import { NivelMatricula } from '@domain/entities/matricula.entity';
+import { Inscripcion } from '@domain/entities/inscripcion.entity';
+import {
+  calcularFinalBe,
+  calcularFinalSuperior,
+  calcularQuimestreBe,
+  calcularQuimestreSuperior,
+} from '@domain/services/calificacion-calculator';
+
+@Injectable()
+export class CalificacionService {
+  constructor(
+    @Inject(I_CALIFICACION_REPOSITORY)
+    private readonly calificacionRepository: ICalificacionRepository,
+
+    @Inject(I_INSCRIPCION_REPOSITORY)
+    private readonly inscripcionRepository: IInscripcionRepository,
+
+    @Inject(I_ESTUDIANTE_REPOSITORY)
+    private readonly estudianteRepository: IEstudianteRepository,
+  ) {}
+
+  async getReporteByMatricula(idMatricula: number) {
+    this.validarId(idMatricula, 'matrícula');
+
+    const inscripciones =
+      await this.inscripcionRepository.findByMatricula(idMatricula);
+
+    if (inscripciones.length === 0) {
+      throw new NotFoundException(
+        'No se encontraron inscripciones para esta matrícula',
+      );
+    }
+
+    const idsInscripcion = inscripciones
+      .map((inscripcion) => inscripcion.id)
+      .filter((id): id is number => typeof id === 'number');
+
+    const calificaciones =
+      await this.calificacionRepository.findByInscripcionIds(idsInscripcion);
+
+    const matricula = inscripciones[0].matricula;
+    const estudiantes = matricula?.estudianteId
+      ? await this.estudianteRepository.findByIds([matricula.estudianteId])
+      : [];
+    const estudiante = estudiantes[0] ?? null;
+
+    const cursos = inscripciones
+      .map((inscripcion) =>
+        this.construirReporteCurso(inscripcion, calificaciones),
+      )
+      .sort((a, b) => a.asignatura.localeCompare(b.asignatura, 'es'));
+
+    return {
+      matricula: {
+        id: idMatricula,
+        nivel: matricula?.nivel ?? null,
+        periodoAcademicoId: matricula?.periodoAcademicoId ?? null,
+      },
+      estudiante: estudiante
+        ? {
+            id: estudiante.id,
+            nroCedula: estudiante.nroCedula,
+            nombreCompleto: [
+              estudiante.primerApellido,
+              estudiante.segundoApellido,
+              estudiante.primerNombre,
+              estudiante.segundoNombre,
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .replace(/\s+/g, ' ')
+              .trim(),
+          }
+        : null,
+      cursos,
+    };
+  }
+
+  private construirReporteCurso(
+    inscripcion: Inscripcion,
+    calificaciones: CalificacionesLote,
+  ) {
+    const idInscripcion = inscripcion.id;
+
+    if (typeof idInscripcion !== 'number') {
+      throw new BadRequestException(
+        'Se encontró una inscripción sin identificador válido',
+      );
+    }
+
+    const nivelMatricula = inscripcion.matricula?.nivel;
+    const esBasicoElemental =
+      nivelMatricula === NivelMatricula.PRIMERO_BASICO_ELEMENTAL ||
+      nivelMatricula === NivelMatricula.SEGUNDO_BASICO_ELEMENTAL;
+
+    const asignacion = inscripcion.asignacion;
+    const materia = asignacion?.materia;
+    const docente = asignacion?.docente;
+
+    if (esBasicoElemental) {
+      const parciales = calificaciones.parcialesBe.filter(
+        (row) => row.inscripcionId === idInscripcion,
+      );
+      const quimestrales = calificaciones.quimestralesBe.filter(
+        (row) => row.inscripcionId === idInscripcion,
+      );
+
+      const q1 = calcularQuimestreBe(
+        parciales,
+        quimestrales.find(
+          (row) => row.quimestre === QuimestreCalificacion.Q1,
+        ),
+        QuimestreCalificacion.Q1,
+      );
+      const q2 = calcularQuimestreBe(
+        parciales,
+        quimestrales.find(
+          (row) => row.quimestre === QuimestreCalificacion.Q2,
+        ),
+        QuimestreCalificacion.Q2,
+      );
+
+      return {
+        idInscripcion,
+        idAsignacion: asignacion?.id ?? null,
+        asignatura: materia?.nombre ?? 'Sin materia',
+        nivelMateria: materia?.nivel ?? null,
+        tipoMateria: materia?.tipo ?? null,
+        tipoCalificacion: 'BE' as const,
+        docente: docente
+          ? {
+              id: docente.id ?? null,
+              nombreCompleto: [docente.primerNombre, docente.primerApellido]
+                .filter(Boolean)
+                .join(' ')
+                .trim(),
+            }
+          : null,
+        quimestre1: q1,
+        quimestre2: q2,
+        final: calcularFinalBe(q1, q2),
+      };
+    }
+
+    const parciales = calificaciones.parciales.filter(
+      (row) => row.inscripcionId === idInscripcion,
+    );
+    const quimestrales = calificaciones.quimestrales.filter(
+      (row) => row.inscripcionId === idInscripcion,
+    );
+    const finalGuardado = calificaciones.finales.find(
+      (row) => row.inscripcionId === idInscripcion,
+    );
+
+    const q1 = calcularQuimestreSuperior(
+      parciales,
+      quimestrales.find(
+        (row) => row.quimestre === QuimestreCalificacion.Q1,
+      ),
+      QuimestreCalificacion.Q1,
+    );
+    const q2 = calcularQuimestreSuperior(
+      parciales,
+      quimestrales.find(
+        (row) => row.quimestre === QuimestreCalificacion.Q2,
+      ),
+      QuimestreCalificacion.Q2,
+    );
+
+    return {
+      idInscripcion,
+      idAsignacion: asignacion?.id ?? null,
+      asignatura: materia?.nombre ?? 'Sin materia',
+      nivelMateria: materia?.nivel ?? null,
+      tipoMateria: materia?.tipo ?? null,
+      tipoCalificacion: 'Superior' as const,
+      docente: docente
+        ? {
+            id: docente.id ?? null,
+            nombreCompleto: [docente.primerNombre, docente.primerApellido]
+              .filter(Boolean)
+              .join(' ')
+              .trim(),
+          }
+        : null,
+      quimestre1: q1,
+      quimestre2: q2,
+      final: calcularFinalSuperior(q1, q2, finalGuardado),
+    };
+  }
+
+  private validarId(id: number, nombre: string): void {
+    if (!Number.isSafeInteger(id) || id < 1) {
+      throw new BadRequestException(
+        `El ID de ${nombre} debe ser un entero mayor que cero`,
+      );
+    }
+  }
+}

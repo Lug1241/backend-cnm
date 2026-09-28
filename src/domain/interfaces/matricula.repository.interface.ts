@@ -1,4 +1,4 @@
-import { Matricula } from '../entities/matricula.entity';
+import { Matricula, NivelMatricula } from '../entities/matricula.entity';
 
 export const I_MATRICULA_REPOSITORY = 'IMatriculaRepository';
 
@@ -14,6 +14,7 @@ export interface IMatriculaRepository {
   findPeriodosByEstudiante(
     estudianteId: number,
   ): Promise<Pick<Matricula, 'id' | 'nivel' | 'periodoAcademicoId'>[]>;
+  findNivelesByPeriodo(periodoAcademicoId: number): Promise<NivelMatricula[]>;
   existeEstudiante(id: number): Promise<boolean>;
   existePeriodo(id: number): Promise<boolean>;
 }

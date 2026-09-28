@@ -21,5 +21,6 @@ import { EstudianteModule } from "src/estudiante/estudiante.module";
             useClass: InscripcionRepository,
         }
     ],
+    exports: [I_INSCRIPCION_REPOSITORY],
 })
 export class InscripcionModule {}
