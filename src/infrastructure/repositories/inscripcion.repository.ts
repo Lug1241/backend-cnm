@@ -11,131 +11,155 @@ import { Asignacion } from '@domain/entities/asignacion.entity';
 
 @Injectable()
 export class InscripcionRepository implements IInscripcionRepository {
-    constructor(
-        @InjectRepository(InscripcionOrmEntity)
-        private readonly ormRepository: Repository<InscripcionOrmEntity>
-    ) {}
+  constructor(
+    @InjectRepository(InscripcionOrmEntity)
+    private readonly ormRepository: Repository<InscripcionOrmEntity>,
+  ) {}
 
-    private toDomain(ormEntity: InscripcionOrmEntity): Inscripcion {
-        return new Inscripcion({
-            id: ormEntity.id,
-            asignacion: ormEntity.asignacion
-                ? new Asignacion({
-                    id: ormEntity.asignacion.id,
-                    paralelo: ormEntity.asignacion.paralelo,
-                    horaInicio: ormEntity.asignacion.horaInicio,
-                    horaFin: ormEntity.asignacion.horaFin,
-                    hora1: ormEntity.asignacion.hora1,
-                    hora2: ormEntity.asignacion.hora2,
-                    dias: ormEntity.asignacion.dias,
-                    cupos: ormEntity.asignacion.cupos,
-                    docente: ormEntity.asignacion.docente,
-                    materia: ormEntity.asignacion.materia,
-                    periodoAcademico: ormEntity.asignacion.periodoAcademico,
-                })
-                : undefined as any,
-            matricula: ormEntity.matricula as any,
-            createdAt: ormEntity.createdAt,
-            updatedAt: ormEntity.updatedAt
-        });
-    }
+  private toDomain(ormEntity: InscripcionOrmEntity): Inscripcion {
+    return new Inscripcion({
+      id: ormEntity.id,
+      asignacion: ormEntity.asignacion
+        ? new Asignacion({
+            id: ormEntity.asignacion.id,
+            paralelo: ormEntity.asignacion.paralelo,
+            horaInicio: ormEntity.asignacion.horaInicio,
+            horaFin: ormEntity.asignacion.horaFin,
+            hora1: ormEntity.asignacion.hora1,
+            hora2: ormEntity.asignacion.hora2,
+            dias: ormEntity.asignacion.dias,
+            cupos: ormEntity.asignacion.cupos,
+            docente: ormEntity.asignacion.docente,
+            materia: ormEntity.asignacion.materia,
+            periodoAcademico: ormEntity.asignacion.periodoAcademico,
+          })
+        : undefined,
+      matricula: ormEntity.matricula,
+      createdAt: ormEntity.createdAt,
+      updatedAt: ormEntity.updatedAt,
+    });
+  }
 
-    async create(inscripcion: Inscripcion): Promise<Inscripcion> {
-        const ormEntity = this.ormRepository.create({
-            asignacion: { id: inscripcion.asignacion.id },
-            matricula: { id: inscripcion.matricula.id }
-        });
-        const saved = await this.ormRepository.save(ormEntity);
-        return this.toDomain(saved);
-    }
+  async create(inscripcion: Inscripcion): Promise<Inscripcion> {
+    const ormEntity = this.ormRepository.create({
+      asignacion: { id: inscripcion.asignacion.id },
+      matricula: { id: inscripcion.matricula.id },
+    });
+    const saved = await this.ormRepository.save(ormEntity);
+    return this.toDomain(saved);
+  }
 
-    async update(id: number, inscripcion: Partial<Inscripcion>): Promise<boolean> {
-        const updateData: any = {};
-        if (inscripcion.asignacion) updateData.asignacion = { id: inscripcion.asignacion.id };
-        if (inscripcion.matricula) updateData.matricula = { id: inscripcion.matricula.id };
+  async update(
+    id: number,
+    inscripcion: Partial<Inscripcion>,
+  ): Promise<boolean> {
+    const updateData: any = {};
+    if (inscripcion.asignacion)
+      updateData.asignacion = { id: inscripcion.asignacion.id };
+    if (inscripcion.matricula)
+      updateData.matricula = { id: inscripcion.matricula.id };
 
-        const result = await this.ormRepository.update(id, updateData);
-        return (result.affected ?? 0) > 0;
-    }
+    const result = await this.ormRepository.update(id, updateData);
+    return (result.affected ?? 0) > 0;
+  }
 
-    async findById(id: number): Promise<Inscripcion | null> {
-        const ormEntity = await this.ormRepository.findOne({
-            where: { id },
-            relations: {
-                asignacion: true,
-                matricula: true
-            }
-        });
-        return ormEntity ? this.toDomain(ormEntity) : null;
-    }
+  async findById(id: number): Promise<Inscripcion | null> {
+    const ormEntity = await this.ormRepository.findOne({
+      where: { id },
+      relations: {
+        asignacion: true,
+        matricula: true,
+      },
+    });
+    return ormEntity ? this.toDomain(ormEntity) : null;
+  }
 
-    async delete(id: number): Promise<void> {
-        await this.ormRepository.delete(id);
-    }
+  async delete(id: number): Promise<void> {
+    await this.ormRepository.delete(id);
+  }
 
-    async findByAsignacion(idAsignacion: number): Promise<Inscripcion[]> {
-        const ormEntities = await this.ormRepository.find({
-            where: {asignacion: { id: idAsignacion } },
-            relations: {
-                matricula: true,
-            },
-        })
-        
-        return ormEntities.map(e => this.toDomain(e)); 
-    }
+  async findByAsignacion(idAsignacion: number): Promise<Inscripcion[]> {
+    const ormEntities = await this.ormRepository.find({
+      where: { asignacion: { id: idAsignacion } },
+      relations: {
+        matricula: true,
+        asignacion: {
+          materia: true,
+          docente: true,
+          periodoAcademico: true,
+        },
+      },
+    });
 
-    async findByMatricula(idMatricula: number): Promise<Inscripcion[]> {
-        const ormEntities = await this.ormRepository.find({
-            where: { matricula: { id: idMatricula } },
-            relations: {
-                matricula: true,
-                asignacion: {
-                    materia: true,
-                    docente: true,
-                }
-            }
-        });
-        return ormEntities.map(e => this.toDomain(e));
-    }
+    return ormEntities.map((e) => this.toDomain(e));
+  }
 
-    async findIndividualesByDocente(
-        idDocente: string, 
-        periodo: PeriodoAcademico, 
-        skip: number, 
-        limit: number
-    ): Promise<{ data: Inscripcion[]; totalRows: number }> {
-        const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('inscripcion')
-            .leftJoinAndSelect('inscripcion.asignacion', 'asignacion')
-            .leftJoinAndSelect('asignacion.materia', 'materia')
-            .leftJoinAndSelect('asignacion.docente', 'docente')
-            .leftJoinAndSelect('inscripcion.matricula', 'matricula')
-            .leftJoinAndSelect('matricula.estudiante', 'estudiante')
-            .where('docente.nroCedula = :idDocente', { idDocente }) 
-            .andWhere('materia.tipo = :tipo', { tipo: 'individual' })
-            .andWhere('matricula.periodoAcademico = :idPeriodo', { idPeriodo: periodo.id })
-            .skip(skip)
-            .take(limit)
-            .getManyAndCount();
+  async findByMatricula(idMatricula: number): Promise<Inscripcion[]> {
+    const ormEntities = await this.ormRepository.find({
+      where: { matricula: { id: idMatricula } },
+      relations: {
+        matricula: true,
+        asignacion: {
+          materia: true,
+          docente: true,
+        },
+      },
+    });
+    return ormEntities.map((e) => this.toDomain(e));
+  }
 
-        return { data: ormEntities.map(e => this.toDomain(e)), totalRows };
-    }
+  async findIndividualesByDocente(
+    idDocente: string,
+    periodo: PeriodoAcademico,
+    skip: number,
+    limit: number,
+  ): Promise<{ data: Inscripcion[]; totalRows: number }> {
+    const [ormEntities, totalRows] = await this.ormRepository
+      .createQueryBuilder('inscripcion')
+      .leftJoinAndSelect('inscripcion.asignacion', 'asignacion')
+      .leftJoinAndSelect('asignacion.materia', 'materia')
+      .leftJoinAndSelect('asignacion.docente', 'docente')
+      .leftJoinAndSelect('inscripcion.matricula', 'matricula')
+      .leftJoinAndSelect('matricula.estudiante', 'estudiante')
+      .where('docente.nroCedula = :idDocente', { idDocente })
+      .andWhere('materia.tipo = :tipo', { tipo: 'individual' })
+      .andWhere('matricula.periodoAcademico = :idPeriodo', {
+        idPeriodo: periodo.id,
+      })
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
-    async findIndividualesByNivel(
-        nivel: NivelMateria[], 
-        periodo: PeriodoAcademico, 
-        skip: number, 
-        limit: number
-    ): Promise<{ data: Inscripcion[]; totalRows: number }> {
-        const [ormEntities, totalRows] = await this.ormRepository.createQueryBuilder('inscripcion')
-            .innerJoinAndSelect('inscripcion.asignacion', 'asignacion')
-            .innerJoinAndSelect('asignacion.materia', 'materia', 'materia.nivel IN (:...nivel) AND materia.tipo = :tipo', { nivel, tipo: 'individual'})
-            .leftJoinAndSelect('asignacion.docente', 'docente')
-            .innerJoinAndSelect('inscripcion.matricula', 'matricula', 'matricula.periodoAcademico = :idPeriodo', { idPeriodo: periodo.id })
-            .leftJoinAndSelect('matricula.estudiante', 'estudiante')
-            .skip(skip)
-            .take(limit)
-            .getManyAndCount();
+    return { data: ormEntities.map((e) => this.toDomain(e)), totalRows };
+  }
 
-        return { data: ormEntities.map(e => this.toDomain(e)), totalRows };
-    }
+  async findIndividualesByNivel(
+    nivel: NivelMateria[],
+    periodo: PeriodoAcademico,
+    skip: number,
+    limit: number,
+  ): Promise<{ data: Inscripcion[]; totalRows: number }> {
+    const [ormEntities, totalRows] = await this.ormRepository
+      .createQueryBuilder('inscripcion')
+      .innerJoinAndSelect('inscripcion.asignacion', 'asignacion')
+      .innerJoinAndSelect(
+        'asignacion.materia',
+        'materia',
+        'materia.nivel IN (:...nivel) AND materia.tipo = :tipo',
+        { nivel, tipo: 'individual' },
+      )
+      .leftJoinAndSelect('asignacion.docente', 'docente')
+      .innerJoinAndSelect(
+        'inscripcion.matricula',
+        'matricula',
+        'matricula.periodoAcademico = :idPeriodo',
+        { idPeriodo: periodo.id },
+      )
+      .leftJoinAndSelect('matricula.estudiante', 'estudiante')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return { data: ormEntities.map((e) => this.toDomain(e)), totalRows };
+  }
 }

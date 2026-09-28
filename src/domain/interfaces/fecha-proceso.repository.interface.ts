@@ -4,7 +4,7 @@ export const I_FECHA_PROCESO_REPOSITORY = 'IFechaProcesoRepository';
 
 export interface IFechaProcesoRepository {
   create(fechaProceso: Partial<FechaProceso>): Promise<FechaProceso>;
-  findById(id: number): Promise<FechaProceso | null>;
+  findById(id: number, proceso?: TipoProceso): Promise<FechaProceso | null>;
   findAll(
     page: number,
     limit: number,
@@ -14,7 +14,7 @@ export interface IFechaProcesoRepository {
     id: number,
     fechaProceso: Partial<FechaProceso>,
   ): Promise<FechaProceso>;
-  delete(id: number): Promise<void>;
+  delete(id: number, proceso?: TipoProceso): Promise<void>;
   findLatestByProceso(proceso: TipoProceso): Promise<FechaProceso | null>;
   existsByProcesoAndDescripcion(
     proceso: TipoProceso,
