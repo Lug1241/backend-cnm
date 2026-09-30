@@ -1,3 +1,5 @@
+import { type PeriodoAcademico } from './periodo-academico.entity';
+
 import { type Estudiante } from './estudiante.entity';
 
 import { type PeriodoAcademico } from './periodo-academico.entity';
@@ -28,6 +30,7 @@ export class Matricula {
   estado!: EstadoMatricula;
   estudianteId!: number;
   periodoAcademicoId!: number;
+  periodoAcademico?: PeriodoAcademico;
   estudiante?: Estudiante;
   periodoAcademico?: PeriodoAcademico;
   createdAt?: Date;

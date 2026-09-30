@@ -1,16 +1,16 @@
-import { 
-    Controller, 
-    Get, 
-    Post, 
-    Put, 
-    Delete, 
-    Body, 
-    Param, 
-    Query, 
-    ParseIntPipe,
-    DefaultValuePipe, 
-    Req,
- UseGuards,
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  ParseIntPipe,
+  DefaultValuePipe,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { InscripcionService } from '@application/services/inscripcion.service';
 import { CreateInscripcionDto } from '@application/dtos/inscripcion/create-inscripcion.dto';
@@ -95,23 +95,6 @@ export class InscripcionController {
     );
   }
 
-    @Get('obtener/docente/:docente/:periodo')
-    async getInscripcionesIndividualesDocente(
-        @Param('docente') docente: string,
-        @Param('periodo', ParseIntPipe) periodo: number,
-        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    ) {
-        if (page < 1 || limit < 1) {
-            throw new BadRequestException('La página y el límite deben ser mayores que cero');
-        }
-        return await this.inscripcionService.getInscripcionesIndividualesDocente(
-            docente, 
-            periodo, 
-            page,
-            limit,
-        );
-    }
   @Get('obtener/docente/:docente/:periodo')
   async getInscripcionesIndividualesDocente(
     @Param('docente') docente: string,

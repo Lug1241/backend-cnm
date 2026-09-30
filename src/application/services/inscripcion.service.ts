@@ -24,7 +24,6 @@ import { DiaSemana } from '@domain/entities/asignacion.entity';
 import { Matricula } from '@domain/entities/matricula.entity';
 import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import { NivelMateria } from '@domain/entities/materia.entity';
-import { DataSource, EntityManager } from 'typeorm';
 import { MatriculaService } from './matricula.service';
 
 @Injectable()
@@ -36,11 +35,6 @@ export class InscripcionService {
     @Inject(I_ASIGNACION_REPOSITORY)
     private readonly asignacionRepository: IAsignacionRepository,
 
-        @Inject(I_ESTUDIANTE_REPOSITORY)
-        private readonly estudianteRepository: IEstudianteRepository,
-
-        private readonly dataSource: DataSource,
-    ) {}
     @Inject(I_ESTUDIANTE_REPOSITORY)
     private readonly estudianteRepository: IEstudianteRepository,
 
@@ -101,12 +95,6 @@ export class InscripcionService {
       );
     }
 
-        let idInscripcion: number;
-        await this.dataSource.transaction(async (manager) => {
-            const cupo = await this.descontarCupo(manager, dto.ID_asignacion);
-            if (!cupo) {
-                throw new BadRequestException('No hay cupos disponibles');
-            }
     const cupoDescontado = await this.asignacionRepository.decrementarCupo(
       dto.ID_asignacion,
     );
@@ -114,16 +102,6 @@ export class InscripcionService {
       throw new BadRequestException('No hay cupos disponibles');
     }
 
-            const result = await manager.query(
-                'INSERT INTO inscripciones (ID_asignacion, ID_matricula) VALUES (?, ?)',
-                [dto.ID_asignacion, dto.ID_matricula],
-            );
-            idInscripcion = result.insertId;
-        });
-
-        return (await this.inscripcionRepository.findById(idInscripcion!))!;
-
-    }
     try {
       return await this.inscripcionRepository.create(nuevaInscripcion);
     } catch (error) {
@@ -147,21 +125,6 @@ export class InscripcionService {
     const oldAsignacionId = inscripcionActual.asignacion?.id;
     const newAsignacionId = dto.ID_asignacion;
 
-        if ((!newAsignacionId && !dto.ID_matricula) || oldAsignacionId === newAsignacionId) {
-            let updated = false;
-            await this.dataSource.transaction(async (manager) => {
-                const result = await manager.query(
-                    'UPDATE inscripciones SET ID_matricula = ? WHERE ID = ?',
-                    [dto.ID_matricula ?? inscripcionActual.matricula.id, id],
-                );
-                updated = (result.affected ?? 0) > 0;
-            });
-            return updated;
-        }
-
-        if (!newAsignacionId) {
-            throw new BadRequestException('Debe seleccionar una asignación válida');
-        }
     if (!newAsignacionId || oldAsignacionId === newAsignacionId) {
       return await this.inscripcionRepository.update(id, {
         matricula: dto.ID_matricula
@@ -187,12 +150,6 @@ export class InscripcionService {
       );
     }
 
-        let updated = false;
-        await this.dataSource.transaction(async (manager) => {
-            const cupo = await this.descontarCupo(manager, newAsignacionId);
-            if (!cupo) {
-                throw new BadRequestException('No hay cupos disponibles en la nueva asignación');
-            }
     const cupoDescontado =
       await this.asignacionRepository.decrementarCupo(newAsignacionId);
     if (!cupoDescontado) {
@@ -201,11 +158,6 @@ export class InscripcionService {
       );
     }
 
-            const result = await manager.query(
-                'UPDATE inscripciones SET ID_asignacion = ?, ID_matricula = ? WHERE ID = ?',
-                [newAsignacionId, dto.ID_matricula ?? inscripcionActual.matricula.id, id],
-            );
-            updated = (result.affected ?? 0) > 0;
     try {
       const result = await this.inscripcionRepository.update(id, {
         asignacion: { id: newAsignacionId } as Asignacion,
@@ -214,16 +166,6 @@ export class InscripcionService {
           : undefined,
       });
 
-            if (oldAsignacionId) {
-                await manager.query(
-                    'UPDATE asignaciones SET cupos = cupos + 1 WHERE ID = ?',
-                    [oldAsignacionId],
-                );
-            }
-        });
-
-        return updated;
-    }
       if (oldAsignacionId) {
         await this.asignacionRepository.incrementarCupo(oldAsignacionId);
       }
@@ -264,24 +206,8 @@ export class InscripcionService {
       );
     }
 
-        await this.dataSource.transaction(async (manager) => {
-            if (await this.tieneCalificaciones(manager, id)) {
-                throw new BadRequestException(
-                    'No se puede eliminar la inscripción porque tiene calificaciones registradas.',
-                );
-            }
-
-            await manager.query('DELETE FROM inscripciones WHERE ID = ?', [id]);
     await this.inscripcionRepository.delete(id);
 
-            if (inscripcion.asignacion?.id) {
-                await manager.query(
-                    'UPDATE asignaciones SET cupos = cupos + 1 WHERE ID = ?',
-                    [inscripcion.asignacion.id],
-                );
-            }
-        });
-    }
     if (inscripcion.asignacion?.id) {
       await this.asignacionRepository.incrementarCupo(
         inscripcion.asignacion.id,
@@ -449,23 +375,6 @@ export class InscripcionService {
 
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
 
-        const rows = data
-            .filter((insc) => insc.asignacion)
-            .map((insc) => {
-                const matricula = insc.matricula as Matricula;
-                return {
-                    ...insc.asignacion,
-                    estudiante: matricula?.estudiante,
-                };
-            });
-
-        return {
-            data: rows,
-            totalRows,
-            totalPages,
-            currentPage: page,
-        };
-    }
     return {
       data,
       totalRows,
@@ -507,24 +416,6 @@ export class InscripcionService {
 
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
 
-      const rows = data
-        .filter((insc) => insc.asignacion)
-        .map((insc) => {
-          const matricula = insc.matricula as Matricula;
-          return {
-            ...insc.asignacion,
-            estudiante: matricula?.estudiante,
-          };
-        });
-
-      return {
-        data: rows,
-        totalRows,
-        totalPages,
-        currentPage: page,
-      };
-    }
-
     return {
       data,
       totalRows,
@@ -536,36 +427,6 @@ export class InscripcionService {
   private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
     if (!nombreMateria) return false;
 
-        return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(nombreMateria);
-    }
-
-    private async descontarCupo(manager: EntityManager, idAsignacion: number): Promise<boolean> {
-        const result = await manager.query(
-            'UPDATE asignaciones SET cupos = cupos - 1 WHERE ID = ? AND cupos > 0',
-            [idAsignacion],
-        );
-        return (result.affected ?? 0) > 0;
-    }
-
-    private async tieneCalificaciones(manager: EntityManager, idInscripcion: number): Promise<boolean> {
-        const tablas = [
-            'calificaciones_finales',
-            'calificaciones_parciales',
-            'calificaciones_parciales_be',
-            'calificaciones_quimestrales',
-            'calificaciones_quimestrales_be',
-        ];
-
-        for (const tabla of tablas) {
-            const rows = await manager.query(
-                `SELECT 1 FROM ${tabla} WHERE ID_inscripcion = ? LIMIT 1`,
-                [idInscripcion],
-            );
-            if (rows.length > 0) return true;
-        }
-
-        return false;
-    }
     return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(
       nombreMateria,
     );
