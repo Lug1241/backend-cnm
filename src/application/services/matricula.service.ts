@@ -5,19 +5,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Matricula } from '@domain/entities/matricula.entity';
+import { Matricula, NivelMatricula } from '@domain/entities/matricula.entity';
 import {
   I_MATRICULA_REPOSITORY,
   type IMatriculaRepository,
 } from '@domain/interfaces/matricula.repository.interface';
 import { CreateMatriculaDto } from '../dtos/matricula/create-matricula.dto';
 import { UpdateMatriculaDto } from '../dtos/matricula/update-matricula.dto';
+import { EstudianteService } from './estudiante.service';
 
 @Injectable()
 export class MatriculaService {
   constructor(
     @Inject(I_MATRICULA_REPOSITORY)
     private readonly matriculaRepository: IMatriculaRepository,
+    private readonly estudianteService: EstudianteService,
   ) {}
 
   async create(dto: CreateMatriculaDto): Promise<Matricula> {
@@ -91,6 +93,50 @@ export class MatriculaService {
       );
     }
     return periodos;
+  }
+
+  async getPeriodosByEstudianteForRepresentante(
+    estudianteId: number,
+    representanteCedula: string,
+  ) {
+    this.validarId(estudianteId);
+    await this.estudianteService.verificarPertenenciaRepresentante(
+      estudianteId,
+      representanteCedula,
+    );
+
+    return this.matriculaRepository.findPeriodosByEstudiante(estudianteId);
+  }
+
+  async getByIdForRepresentante(
+    id: number,
+    representanteCedula: string,
+  ): Promise<Matricula> {
+    const matricula = await this.getById(id);
+    await this.estudianteService.verificarPertenenciaRepresentante(
+      matricula.estudianteId,
+      representanteCedula,
+    );
+
+    return matricula;
+  }
+
+  async getNivelesByPeriodo(
+    periodoAcademicoId: number,
+  ): Promise<NivelMatricula[]> {
+    this.validarId(periodoAcademicoId);
+
+    if (!(await this.matriculaRepository.existePeriodo(periodoAcademicoId))) {
+      throw new NotFoundException('Período académico no encontrado');
+    }
+
+    const niveles =
+      await this.matriculaRepository.findNivelesByPeriodo(periodoAcademicoId);
+    const ordenAcademico = Object.values(NivelMatricula);
+
+    return [...new Set(niveles)].sort(
+      (a, b) => ordenAcademico.indexOf(a) - ordenAcademico.indexOf(b),
+    );
   }
 
   async delete(id: number): Promise<Matricula> {

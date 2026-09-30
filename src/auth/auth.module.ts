@@ -9,6 +9,8 @@ import { DocenteModule } from '../docente/docente.module';
 import { RepresentanteModule } from '../representante/representante.module';
 
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { SecretariaGuard } from './secretaria.guard';
+import { RepresentanteGuard } from './representante.guard';
 
 @Module({
   imports: [
@@ -30,8 +32,8 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
   controllers: [AuthController],
 
-  providers: [AuthService, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, SecretariaGuard, RepresentanteGuard],
 
-  exports: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, SecretariaGuard, RepresentanteGuard],
 })
 export class AuthModule {}
