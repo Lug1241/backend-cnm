@@ -33,6 +33,53 @@ export class InscripcionController {
   constructor(private readonly inscripcionService: InscripcionService) {}
 
   @Post('crear')
+  async createInscripcion(@Body() dto: CreateInscripcionDto, @Req() req: any) {
+    const rolUsuario = req.user?.rol || '';
+    return await this.inscripcionService.create(dto, rolUsuario);
+  }
+
+  @Put('editar/:id')
+  async updateInscripcion(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateInscripcionDto,
+    @Req() req: any,
+  ) {
+    const rolUsuario = req.user?.rol || '';
+    const result = await this.inscripcionService.update(id, dto, rolUsuario);
+    return { success: result };
+  }
+
+  @Get('obtener/:id')
+  async getInscripcion(@Param('id', ParseIntPipe) id: number) {
+    return await this.inscripcionService.getById(id);
+  }
+
+  @Delete('eliminar/:id')
+  async deleteInscripcion(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
+  ) {
+    const rolUsuario = req.user?.rol || '';
+    await this.inscripcionService.delete(id, rolUsuario);
+    return { message: 'Inscripción eliminada correctamente' };
+  }
+
+  @Get('asignacion/:id_asignacion')
+  async getEstudiantesPorAsignacion(
+    @Param('id_asignacion', ParseIntPipe) idAsignacion: number,
+  ) {
+    return await this.inscripcionService.getEstudiantesPorAsignacion(
+      idAsignacion,
+    );
+  }
+
+  @Get('obtener/matricula/:matricula')
+  async getInscripcionesByMatricula(
+    @Param('matricula', ParseIntPipe) matricula: number,
+  ) {
+    return await this.inscripcionService.getInscripcionesByMatricula(matricula);
+
+  @Post('crear')
   async createInscripcion(
     @Body() dto: CreateInscripcionDto,
     @Req() req: RequestWithOptionalUser,

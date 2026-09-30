@@ -299,6 +299,63 @@ export class InscripcionService {
     });
   }
 
+  async getInscripcionesIndividualesDocente(
+    idDocente: string,
+    idPeriodo: number,
+
+        return {
+          idInscripcion: insc.id,
+          idEstudiante: estudiante.id,
+          nombreCompleto,
+          nivel: insc.matricula?.nivel || '',
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) =>
+        (a?.nombreCompleto || '').localeCompare(b?.nombreCompleto || ''),
+      )
+      .map((est, index) => ({
+        nro: index + 1,
+        ...est,
+      }));
+  }
+
+  async getInscripcionesByMatricula(idMatricula: number) {
+    const inscripciones =
+      await this.inscripcionRepository.findByMatricula(idMatricula);
+
+    return inscripciones.map((inscripcion) => {
+      const asignacion = inscripcion.asignacion;
+      let rangoPorDia:
+        | Partial<Record<DiaSemana, { horaInicio: string; horaFin: string }>>
+        | undefined = undefined;
+
+      if (asignacion.dias && asignacion.dias.length === 2) {
+        const primerDia = asignacion.dias[0];
+        const segundoDia = asignacion.dias[1];
+
+        rangoPorDia = {
+          [primerDia]: {
+            horaInicio: asignacion.horaInicio,
+            horaFin: asignacion.horaFin,
+          },
+          [segundoDia]: {
+            horaInicio: asignacion.hora1,
+            horaFin: asignacion.hora2,
+          },
+        };
+      }
+
+      return {
+        ...inscripcion,
+        asignacion: {
+          ...asignacion,
+          rangoPorDia,
+        },
+      };
+    });
+  }
+
   async getHorarioByMatriculaForRepresentante(
     idMatricula: number,
     representanteCedula: string,
@@ -368,6 +425,52 @@ export class InscripcionService {
     const { data, totalRows } =
       await this.inscripcionRepository.findIndividualesByDocente(
         idDocente,
+        periodoDummy,
+        skip,
+        limit,
+      );
+
+    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+
+    return {
+      data,
+      totalRows,
+      totalPages,
+      currentPage: page,
+    };
+  }
+
+  async getInscripcionesIndividualesByNivel(
+    nivelStr: string,
+    periodoId: number,
+    page: number,
+    limit: number,
+  ) {
+    const skip = (page - 1) * limit;
+    const periodoDummy = { id: idPeriodo } as PeriodoAcademico;
+
+    const { data, totalRows } =
+      await this.inscripcionRepository.findIndividualesByDocente(
+        idDocente,
+
+    const periodoDummy = { id: periodoId } as PeriodoAcademico;
+
+    const nivelesDict: Record<string, NivelMateria[]> = {
+      BE: [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
+      BM: [NivelMateria._1RO_BM, NivelMateria._2DO_BM, NivelMateria._3RO_BM],
+      BS: [NivelMateria._1RO_BS, NivelMateria._2DO_BS, NivelMateria._3RO_BS],
+      BCH: [
+        NivelMateria._1RO_BCH,
+        NivelMateria._2DO_BCH,
+        NivelMateria._3RO_BCH,
+      ],
+    };
+
+    const niveles = nivelesDict[nivelStr] || [nivelStr as NivelMateria];
+
+    const { data, totalRows } =
+      await this.inscripcionRepository.findIndividualesByNivel(
+        niveles,
         periodoDummy,
         skip,
         limit,

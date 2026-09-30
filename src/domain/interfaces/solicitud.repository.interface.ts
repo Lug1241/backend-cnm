@@ -19,16 +19,16 @@ export interface ISolicitudRepository {
   ): Promise<Solicitud | null>;
   findAll(): Promise<Solicitud[]>;
   findByConditions(
-    id?: number, 
-    cedula?: string, 
-    fechaInicio?: string, 
-    fechaFin?: string
-  ): Promise<Solicitud[]>
+    id?: number,
+    cedula?: string,
+    fechaInicio?: string,
+    fechaFin?: string,
+  ): Promise<Solicitud[]>;
 
   findLastAcceptedByDocente(
     id?: number,
     cedula?: string,
   ): Promise<Solicitud | null>;
-  
+
   delete(id: number): Promise<void>;
 }

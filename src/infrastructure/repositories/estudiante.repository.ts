@@ -121,13 +121,14 @@ export class EstudianteRepository implements IEstudianteRepository {
   }
 
   async findByIds(ids: number[]): Promise<Estudiante[]> {
-    if(!ids || ids.length === 0) return [];
+    if (!ids || ids.length === 0) return [];
 
-    const ormEntities = await this.ormRepository.createQueryBuilder('estudiante')
+    const ormEntities = await this.ormRepository
+      .createQueryBuilder('estudiante')
       .where('estudiante.id IN (:...ids)', { ids })
       .getMany();
     return ormEntities
-      .map(e => this.toDomain(e))
+      .map((e) => this.toDomain(e))
       .filter((e): e is Estudiante => e !== null);
   }
 

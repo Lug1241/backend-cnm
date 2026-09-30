@@ -130,6 +130,24 @@ export class RepresentanteController {
     return this.actualizarRepresentante(nroCedula, updateDto, archivos);
   }
 
+  @Get('me/verificar-documentos')
+  @UseGuards(JwtAuthGuard)
+  async verificarMisDocumentos(@Req() request: AuthenticatedRequest) {
+    if (request.user.type !== 'representante') {
+      throw new ForbiddenException(
+        'Solo un representante puede verificar sus propios documentos',
+      );
+    }
+    return this.representanteService.verificarDocumentosActualizados(
+      request.user.id,
+    );
+  }
+
+  @Get('verificar-documentos/:cedula')
+  async verificarDocumentos(@Param('cedula') cedula: string) {
+    return this.representanteService.verificarDocumentosActualizados(cedula);
+  }
+
   @Get('obtener/:cedula')
   async getRepresentante(@Param('cedula') cedula: string) {
     return this.representanteService.getByCedula(cedula);

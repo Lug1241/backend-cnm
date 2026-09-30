@@ -9,9 +9,10 @@ import { DocenteModule } from 'src/docente/docente.module';
 import { PeriodoAcademicoModule } from 'src/periodo-academico/periodo-academico.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AsignacionOrmEntity]),
-  DocenteModule,
-  PeriodoAcademicoModule,
+  imports: [
+    TypeOrmModule.forFeature([AsignacionOrmEntity]),
+    DocenteModule,
+    PeriodoAcademicoModule,
   ],
   controllers: [AsignacionController],
   providers: [
@@ -21,8 +22,6 @@ import { PeriodoAcademicoModule } from 'src/periodo-academico/periodo-academico.
       useClass: AsignacionRepository,
     },
   ],
-  exports: [
-    I_ASIGNACION_REPOSITORY,
-  ],
+  exports: [I_ASIGNACION_REPOSITORY],
 })
 export class AsignacionModule {}

@@ -7,10 +7,7 @@ import { SolicitudRepository } from '@infrastructure/repositories/solicitud.repo
 import { I_SOLICITUD_REPOSITORY } from '@domain/interfaces/solicitud.repository.interface';
 import { DocenteModule } from 'src/docente/docente.module';
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([SolicitudOrmEntity]),
-    DocenteModule,
-],
+  imports: [TypeOrmModule.forFeature([SolicitudOrmEntity]), DocenteModule],
   controllers: [SolicitudController],
   providers: [
     SolicitudService,
