@@ -8,6 +8,8 @@ import {
   Post,
   Put,
   Res,
+  Req,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -15,6 +17,11 @@ import type { Response } from 'express';
 import { MatriculaService } from '@application/services/matricula.service';
 import { CreateMatriculaDto } from '@application/dtos/matricula/create-matricula.dto';
 import { UpdateMatriculaDto } from '@application/dtos/matricula/update-matricula.dto';
+import {
+  type AuthenticatedRequest,
+  JwtAuthGuard,
+} from '../auth/jwt-auth.guard';
+import { RepresentanteGuard } from '../auth/representante.guard';
 
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 @Controller('api/matriculas')
@@ -63,6 +70,18 @@ export class MatriculaController {
     @Param('estudiante', ParseIntPipe) estudianteId: number,
   ) {
     return this.matriculaService.getPeriodosByEstudiante(estudianteId);
+  }
+
+  @Get('representante/estudiante/:estudiante')
+  @UseGuards(JwtAuthGuard, RepresentanteGuard)
+  getPeriodosByEstudianteForRepresentante(
+    @Param('estudiante', ParseIntPipe) estudianteId: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.matriculaService.getPeriodosByEstudianteForRepresentante(
+      estudianteId,
+      request.user.id,
+    );
   }
 
   @Delete('eliminar/:id')

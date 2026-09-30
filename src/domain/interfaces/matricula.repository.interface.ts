@@ -11,9 +11,7 @@ export interface IMatriculaRepository {
     estudianteId: number,
     periodoAcademicoId: number,
   ): Promise<Matricula | null>;
-  findPeriodosByEstudiante(
-    estudianteId: number,
-  ): Promise<Pick<Matricula, 'id' | 'nivel' | 'periodoAcademicoId'>[]>;
+  findPeriodosByEstudiante(estudianteId: number): Promise<Matricula[]>;
   findNivelesByPeriodo(periodoAcademicoId: number): Promise<NivelMatricula[]>;
   existeEstudiante(id: number): Promise<boolean>;
   existePeriodo(id: number): Promise<boolean>;

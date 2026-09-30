@@ -160,6 +160,48 @@ export class EstudianteService {
     return estudiantes;
   }
 
+  async getPropiosByRepresentanteCedula(nroCedula: string) {
+    const estudiantes =
+      await this.estudianteRepository.findByRepresentanteCedula(nroCedula);
+
+    return estudiantes.map((estudiante) => ({
+      id: estudiante.id,
+      nroCedula: estudiante.nroCedula,
+      primerNombre: estudiante.primerNombre,
+      segundoNombre: estudiante.segundoNombre,
+      primerApellido: estudiante.primerApellido,
+      segundoApellido: estudiante.segundoApellido,
+      cedulaPdf: estudiante.cedulaPdf,
+      genero: estudiante.genero,
+      fechaNacimiento: estudiante.fechaNacimiento,
+      grupoEtnico: estudiante.grupoEtnico,
+      especialidad: estudiante.especialidad,
+      nacionalidad: estudiante.nacionalidad,
+      ier: estudiante.ier,
+      direccion: estudiante.direccion,
+      jornada: estudiante.jornada,
+      nivel: estudiante.nivel,
+      representanteCedula: estudiante.representanteCedula,
+    }));
+  }
+
+  async verificarPertenenciaRepresentante(
+    estudianteId: number,
+    representanteCedula: string,
+  ) {
+    const [estudiante] = await this.estudianteRepository.findByIds([
+      estudianteId,
+    ]);
+
+    if (!estudiante || estudiante.representanteCedula !== representanteCedula) {
+      throw new NotFoundException(
+        'No se encontró el estudiante asociado al representante',
+      );
+    }
+
+    return estudiante;
+  }
+
   async getByApellido(page: number, limit: number, search: string) {
     if (!search.trim()) {
       return {

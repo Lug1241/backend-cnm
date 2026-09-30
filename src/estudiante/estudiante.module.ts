@@ -8,6 +8,7 @@ import { EstudianteController } from './estudiante.controller';
 import { RepresentanteModule } from '../representante/representante.module';
 import { PeriodoAcademicoModule } from '../periodo-academico/periodo-academico.module';
 import { ArchivoModule } from '../archivo/archivo.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ArchivoModule } from '../archivo/archivo.module';
     RepresentanteModule,
     PeriodoAcademicoModule,
     ArchivoModule,
+    AuthModule,
   ],
   controllers: [EstudianteController],
   providers: [
@@ -24,6 +26,6 @@ import { ArchivoModule } from '../archivo/archivo.module';
       useClass: EstudianteRepository,
     },
   ],
-  exports: [I_ESTUDIANTE_REPOSITORY],
+  exports: [EstudianteService, I_ESTUDIANTE_REPOSITORY],
 })
 export class EstudianteModule {}

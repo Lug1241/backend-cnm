@@ -10,6 +10,7 @@ import { RepresentanteModule } from '../representante/representante.module';
 
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { SecretariaGuard } from './secretaria.guard';
+import { RepresentanteGuard } from './representante.guard';
 
 @Module({
   imports: [
@@ -31,8 +32,8 @@ import { SecretariaGuard } from './secretaria.guard';
 
   controllers: [AuthController],
 
-  providers: [AuthService, JwtAuthGuard, SecretariaGuard],
+  providers: [AuthService, JwtAuthGuard, SecretariaGuard, RepresentanteGuard],
 
-  exports: [AuthService, JwtAuthGuard, SecretariaGuard],
+  exports: [AuthService, JwtAuthGuard, SecretariaGuard, RepresentanteGuard],
 })
 export class AuthModule {}
