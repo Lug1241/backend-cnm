@@ -28,6 +28,14 @@ export interface IAsignacionRepository {
         grupo: NivelMateria[],
     ): Promise<{ data: Asignacion[]; totalRows: number }>;
 
+    findIndividualesPaginated(
+        skip: number,
+        limit: number,
+        search: string,
+        periodo: PeriodoAcademico,
+        nivel?: NivelMateria,
+    ): Promise<{ data: Asignacion[]; totalRows: number }>;
+
     findByPeriodo(periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number }>;
     findByDocente(docente: Docente): Promise<{ data: Asignacion[]; totalRows: number }>;
     findByMateria(

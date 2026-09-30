@@ -16,6 +16,7 @@ import { DiaSemana } from '@domain/entities/asignacion.entity';
 import { Matricula } from '@domain/entities/matricula.entity';
 import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import { NivelMateria } from '@domain/entities/materia.entity';
+import { DataSource, EntityManager } from 'typeorm';
 
 @Injectable()
 export class InscripcionService {
@@ -28,6 +29,8 @@ export class InscripcionService {
 
         @Inject(I_ESTUDIANTE_REPOSITORY)
         private readonly estudianteRepository: IEstudianteRepository,
+
+        private readonly dataSource: DataSource,
     ) {}
 
     async create(dto: CreateInscripcionDto, rolUsuario: string): Promise<Inscripcion> {
@@ -63,17 +66,21 @@ export class InscripcionService {
             throw new BadRequestException('No se puede inscribir en esta materia, administración les asignará cupo después');
         }
 
-        const cupoDescontado = await this.asignacionRepository.decrementarCupo(dto.ID_asignacion);
-        if (!cupoDescontado) {
-            throw new BadRequestException('No hay cupos disponibles');
-        }
+        let idInscripcion: number;
+        await this.dataSource.transaction(async (manager) => {
+            const cupo = await this.descontarCupo(manager, dto.ID_asignacion);
+            if (!cupo) {
+                throw new BadRequestException('No hay cupos disponibles');
+            }
 
-        try {
-            return await this.inscripcionRepository.create(nuevaInscripcion);
-        } catch (error) {
-            await this.asignacionRepository.incrementarCupo(dto.ID_asignacion);
-            throw error;
-        }
+            const result = await manager.query(
+                'INSERT INTO inscripciones (ID_asignacion, ID_matricula) VALUES (?, ?)',
+                [dto.ID_asignacion, dto.ID_matricula],
+            );
+            idInscripcion = result.insertId;
+        });
+
+        return (await this.inscripcionRepository.findById(idInscripcion!))!;
 
     }
 
@@ -86,10 +93,20 @@ export class InscripcionService {
         const oldAsignacionId = inscripcionActual.asignacion?.id;
         const newAsignacionId = dto.ID_asignacion;
 
-        if (!newAsignacionId || oldAsignacionId === newAsignacionId) {
-            return await this.inscripcionRepository.update(id, {
-                matricula: dto.ID_matricula ? { id: dto.ID_matricula } as Matricula : undefined
+        if ((!newAsignacionId && !dto.ID_matricula) || oldAsignacionId === newAsignacionId) {
+            let updated = false;
+            await this.dataSource.transaction(async (manager) => {
+                const result = await manager.query(
+                    'UPDATE inscripciones SET ID_matricula = ? WHERE ID = ?',
+                    [dto.ID_matricula ?? inscripcionActual.matricula.id, id],
+                );
+                updated = (result.affected ?? 0) > 0;
             });
+            return updated;
+        }
+
+        if (!newAsignacionId) {
+            throw new BadRequestException('Debe seleccionar una asignación válida');
         }
 
         const asignacionNueva = await this.asignacionRepository.findById(newAsignacionId);
@@ -103,27 +120,28 @@ export class InscripcionService {
             throw new BadRequestException('No se puede cambiar a esta materia, administración les asignará cupo después');
         }
 
-        const cupoDescontado = await this.asignacionRepository.decrementarCupo(newAsignacionId);
-        if (!cupoDescontado) {
-            throw new BadRequestException('No hay cupos disponibles en la nueva asignación');
-        }
-
-        try {
-            const result = await this.inscripcionRepository.update(id, {
-                asignacion: { id: newAsignacionId } as Asignacion,
-                matricula: dto.ID_matricula ? { id: dto.ID_matricula } as Matricula : undefined
-            });
-
-            if (oldAsignacionId) {
-                await this.asignacionRepository.incrementarCupo(oldAsignacionId);
+        let updated = false;
+        await this.dataSource.transaction(async (manager) => {
+            const cupo = await this.descontarCupo(manager, newAsignacionId);
+            if (!cupo) {
+                throw new BadRequestException('No hay cupos disponibles en la nueva asignación');
             }
 
-            return result;
+            const result = await manager.query(
+                'UPDATE inscripciones SET ID_asignacion = ?, ID_matricula = ? WHERE ID = ?',
+                [newAsignacionId, dto.ID_matricula ?? inscripcionActual.matricula.id, id],
+            );
+            updated = (result.affected ?? 0) > 0;
 
-        } catch (error) {
-            await this.asignacionRepository.incrementarCupo(newAsignacionId);
-            throw error;
-        }
+            if (oldAsignacionId) {
+                await manager.query(
+                    'UPDATE asignaciones SET cupos = cupos + 1 WHERE ID = ?',
+                    [oldAsignacionId],
+                );
+            }
+        });
+
+        return updated;
     }
 
     async getById(id: number): Promise<Inscripcion> {
@@ -146,11 +164,22 @@ export class InscripcionService {
             throw new BadRequestException('No se puede borrar inscripciones de materias de agrupación');
         }
 
-        await this.inscripcionRepository.delete(id);
+        await this.dataSource.transaction(async (manager) => {
+            if (await this.tieneCalificaciones(manager, id)) {
+                throw new BadRequestException(
+                    'No se puede eliminar la inscripción porque tiene calificaciones registradas.',
+                );
+            }
 
-        if (inscripcion.asignacion?.id) {
-            await this.asignacionRepository.incrementarCupo(inscripcion.asignacion.id);
-        }
+            await manager.query('DELETE FROM inscripciones WHERE ID = ?', [id]);
+
+            if (inscripcion.asignacion?.id) {
+                await manager.query(
+                    'UPDATE asignaciones SET cupos = cupos + 1 WHERE ID = ?',
+                    [inscripcion.asignacion.id],
+                );
+            }
+        });
     }
 
     async getEstudiantesPorAsignacion(idAsignacion: number) {
@@ -232,8 +261,18 @@ export class InscripcionService {
 
         const totalPages = Math.max(1, Math.ceil(totalRows / limit));
 
+        const rows = data
+            .filter((insc) => insc.asignacion)
+            .map((insc) => {
+                const matricula = insc.matricula as Matricula;
+                return {
+                    ...insc.asignacion,
+                    estudiante: matricula?.estudiante,
+                };
+            });
+
         return {
-            data,
+            data: rows,
             totalRows,
             totalPages,
             currentPage: page,
@@ -268,8 +307,18 @@ export class InscripcionService {
 
       const totalPages = Math.max(1, Math.ceil(totalRows / limit));
 
+      const rows = data
+        .filter((insc) => insc.asignacion)
+        .map((insc) => {
+          const matricula = insc.matricula as Matricula;
+          return {
+            ...insc.asignacion,
+            estudiante: matricula?.estudiante,
+          };
+        });
+
       return {
-        data,
+        data: rows,
         totalRows,
         totalPages,
         currentPage: page,
@@ -281,5 +330,33 @@ export class InscripcionService {
         if(!nombreMateria) return false;
 
         return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(nombreMateria);
+    }
+
+    private async descontarCupo(manager: EntityManager, idAsignacion: number): Promise<boolean> {
+        const result = await manager.query(
+            'UPDATE asignaciones SET cupos = cupos - 1 WHERE ID = ? AND cupos > 0',
+            [idAsignacion],
+        );
+        return (result.affected ?? 0) > 0;
+    }
+
+    private async tieneCalificaciones(manager: EntityManager, idInscripcion: number): Promise<boolean> {
+        const tablas = [
+            'calificaciones_finales',
+            'calificaciones_parciales',
+            'calificaciones_parciales_be',
+            'calificaciones_quimestrales',
+            'calificaciones_quimestrales_be',
+        ];
+
+        for (const tabla of tablas) {
+            const rows = await manager.query(
+                `SELECT 1 FROM ${tabla} WHERE ID_inscripcion = ? LIMIT 1`,
+                [idInscripcion],
+            );
+            if (rows.length > 0) return true;
+        }
+
+        return false;
     }
 }

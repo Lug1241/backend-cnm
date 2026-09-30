@@ -97,6 +97,45 @@ export class AsignacionRepository implements IAsignacionRepository {
     };
   }
 
+  async findIndividualesPaginated(
+    skip: number,
+    limit: number,
+    search: string,
+    periodo: PeriodoAcademico,
+    nivel?: NivelMateria,
+  ): Promise<{ data: Asignacion[]; totalRows: number }> {
+    const query = this.ormRepository.createQueryBuilder('asignacion')
+      .innerJoinAndSelect('asignacion.materia', 'materia')
+      .leftJoinAndSelect('asignacion.docente', 'docente')
+      .leftJoinAndSelect('asignacion.periodoAcademico', 'periodoAcademico')
+      .where('TRIM(LOWER(materia.tipo)) = :tipoMateria', { tipoMateria: 'individual' })
+      .andWhere('asignacion.periodoAcademico = :periodoId', { periodoId: periodo.id });
+
+    if (nivel) {
+      query.andWhere('materia.nivel = :nivel', { nivel });
+    }
+
+    if (search) {
+      query.andWhere(
+        '(LOWER(materia.nombre) LIKE :search OR LOWER(docente.primerNombre) LIKE :search OR LOWER(docente.primerApellido) LIKE :search)',
+        { search: `%${search.toLowerCase()}%` },
+      );
+    }
+
+    const [ormEntities, totalRows] = await query
+      .orderBy('asignacion.id', 'ASC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: ormEntities
+        .map((entity) => this.toDomain(entity))
+        .filter((entity): entity is Asignacion => entity != null),
+      totalRows,
+    };
+  }
+
   async findByPeriodo(
     periodo: PeriodoAcademico,
   ): Promise<{ data: Asignacion[]; totalRows: number }> {
