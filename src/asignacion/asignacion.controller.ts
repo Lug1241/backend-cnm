@@ -62,6 +62,21 @@ export class AsignacionController {
     return this.asignacionService.getAll(page, limit, search, periodo, grupo);
   }
 
+  @Get('obtener/individuales/:periodo')
+  async getAsignacionesIndividuales(
+    @Param('periodo', ParseIntPipe) periodo: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('search', new DefaultValuePipe('')) search: string,
+    @Query('nivel') nivel?: string,
+  ) {
+    if (page < 1 || limit < 1) {
+      throw new BadRequestException('La página y el límite deben ser mayores que cero');
+    }
+
+    return this.asignacionService.getIndividuales(page, limit, search, periodo, nivel);
+  }
+
   @Get('obtener/periodo_academico/:periodo')
   async getAsignacionesPorPeriodo(
     @Param('periodo', ParseIntPipe) periodo: number,

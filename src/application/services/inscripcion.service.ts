@@ -24,6 +24,7 @@ import { DiaSemana } from '@domain/entities/asignacion.entity';
 import { Matricula } from '@domain/entities/matricula.entity';
 import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import { NivelMateria } from '@domain/entities/materia.entity';
+import { MatriculaService } from './matricula.service';
 
 @Injectable()
 export class InscripcionService {
@@ -36,6 +37,8 @@ export class InscripcionService {
 
     @Inject(I_ESTUDIANTE_REPOSITORY)
     private readonly estudianteRepository: IEstudianteRepository,
+
+    private readonly matriculaService: MatriculaService,
   ) {}
 
   async create(
@@ -299,6 +302,120 @@ export class InscripcionService {
   async getInscripcionesIndividualesDocente(
     idDocente: string,
     idPeriodo: number,
+
+        return {
+          idInscripcion: insc.id,
+          idEstudiante: estudiante.id,
+          nombreCompleto,
+          nivel: insc.matricula?.nivel || '',
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) =>
+        (a?.nombreCompleto || '').localeCompare(b?.nombreCompleto || ''),
+      )
+      .map((est, index) => ({
+        nro: index + 1,
+        ...est,
+      }));
+  }
+
+  async getInscripcionesByMatricula(idMatricula: number) {
+    const inscripciones =
+      await this.inscripcionRepository.findByMatricula(idMatricula);
+
+    return inscripciones.map((inscripcion) => {
+      const asignacion = inscripcion.asignacion;
+      let rangoPorDia:
+        | Partial<Record<DiaSemana, { horaInicio: string; horaFin: string }>>
+        | undefined = undefined;
+
+      if (asignacion.dias && asignacion.dias.length === 2) {
+        const primerDia = asignacion.dias[0];
+        const segundoDia = asignacion.dias[1];
+
+        rangoPorDia = {
+          [primerDia]: {
+            horaInicio: asignacion.horaInicio,
+            horaFin: asignacion.horaFin,
+          },
+          [segundoDia]: {
+            horaInicio: asignacion.hora1,
+            horaFin: asignacion.hora2,
+          },
+        };
+      }
+
+      return {
+        ...inscripcion,
+        asignacion: {
+          ...asignacion,
+          rangoPorDia,
+        },
+      };
+    });
+  }
+
+  async getHorarioByMatriculaForRepresentante(
+    idMatricula: number,
+    representanteCedula: string,
+  ) {
+    const matricula = await this.matriculaService.getByIdForRepresentante(
+      idMatricula,
+      representanteCedula,
+    );
+    const inscripciones =
+      await this.inscripcionRepository.findByMatricula(idMatricula);
+    const ordenDias = Object.values(DiaSemana);
+
+    const clases = inscripciones
+      .flatMap((inscripcion) => {
+        const asignacion = inscripcion.asignacion;
+
+        return (asignacion.dias ?? []).map((dia, index) => ({
+          idInscripcion: inscripcion.id,
+          idAsignacion: asignacion.id,
+          asignatura: asignacion.materia?.nombre ?? 'Sin materia',
+          tipoMateria: asignacion.materia?.tipo ?? null,
+          paralelo: asignacion.paralelo,
+          dia,
+          horaInicio:
+            index === 1 && asignacion.hora1
+              ? asignacion.hora1
+              : asignacion.horaInicio,
+          horaFin:
+            index === 1 && asignacion.hora2
+              ? asignacion.hora2
+              : asignacion.horaFin,
+          docente: asignacion.docente
+            ? [
+                asignacion.docente.primerNombre,
+                asignacion.docente.primerApellido,
+              ]
+                .filter(Boolean)
+                .join(' ')
+                .trim()
+            : null,
+        }));
+      })
+      .sort((a, b) => {
+        const porDia = ordenDias.indexOf(a.dia) - ordenDias.indexOf(b.dia);
+        return porDia || a.horaInicio.localeCompare(b.horaInicio);
+      });
+
+    return {
+      matricula: {
+        id: matricula.id,
+        nivel: matricula.nivel,
+        periodoAcademicoId: matricula.periodoAcademicoId,
+      },
+      clases,
+    };
+  }
+
+  async getInscripcionesIndividualesDocente(
+    idDocente: string,
+    idPeriodo: number,
     page: number,
     limit: number,
   ) {
@@ -308,6 +425,52 @@ export class InscripcionService {
     const { data, totalRows } =
       await this.inscripcionRepository.findIndividualesByDocente(
         idDocente,
+        periodoDummy,
+        skip,
+        limit,
+      );
+
+    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
+
+    return {
+      data,
+      totalRows,
+      totalPages,
+      currentPage: page,
+    };
+  }
+
+  async getInscripcionesIndividualesByNivel(
+    nivelStr: string,
+    periodoId: number,
+    page: number,
+    limit: number,
+  ) {
+    const skip = (page - 1) * limit;
+    const periodoDummy = { id: idPeriodo } as PeriodoAcademico;
+
+    const { data, totalRows } =
+      await this.inscripcionRepository.findIndividualesByDocente(
+        idDocente,
+
+    const periodoDummy = { id: periodoId } as PeriodoAcademico;
+
+    const nivelesDict: Record<string, NivelMateria[]> = {
+      BE: [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
+      BM: [NivelMateria._1RO_BM, NivelMateria._2DO_BM, NivelMateria._3RO_BM],
+      BS: [NivelMateria._1RO_BS, NivelMateria._2DO_BS, NivelMateria._3RO_BS],
+      BCH: [
+        NivelMateria._1RO_BCH,
+        NivelMateria._2DO_BCH,
+        NivelMateria._3RO_BCH,
+      ],
+    };
+
+    const niveles = nivelesDict[nivelStr] || [nivelStr as NivelMateria];
+
+    const { data, totalRows } =
+      await this.inscripcionRepository.findIndividualesByNivel(
+        niveles,
         periodoDummy,
         skip,
         limit,

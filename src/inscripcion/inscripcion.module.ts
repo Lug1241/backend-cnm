@@ -7,12 +7,16 @@ import { I_INSCRIPCION_REPOSITORY } from '@domain/interfaces/inscripcion.reposit
 import { InscripcionRepository } from '@infrastructure/repositories/inscripcion.repository';
 import { AsignacionModule } from 'src/asignacion/asignacion.module';
 import { EstudianteModule } from 'src/estudiante/estudiante.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { MatriculaModule } from 'src/matricula/matricula.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([InscripcionOrmEntity]),
     AsignacionModule,
     EstudianteModule,
+    AuthModule,
+    MatriculaModule,
   ],
   controllers: [InscripcionController],
   providers: [
@@ -22,5 +26,6 @@ import { EstudianteModule } from 'src/estudiante/estudiante.module';
       useClass: InscripcionRepository,
     },
   ],
+  exports: [I_INSCRIPCION_REPOSITORY],
 })
 export class InscripcionModule {}

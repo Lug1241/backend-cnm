@@ -16,6 +16,8 @@ import {
   Res,
   NotFoundException,
   UploadedFiles,
+  Req,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { EstudianteService } from '@application/services/estudiante.service';
@@ -33,6 +35,11 @@ import {
   type ArchivosPdfSubidos,
   CarpetaArchivo,
 } from '../archivo/archivo.types';
+import {
+  type AuthenticatedRequest,
+  JwtAuthGuard,
+} from '../auth/jwt-auth.guard';
+import { RepresentanteGuard } from '../auth/representante.guard';
 
 @UsePipes(
   new ValidationPipe({
@@ -177,6 +184,14 @@ export class EstudianteController {
   @Get('representante/:cedula')
   async getEstudiantesByRepresentante(@Param('cedula') cedula: string) {
     return this.estudianteService.getByRepresentanteCedula(cedula);
+  }
+
+  @Get('representante/me/propios')
+  @UseGuards(JwtAuthGuard, RepresentanteGuard)
+  getEstudiantesPropios(@Req() request: AuthenticatedRequest) {
+    return this.estudianteService.getPropiosByRepresentanteCedula(
+      request.user.id,
+    );
   }
 
   @Get('obtenerPorApellido')

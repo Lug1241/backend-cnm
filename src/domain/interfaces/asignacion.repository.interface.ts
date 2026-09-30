@@ -51,3 +51,31 @@ export interface IAsignacionRepository {
     periodo?: number,
   ): Promise<{ data: Asignacion[]; totalRows: number }>;
 }
+    findIndividualesPaginated(
+        skip: number,
+        limit: number,
+        search: string,
+        periodo: PeriodoAcademico,
+        nivel?: NivelMateria,
+    ): Promise<{ data: Asignacion[]; totalRows: number }>;
+
+    findByPeriodo(periodo: PeriodoAcademico): Promise<{ data: Asignacion[]; totalRows: number }>;
+    findByDocente(docente: Docente): Promise<{ data: Asignacion[]; totalRows: number }>;
+    findByMateria(
+        periodo: PeriodoAcademico, 
+        nivelMateria: NivelMateria, 
+        materia: string, 
+        jornada: Jornada,
+        tipo?: TipoMateria,
+        page?: number,
+        limit?: number,
+    ): Promise<{ data: Asignacion[]; totalRows: number }>;
+    
+    findBySinMatricula(
+        skip: number,
+        limit: number,
+        idDocente?: number,
+        periodo?: number,
+    ): Promise<{ data: Asignacion[]; totalRows: number }>;
+    
+}
