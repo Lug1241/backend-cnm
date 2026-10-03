@@ -8,22 +8,6 @@ import {
   I_INSCRIPCION_REPOSITORY,
   type IInscripcionRepository,
 } from '@domain/interfaces/inscripcion.repository.interface';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import {
-  Inject,
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  I_INSCRIPCION_REPOSITORY,
-  type IInscripcionRepository,
-} from '@domain/interfaces/inscripcion.repository.interface';
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 import { CreateInscripcionDto } from '@application/dtos/inscripcion/create-inscripcion.dto';
 import { UpdateInscripcionDto } from '@application/dtos/inscripcion/update-inscripcion.dto';
 import { Inscripcion } from '@domain/entities/inscripcion.entity';
@@ -35,20 +19,6 @@ import {
   I_ESTUDIANTE_REPOSITORY,
   type IEstudianteRepository,
 } from '@domain/interfaces/estudiante.repository.interface';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import {
-  I_ASIGNACION_REPOSITORY,
-  type IAsignacionRepository,
-} from '@domain/interfaces/asignacion.repository.interface';
-import {
-  I_ESTUDIANTE_REPOSITORY,
-  type IEstudianteRepository,
-} from '@domain/interfaces/estudiante.repository.interface';
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import { DiaSemana } from '@domain/entities/asignacion.entity';
 import { Matricula } from '@domain/entities/matricula.entity';
@@ -61,24 +31,8 @@ export class InscripcionService {
   constructor(
     @Inject(I_INSCRIPCION_REPOSITORY)
     private readonly inscripcionRepository: IInscripcionRepository,
-
     @Inject(I_ASIGNACION_REPOSITORY)
     private readonly asignacionRepository: IAsignacionRepository,
-<<<<<<< HEAD
-<<<<<<< HEAD
-  constructor(
-    @Inject(I_INSCRIPCION_REPOSITORY)
-    private readonly inscripcionRepository: IInscripcionRepository,
-
-    @Inject(I_ASIGNACION_REPOSITORY)
-    private readonly asignacionRepository: IAsignacionRepository,
-
-=======
-
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
-
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     @Inject(I_ESTUDIANTE_REPOSITORY)
     private readonly estudianteRepository: IEstudianteRepository,
   ) {}
@@ -108,35 +62,11 @@ export class InscripcionService {
       asignacion: { id: dto.ID_asignacion } as Asignacion,
       matricula: { id: dto.ID_matricula } as Matricula,
     });
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const inscripcionesPrevias =
-      await this.inscripcionRepository.findByMatricula(dto.ID_matricula);
-
-    const nuevaInscripcion = new Inscripcion({
-      asignacion: { id: dto.ID_asignacion } as Asignacion,
-      matricula: { id: dto.ID_matricula } as Matricula,
-    });
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     if (nuevaInscripcion.esDuplicada(inscripcionesPrevias)) {
       throw new BadRequestException(
         'El estudiante ya está inscrito en esta materia',
       );
-<<<<<<< HEAD
-<<<<<<< HEAD
-    }
-    if (nuevaInscripcion.esDuplicada(inscripcionesPrevias)) {
-      throw new BadRequestException(
-        'El estudiante ya está inscrito en esta materia',
-      );
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     }
 
     const asignacionesPrevias = inscripcionesPrevias.map(
@@ -149,23 +79,6 @@ export class InscripcionService {
       throw new BadRequestException(
         'Inscripción no válida por cruce de horarios',
       );
-<<<<<<< HEAD
-<<<<<<< HEAD
-    }
-    const asignacionesPrevias = inscripcionesPrevias.map(
-      (insc) => insc.asignacion,
-    );
-    const conflicto = asignacionesPrevias.some((asig) =>
-      asig.tieneConflictoCon(asignacionActual),
-    );
-    if (conflicto) {
-      throw new BadRequestException(
-        'Inscripción no válida por cruce de horarios',
-      );
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     }
 
     const nombreMateria = asignacionActual.materia.nombre.toLowerCase();
@@ -177,21 +90,6 @@ export class InscripcionService {
         'No se puede inscribir en esta materia, administración les asignará cupo después',
       );
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const nombreMateria = asignacionActual.materia.nombre.toLowerCase();
-    if (
-      rolUsuario === 'representante' &&
-      this.esMateriaAgrupacion(nombreMateria)
-    ) {
-      throw new BadRequestException(
-        'No se puede inscribir en esta materia, administración les asignará cupo después',
-      );
-    }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const cupoDescontado = await this.asignacionRepository.decrementarCupo(
       dto.ID_asignacion,
@@ -199,18 +97,6 @@ export class InscripcionService {
     if (!cupoDescontado) {
       throw new BadRequestException('No hay cupos disponibles');
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const cupoDescontado = await this.asignacionRepository.decrementarCupo(
-      dto.ID_asignacion,
-    );
-    if (!cupoDescontado) {
-      throw new BadRequestException('No hay cupos disponibles');
-    }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     try {
       return await this.inscripcionRepository.create(nuevaInscripcion);
@@ -219,33 +105,7 @@ export class InscripcionService {
       throw error;
     }
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    try {
-      return await this.inscripcionRepository.create(nuevaInscripcion);
-    } catch (error) {
-      await this.asignacionRepository.incrementarCupo(dto.ID_asignacion);
-      throw error;
-    }
-  }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
-  async update(
-    id: number,
-    dto: UpdateInscripcionDto,
-    rolUsuario: string,
-  ): Promise<boolean> {
-    const inscripcionActual = await this.inscripcionRepository.findById(id);
-    if (!inscripcionActual) {
-      throw new NotFoundException(
-        'No se puede actualizar: la inscripción no existe o ya fue eliminada.',
-      );
-    }
-<<<<<<< HEAD
-<<<<<<< HEAD
   async update(
     id: number,
     dto: UpdateInscripcionDto,
@@ -260,18 +120,6 @@ export class InscripcionService {
 
     const oldAsignacionId = inscripcionActual.asignacion?.id;
     const newAsignacionId = dto.ID_asignacion;
-    const oldAsignacionId = inscripcionActual.asignacion?.id;
-    const newAsignacionId = dto.ID_asignacion;
-=======
-
-    const oldAsignacionId = inscripcionActual.asignacion?.id;
-    const newAsignacionId = dto.ID_asignacion;
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
-
-    const oldAsignacionId = inscripcionActual.asignacion?.id;
-    const newAsignacionId = dto.ID_asignacion;
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     if (!newAsignacionId || oldAsignacionId === newAsignacionId) {
       return await this.inscripcionRepository.update(id, {
@@ -280,36 +128,12 @@ export class InscripcionService {
           : undefined,
       });
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    if (!newAsignacionId || oldAsignacionId === newAsignacionId) {
-      return await this.inscripcionRepository.update(id, {
-        matricula: dto.ID_matricula
-          ? ({ id: dto.ID_matricula } as Matricula)
-          : undefined,
-      });
-    }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const asignacionNueva =
       await this.asignacionRepository.findById(newAsignacionId);
     if (!asignacionNueva) {
       throw new NotFoundException('La nueva asignación no existe');
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const asignacionNueva =
-      await this.asignacionRepository.findById(newAsignacionId);
-    if (!asignacionNueva) {
-      throw new NotFoundException('La nueva asignación no existe');
-    }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const nombreMateria = asignacionNueva.materia?.nombre?.toLowerCase() || '';
 
@@ -321,22 +145,6 @@ export class InscripcionService {
         'No se puede cambiar a esta materia, administración les asignará cupo después',
       );
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const nombreMateria = asignacionNueva.materia?.nombre?.toLowerCase() || '';
-
-    if (
-      rolUsuario === 'representante' &&
-      this.esMateriaAgrupacion(nombreMateria)
-    ) {
-      throw new BadRequestException(
-        'No se puede cambiar a esta materia, administración les asignará cupo después',
-      );
-    }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const cupoDescontado =
       await this.asignacionRepository.decrementarCupo(newAsignacionId);
@@ -345,19 +153,6 @@ export class InscripcionService {
         'No hay cupos disponibles en la nueva asignación',
       );
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const cupoDescontado =
-      await this.asignacionRepository.decrementarCupo(newAsignacionId);
-    if (!cupoDescontado) {
-      throw new BadRequestException(
-        'No hay cupos disponibles en la nueva asignación',
-      );
-    }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     try {
       const result = await this.inscripcionRepository.update(id, {
@@ -366,32 +161,10 @@ export class InscripcionService {
           ? ({ id: dto.ID_matricula } as Matricula)
           : undefined,
       });
-<<<<<<< HEAD
-<<<<<<< HEAD
-    try {
-      const result = await this.inscripcionRepository.update(id, {
-        asignacion: { id: newAsignacionId } as Asignacion,
-        matricula: dto.ID_matricula
-          ? ({ id: dto.ID_matricula } as Matricula)
-          : undefined,
-      });
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       if (oldAsignacionId) {
         await this.asignacionRepository.incrementarCupo(oldAsignacionId);
       }
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if (oldAsignacionId) {
-        await this.asignacionRepository.incrementarCupo(oldAsignacionId);
-      }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       return result;
     } catch (error) {
@@ -399,18 +172,6 @@ export class InscripcionService {
       throw error;
     }
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-      return result;
-    } catch (error) {
-      await this.asignacionRepository.incrementarCupo(newAsignacionId);
-      throw error;
-    }
-  }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getById(id: number): Promise<Inscripcion> {
     const inscripcion = await this.inscripcionRepository.findById(id);
@@ -421,21 +182,6 @@ export class InscripcionService {
     }
     return inscripcion;
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-  async getById(id: number): Promise<Inscripcion> {
-    const inscripcion = await this.inscripcionRepository.findById(id);
-    if (!inscripcion) {
-      throw new NotFoundException(
-        'No se puede consultar: la inscripción no existe o ya fue eliminada.',
-      );
-    }
-    return inscripcion;
-  }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async delete(id: number, rolUsuario: string): Promise<void> {
     const inscripcion = await this.inscripcionRepository.findById(id);
@@ -444,37 +190,9 @@ export class InscripcionService {
         'No se puede eliminar: la inscripción no existe o ya fue eliminada.',
       );
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-  async delete(id: number, rolUsuario: string): Promise<void> {
-    const inscripcion = await this.inscripcionRepository.findById(id);
-    if (!inscripcion) {
-      throw new NotFoundException(
-        'No se puede eliminar: la inscripción no existe o ya fue eliminada.',
-      );
-    }
-
-    const nombreMateria = inscripcion.asignacion?.materia?.nombre || '';
-    const nombreMateria = inscripcion.asignacion?.materia?.nombre || '';
-=======
-
-    const nombreMateria = inscripcion.asignacion?.materia?.nombre || '';
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-
-    if (
-      rolUsuario === 'representante' &&
-      this.esMateriaAgrupacion(nombreMateria)
-    ) {
-      throw new BadRequestException(
-        'No se puede borrar inscripciones de materias de agrupación',
-      );
-    }
-<<<<<<< HEAD
-=======
 
     const nombreMateria = inscripcion.asignacion?.materia?.nombre || '';
 
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     if (
       rolUsuario === 'representante' &&
       this.esMateriaAgrupacion(nombreMateria)
@@ -485,14 +203,6 @@ export class InscripcionService {
     }
 
     await this.inscripcionRepository.delete(id);
-<<<<<<< HEAD
-    await this.inscripcionRepository.delete(id);
-=======
-
-    await this.inscripcionRepository.delete(id);
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     if (inscripcion.asignacion?.id) {
       await this.asignacionRepository.incrementarCupo(
@@ -500,38 +210,12 @@ export class InscripcionService {
       );
     }
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    if (inscripcion.asignacion?.id) {
-      await this.asignacionRepository.incrementarCupo(
-        inscripcion.asignacion.id,
-      );
-    }
-  }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getEstudiantesPorAsignacion(idAsignacion: number) {
     const inscripciones =
       await this.inscripcionRepository.findByAsignacion(idAsignacion);
-<<<<<<< HEAD
-<<<<<<< HEAD
-  async getEstudiantesPorAsignacion(idAsignacion: number) {
-    const inscripciones =
-      await this.inscripcionRepository.findByAsignacion(idAsignacion);
 
     if (!inscripciones.length) return [];
-    if (!inscripciones.length) return [];
-=======
-
-    if (!inscripciones.length) return [];
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
-
-    if (!inscripciones.length) return [];
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const idsEstudiantes = [
       ...new Set(
@@ -540,19 +224,6 @@ export class InscripcionService {
     ];
     const estudiantesData =
       await this.estudianteRepository.findByIds(idsEstudiantes);
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const idsEstudiantes = [
-      ...new Set(
-        inscripciones.map((i) => i.matricula?.estudianteId).filter(Boolean),
-      ),
-    ];
-    const estudiantesData =
-      await this.estudianteRepository.findByIds(idsEstudiantes);
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return inscripciones
       .map((insc) => {
@@ -560,18 +231,6 @@ export class InscripcionService {
           (e) => e.id === insc.matricula?.estudianteId,
         );
         if (!estudiante) return null;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    return inscripciones
-      .map((insc) => {
-        const estudiante = estudiantesData.find(
-          (e) => e.id === insc.matricula?.estudianteId,
-        );
-        if (!estudiante) return null;
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
         const nombreCompleto = [
           estudiante.primerApellido,
@@ -582,21 +241,6 @@ export class InscripcionService {
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        const nombreCompleto = [
-          estudiante.primerApellido,
-          estudiante.segundoApellido ?? '',
-          estudiante.primerNombre,
-          estudiante.segundoNombre ?? '',
-        ]
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
         return {
           idInscripcion: insc.id,
@@ -714,158 +358,16 @@ export class InscripcionService {
         ...estudiante,
       }));
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-        return {
-          idInscripcion: insc.id,
-          idEstudiante: estudiante.id,
-          nombreCompleto,
-          nivel: insc.matricula?.nivel || '',
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) =>
-        (a?.nombreCompleto || '').localeCompare(b?.nombreCompleto || ''),
-      )
-      .map((est, index) => ({
-        nro: index + 1,
-        ...est,
-      }));
-  }
-
-  async getEstudiantesPorAsignaciones(idsAsignacion: number[]) {
-    const grupos = await Promise.all(
-      idsAsignacion.map(async (idAsignacion) => ({
-        idAsignacion,
-        inscripciones:
-          await this.inscripcionRepository.findByAsignacion(idAsignacion),
-      })),
-    );
-
-    const idsEstudiantes = [
-      ...new Set(
-        grupos
-          .flatMap(({ inscripciones }) => inscripciones)
-          .map((inscripcion) => inscripcion.matricula?.estudianteId)
-          .filter((id): id is number => typeof id === 'number'),
-      ),
-    ];
-
-    if (idsEstudiantes.length === 0) {
-      return [];
-    }
-
-    const estudiantesData =
-      await this.estudianteRepository.findByIds(idsEstudiantes);
-
-    const estudiantesPorId = new Map(
-      estudiantesData.map((estudiante) => [estudiante.id, estudiante]),
-    );
-
-    const agrupados = new Map<
-      number,
-      {
-        idEstudiante: number;
-        nombreCompleto: string;
-        nivel: string;
-        idAsignaciones: number[];
-        idInscripciones: number[];
-      }
-    >();
-
-    for (const { idAsignacion, inscripciones } of grupos) {
-      for (const inscripcion of inscripciones) {
-        const idEstudiante = inscripcion.matricula?.estudianteId;
-
-        if (typeof idEstudiante !== 'number') {
-          continue;
-        }
-
-        const estudiante = estudiantesPorId.get(idEstudiante);
-
-        if (!estudiante) {
-          continue;
-        }
-
-        const nombreCompleto = [
-          estudiante.primerApellido,
-          estudiante.segundoApellido ?? '',
-          estudiante.primerNombre,
-          estudiante.segundoNombre ?? '',
-        ]
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        const existente = agrupados.get(idEstudiante);
-
-        if (existente) {
-          if (!existente.idAsignaciones.includes(idAsignacion)) {
-            existente.idAsignaciones.push(idAsignacion);
-          }
-
-          if (
-            typeof inscripcion.id === 'number' &&
-            !existente.idInscripciones.includes(inscripcion.id)
-          ) {
-            existente.idInscripciones.push(inscripcion.id);
-          }
-
-          continue;
-        }
-
-        agrupados.set(idEstudiante, {
-          idEstudiante,
-          nombreCompleto,
-          nivel: inscripcion.matricula?.nivel ?? '',
-          idAsignaciones: [idAsignacion],
-          idInscripciones:
-            typeof inscripcion.id === 'number' ? [inscripcion.id] : [],
-        });
-      }
-    }
-
-    return [...agrupados.values()]
-      .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto, 'es'))
-      .map((estudiante, index) => ({
-        nro: index + 1,
-        ...estudiante,
-      }));
-  }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getInscripcionesByMatricula(idMatricula: number) {
     const inscripciones =
       await this.inscripcionRepository.findByMatricula(idMatricula);
-<<<<<<< HEAD
-<<<<<<< HEAD
-  async getInscripcionesByMatricula(idMatricula: number) {
-    const inscripciones =
-      await this.inscripcionRepository.findByMatricula(idMatricula);
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return inscripciones.map((inscripcion) => {
       const asignacion = inscripcion.asignacion;
       let rangoPorDia:
         | Partial<Record<DiaSemana, { horaInicio: string; horaFin: string }>>
         | undefined = undefined;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    return inscripciones.map((inscripcion) => {
-      const asignacion = inscripcion.asignacion;
-      let rangoPorDia:
-        | Partial<Record<DiaSemana, { horaInicio: string; horaFin: string }>>
-        | undefined = undefined;
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       if (asignacion.dias && asignacion.dias.length === 2) {
         const primerDia = asignacion.dias[0];
@@ -882,27 +384,6 @@ export class InscripcionService {
           },
         };
       }
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if (asignacion.dias && asignacion.dias.length === 2) {
-        const primerDia = asignacion.dias[0];
-        const segundoDia = asignacion.dias[1];
-
-        rangoPorDia = {
-          [primerDia]: {
-            horaInicio: asignacion.horaInicio,
-            horaFin: asignacion.horaFin,
-          },
-          [segundoDia]: {
-            horaInicio: asignacion.hora1,
-            horaFin: asignacion.hora2,
-          },
-        };
-      }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
       return {
         ...inscripcion,
@@ -922,20 +403,6 @@ export class InscripcionService {
   ) {
     const skip = (page - 1) * limit;
     const periodoDummy = { id: idPeriodo } as PeriodoAcademico;
-<<<<<<< HEAD
-<<<<<<< HEAD
-  async getInscripcionesIndividualesDocente(
-    idDocente: string,
-    idPeriodo: number,
-    page: number,
-    limit: number,
-  ) {
-    const skip = (page - 1) * limit;
-    const periodoDummy = { id: idPeriodo } as PeriodoAcademico;
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     const { data, totalRows } =
       await this.inscripcionRepository.findIndividualesByDocente(
@@ -944,26 +411,8 @@ export class InscripcionService {
         skip,
         limit,
       );
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const { data, totalRows } =
-      await this.inscripcionRepository.findIndividualesByDocente(
-        idDocente,
-        periodoDummy,
-        skip,
-        limit,
-      );
 
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
-    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
-=======
-
-    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
-
-    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return {
       data,
@@ -972,19 +421,6 @@ export class InscripcionService {
       currentPage: page,
     };
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    return {
-      data,
-      totalRows,
-      totalPages,
-      currentPage: page,
-    };
-  }
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
   async getInscripcionesIndividualesByNivel(
     nivelStr: string,
@@ -993,39 +429,8 @@ export class InscripcionService {
     limit: number,
   ) {
     const skip = (page - 1) * limit;
-<<<<<<< HEAD
-<<<<<<< HEAD
-  async getInscripcionesIndividualesByNivel(
-    nivelStr: string,
-    periodoId: number,
-    page: number,
-    limit: number,
-  ) {
-    const skip = (page - 1) * limit;
-
-    const periodoDummy = { id: periodoId } as PeriodoAcademico;
-    const periodoDummy = { id: periodoId } as PeriodoAcademico;
-=======
-
-    const periodoDummy = { id: periodoId } as PeriodoAcademico;
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-
-    const nivelesDict: Record<string, NivelMateria[]> = {
-      BE: [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
-      BM: [NivelMateria._1RO_BM, NivelMateria._2DO_BM, NivelMateria._3RO_BM],
-      BS: [NivelMateria._1RO_BS, NivelMateria._2DO_BS, NivelMateria._3RO_BS],
-      BCH: [
-        NivelMateria._1RO_BCH,
-        NivelMateria._2DO_BCH,
-        NivelMateria._3RO_BCH,
-      ],
-    };
-<<<<<<< HEAD
-=======
-
     const periodoDummy = { id: periodoId } as PeriodoAcademico;
 
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
     const nivelesDict: Record<string, NivelMateria[]> = {
       BE: [NivelMateria._1RO_BE, NivelMateria._2DO_BE],
       BM: [NivelMateria._1RO_BM, NivelMateria._2DO_BM, NivelMateria._3RO_BM],
@@ -1038,50 +443,17 @@ export class InscripcionService {
     };
 
     const niveles = nivelesDict[nivelStr] || [nivelStr as NivelMateria];
-<<<<<<< HEAD
-    const niveles = nivelesDict[nivelStr] || [nivelStr as NivelMateria];
 
     const { data, totalRows } =
       await this.inscripcionRepository.findIndividualesByNivel(
-    const { data, totalRows } =
-      await this.inscripcionRepository.findIndividualesByNivel(
-=======
-
-    const niveles = nivelesDict[nivelStr] || [nivelStr as NivelMateria];
-
-    const { data, totalRows } =
-      await this.inscripcionRepository.findIndividualesByNivel(
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
-
-    const { data, totalRows } =
-      await this.inscripcionRepository.findIndividualesByNivel(
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
         niveles,
         periodoDummy,
         skip,
         limit,
-<<<<<<< HEAD
-<<<<<<< HEAD
-        limit,
       );
 
     const totalPages = Math.max(1, Math.ceil(totalRows / limit));
-    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
-=======
-      );
 
-    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-
-    return {
-      data,
-      totalRows,
-      totalPages,
-      currentPage: page,
-    };
-  }
-<<<<<<< HEAD
     return {
       data,
       totalRows,
@@ -1092,45 +464,9 @@ export class InscripcionService {
 
   private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
     if (!nombreMateria) return false;
-  private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
-    if (!nombreMateria) return false;
-=======
-
-  private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
-    if (!nombreMateria) return false;
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
 
     return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(
       nombreMateria,
     );
   }
-<<<<<<< HEAD
-=======
-      );
-
-    const totalPages = Math.max(1, Math.ceil(totalRows / limit));
-
-    return {
-      data,
-      totalRows,
-      totalPages,
-      currentPage: page,
-    };
-  }
-
-  private esMateriaAgrupacion(nombreMateria: string | undefined): boolean {
-    if (!nombreMateria) return false;
-
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-    return /ensamble|coro|banda|big band|audioperceptiva|orquesta pedagógica/i.test(
-      nombreMateria,
-    );
-  }
 }
-<<<<<<< HEAD
-
-=======
-}
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
-=======
->>>>>>> 4a43d96 (feat(secretaria): agregar soporte para administracion escolar)
