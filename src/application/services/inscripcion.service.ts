@@ -62,6 +62,9 @@ export class InscripcionService {
     @Inject(I_ESTUDIANTE_REPOSITORY)
     private readonly estudianteRepository: IEstudianteRepository,
   ) {}
+    @Inject(I_ESTUDIANTE_REPOSITORY)
+    private readonly estudianteRepository: IEstudianteRepository,
+  ) {}
 
   async create(
     dto: CreateInscripcionDto,
@@ -612,6 +615,15 @@ export class InscripcionService {
         };
       }
 
+      return {
+        ...inscripcion,
+        asignacion: {
+          ...asignacion,
+          rangoPorDia,
+        },
+      };
+    });
+  }
       return {
         ...inscripcion,
         asignacion: {
