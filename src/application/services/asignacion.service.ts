@@ -2,6 +2,8 @@ import { CreateAsignacionDto } from '@application/dtos/asignacion/create-asignac
 import { UpdateAsignacionDto } from '@application/dtos/asignacion/update-asignacion.dto';
 import { Asignacion } from '@domain/entities/asignacion.entity';
 import { NivelMateria, TipoMateria } from '@domain/entities/materia.entity';
+import { Jornada } from '@domain/interfaces/asignacion.repository.interface';
+import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import {
   I_ASIGNACION_REPOSITORY,
   type IAsignacionRepository,
@@ -21,14 +23,6 @@ import {
   type IPeriodoAcademicoRepository,
 } from '@domain/interfaces/periodo-academico.repository.interface';
 import { DataSource } from 'typeorm';
-import { I_DOCENTE_REPOSITORY,
-  type IDocenteRepository
- } from '@domain/interfaces/docente.repository.interface';
-import { I_PERIODO_REPOSITORY,
-  type IPeriodoAcademicoRepository
- } from '@domain/interfaces/periodo-academico.repository.interface';
-import { dot } from 'node:test/reporters';
-import { Not } from 'typeorm/browser';
 
 @Injectable()
 export class AsignacionService {
@@ -202,10 +196,10 @@ export class AsignacionService {
         throw new NotFoundException(`Asignación con ID ${id} no encontrada`);
       }
 
-      const inscripciones = await manager.query(
+      const inscripciones = await manager.query<{ ID: number }[]>(
         'SELECT ID FROM inscripciones WHERE ID_asignacion = ?',
         [id],
-      ) as { ID: number }[];
+      );
 
       if (inscripciones.length > 0) {
         const ids = inscripciones.map(({ ID }) => ID);
@@ -219,12 +213,12 @@ export class AsignacionService {
         ];
 
         for (const tabla of tablasCalificaciones) {
-          const rows = await manager.query(
+          const rows: unknown = await manager.query(
             `SELECT 1 FROM ${tabla} WHERE ID_inscripcion IN (${placeholders}) LIMIT 1`,
             ids,
           );
 
-          if (rows.length > 0) {
+          if (Array.isArray(rows) && rows.length > 0) {
             throw new BadRequestException(
               'No se puede eliminar la asignación porque tiene calificaciones registradas.',
             );
@@ -288,7 +282,7 @@ export class AsignacionService {
     const niveles: NivelMateria[] =
       grupo && gruposDict[grupo] ? gruposDict[grupo] : [];
 
-    const periodoDummy = { id: id_periodo } as any;
+    const periodoDummy = { id: id_periodo } as PeriodoAcademico;
 
     const { data, totalRows } =
       await this.asignacionRepository.findAllPaginated(
@@ -321,13 +315,14 @@ export class AsignacionService {
       throw new BadRequestException('El nivel de materia no es válido');
     }
 
-    const { data, totalRows } = await this.asignacionRepository.findIndividualesPaginated(
-      (page - 1) * limit,
-      limit,
-      search,
-      { id: idPeriodo } as any,
-      nivel as NivelMateria | undefined,
-    );
+    const { data, totalRows } =
+      await this.asignacionRepository.findIndividualesPaginated(
+        (page - 1) * limit,
+        limit,
+        search,
+        { id: idPeriodo } as PeriodoAcademico,
+        nivel as NivelMateria | undefined,
+      );
 
     return {
       data,
@@ -338,20 +333,20 @@ export class AsignacionService {
   }
 
   async getByPeriodo(id_periodo: number) {
-    const periodoDummy = { id: id_periodo } as any;
+    const periodoDummy = { id: id_periodo } as PeriodoAcademico;
     return this.asignacionRepository.findByPeriodo(periodoDummy);
   }
 
   async getByMateria(
     id_periodo: number,
-    nivel: any,
+    nivel: NivelMateria,
     materia: string,
-    jornada: any,
+    jornada: Jornada,
     tipo?: TipoMateria,
     page = 1,
     limit = 5,
   ) {
-    const periodoDummy = { id: id_periodo } as any;
+    const periodoDummy = { id: id_periodo } as PeriodoAcademico;
     const result = await this.asignacionRepository.findByMateria(
       periodoDummy,
       nivel,

@@ -18,6 +18,45 @@ export class InscripcionRepository implements IInscripcionRepository {
     private readonly ormRepository: Repository<InscripcionOrmEntity>,
   ) {}
 
+  private toMatriculaDomain(
+    ormEntity?: MatriculaOrmEntity | null,
+  ): Matricula | undefined {
+    if (!ormEntity) return undefined;
+
+    return new Matricula({
+      id: ormEntity.id,
+      nivel: ormEntity.nivel,
+      estado: ormEntity.estado,
+      estudianteId: ormEntity.estudianteId,
+      periodoAcademicoId: ormEntity.periodoAcademicoId,
+      estudiante: ormEntity.estudiante
+        ? new Estudiante({
+            id: ormEntity.estudiante.id,
+            nroCedula: ormEntity.estudiante.nroCedula,
+            primerNombre: ormEntity.estudiante.primerNombre,
+            segundoNombre: ormEntity.estudiante.segundoNombre,
+            primerApellido: ormEntity.estudiante.primerApellido,
+            segundoApellido: ormEntity.estudiante.segundoApellido,
+            genero: ormEntity.estudiante.genero,
+            anioMatricula: ormEntity.estudiante.anioMatricula,
+            jornada: ormEntity.estudiante.jornada,
+            fechaNacimiento: ormEntity.estudiante.fechaNacimiento,
+            grupoEtnico: ormEntity.estudiante.grupoEtnico,
+            especialidad: ormEntity.estudiante.especialidad,
+            nroMatricula: ormEntity.estudiante.nroMatricula,
+            nacionalidad: ormEntity.estudiante.nacionalidad,
+            ier: ormEntity.estudiante.ier,
+            direccion: ormEntity.estudiante.direccion,
+            nivel: ormEntity.estudiante.nivel,
+            representanteId: ormEntity.estudiante.representante?.id,
+            representanteCedula: ormEntity.estudiante.representanteCedula,
+          })
+        : undefined,
+      createdAt: ormEntity.createdAt,
+      updatedAt: ormEntity.updatedAt,
+    });
+  }
+
   private toDomain(ormEntity: InscripcionOrmEntity): Inscripcion {
     return new Inscripcion({
       id: ormEntity.id,
@@ -36,71 +75,11 @@ export class InscripcionRepository implements IInscripcionRepository {
             periodoAcademico: ormEntity.asignacion.periodoAcademico,
           })
         : undefined,
-      matricula: ormEntity.matricula,
+      matricula: this.toMatriculaDomain(ormEntity.matricula),
       createdAt: ormEntity.createdAt,
       updatedAt: ormEntity.updatedAt,
     });
   }
-    private toMatriculaDomain(ormEntity?: MatriculaOrmEntity | null): Matricula | undefined {
-        if (!ormEntity) return undefined;
-
-        return new Matricula({
-            id: ormEntity.id,
-            nivel: ormEntity.nivel,
-            estado: ormEntity.estado,
-            estudianteId: ormEntity.estudianteId,
-            periodoAcademicoId: ormEntity.periodoAcademicoId,
-            estudiante: ormEntity.estudiante
-                ? new Estudiante({
-                    id: ormEntity.estudiante.id,
-                    nroCedula: ormEntity.estudiante.nroCedula,
-                    primerNombre: ormEntity.estudiante.primerNombre,
-                    segundoNombre: ormEntity.estudiante.segundoNombre,
-                    primerApellido: ormEntity.estudiante.primerApellido,
-                    segundoApellido: ormEntity.estudiante.segundoApellido,
-                    genero: ormEntity.estudiante.genero,
-                    anioMatricula: ormEntity.estudiante.anioMatricula,
-                    jornada: ormEntity.estudiante.jornada,
-                    fechaNacimiento: ormEntity.estudiante.fechaNacimiento,
-                    grupoEtnico: ormEntity.estudiante.grupoEtnico,
-                    especialidad: ormEntity.estudiante.especialidad,
-                    nroMatricula: ormEntity.estudiante.nroMatricula,
-                    nacionalidad: ormEntity.estudiante.nacionalidad,
-                    ier: ormEntity.estudiante.ier,
-                    direccion: ormEntity.estudiante.direccion,
-                    nivel: ormEntity.estudiante.nivel,
-                    representanteId: ormEntity.estudiante.representante?.id,
-                    representanteCedula: ormEntity.estudiante.representanteCedula,
-                })
-                : undefined,
-            createdAt: ormEntity.createdAt,
-            updatedAt: ormEntity.updatedAt,
-        });
-    }
-
-    private toDomain(ormEntity: InscripcionOrmEntity): Inscripcion {
-        return new Inscripcion({
-            id: ormEntity.id,
-            asignacion: ormEntity.asignacion
-                ? new Asignacion({
-                    id: ormEntity.asignacion.id,
-                    paralelo: ormEntity.asignacion.paralelo,
-                    horaInicio: ormEntity.asignacion.horaInicio,
-                    horaFin: ormEntity.asignacion.horaFin,
-                    hora1: ormEntity.asignacion.hora1,
-                    hora2: ormEntity.asignacion.hora2,
-                    dias: ormEntity.asignacion.dias,
-                    cupos: ormEntity.asignacion.cupos,
-                    docente: ormEntity.asignacion.docente,
-                    materia: ormEntity.asignacion.materia,
-                    periodoAcademico: ormEntity.asignacion.periodoAcademico,
-                })
-                : undefined as any,
-            matricula: this.toMatriculaDomain(ormEntity.matricula) as Matricula,
-            createdAt: ormEntity.createdAt,
-            updatedAt: ormEntity.updatedAt
-        });
-    }
 
   async create(inscripcion: Inscripcion): Promise<Inscripcion> {
     const ormEntity = this.ormRepository.create({
@@ -115,8 +94,11 @@ export class InscripcionRepository implements IInscripcionRepository {
     id: number,
     inscripcion: Partial<Inscripcion>,
   ): Promise<boolean> {
-    const updateData: any = {};
-    if (inscripcion.asignacion)
+    const updateData: {
+      asignacion?: { id: number };
+      matricula?: { id: number };
+    } = {};
+    if (inscripcion.asignacion?.id !== undefined)
       updateData.asignacion = { id: inscripcion.asignacion.id };
     if (inscripcion.matricula)
       updateData.matricula = { id: inscripcion.matricula.id };
@@ -145,6 +127,7 @@ export class InscripcionRepository implements IInscripcionRepository {
       where: { asignacion: { id: idAsignacion } },
       relations: {
         matricula: true,
+        asignacion: { materia: true, docente: true },
       },
     });
 

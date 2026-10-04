@@ -17,7 +17,10 @@ import {
   type IEstudianteRepository,
 } from '@domain/interfaces/estudiante.repository.interface';
 import {
+  CalificacionParcial,
+  CalificacionParcialBe,
   CalificacionesLote,
+  ParcialCalificacion,
   QuimestreCalificacion,
 } from '@domain/entities/calificacion.entity';
 import { NivelMatricula } from '@domain/entities/matricula.entity';
@@ -25,6 +28,8 @@ import { Inscripcion } from '@domain/entities/inscripcion.entity';
 import {
   calcularFinalBe,
   calcularFinalSuperior,
+  calcularParcialBe,
+  calcularParcialSuperior,
   calcularQuimestreBe,
   calcularQuimestreSuperior,
 } from '@domain/services/calificacion-calculator';
@@ -114,6 +119,83 @@ export class CalificacionService {
     };
   }
 
+  async getReporteByAsignaciones(idsAsignacion: number[]) {
+    const ids = [...new Set(idsAsignacion)];
+    if (ids.length === 0) {
+      throw new BadRequestException(
+        'Debe proporcionar al menos una asignación',
+      );
+    }
+    ids.forEach((id) => this.validarId(id, 'asignación'));
+
+    const grupos = await Promise.all(
+      ids.map((id) => this.inscripcionRepository.findByAsignacion(id)),
+    );
+    const inscripciones = grupos.flat();
+    if (inscripciones.length === 0)
+      return { asignacionIds: ids, estudiantes: [] };
+
+    const idsInscripcion = inscripciones
+      .map((inscripcion) => inscripcion.id)
+      .filter((id): id is number => typeof id === 'number');
+    const calificaciones =
+      await this.calificacionRepository.findByInscripcionIds(idsInscripcion);
+
+    const idsEstudiantes = [
+      ...new Set(
+        inscripciones
+          .map((inscripcion) => inscripcion.matricula?.estudianteId)
+          .filter((id): id is number => typeof id === 'number'),
+      ),
+    ];
+    const estudiantes =
+      await this.estudianteRepository.findByIds(idsEstudiantes);
+    const estudiantesPorId = new Map(estudiantes.map((e) => [e.id, e]));
+
+    const filas = inscripciones.map((inscripcion) => {
+      const curso = this.construirReporteCurso(inscripcion, calificaciones);
+      const idEstudiante = inscripcion.matricula?.estudianteId;
+      const estudiante =
+        typeof idEstudiante === 'number'
+          ? estudiantesPorId.get(idEstudiante)
+          : undefined;
+      const nombreCompleto = estudiante
+        ? [
+            estudiante.primerApellido,
+            estudiante.segundoApellido,
+            estudiante.primerNombre,
+            estudiante.segundoNombre,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+        : '';
+
+      return {
+        idInscripcion: curso.idInscripcion,
+        idAsignacion: curso.idAsignacion,
+        idMatricula: inscripcion.matricula?.id ?? null,
+        idEstudiante: estudiante?.id ?? idEstudiante ?? null,
+        nombreCompleto,
+        nivel: inscripcion.matricula?.nivel ?? null,
+        asignatura: curso.asignatura,
+        tipoMateria: curso.tipoMateria,
+        tipoCalificacion: curso.tipoCalificacion,
+        docente: curso.docente,
+        detalleParciales: curso.detalleParciales,
+        quimestre1: curso.quimestre1,
+        quimestre2: curso.quimestre2,
+        final: curso.final,
+      };
+    });
+
+    filas.sort((a, b) =>
+      a.nombreCompleto.localeCompare(b.nombreCompleto, 'es'),
+    );
+    return { asignacionIds: ids, estudiantes: filas };
+  }
+
   private construirReporteCurso(
     inscripcion: Inscripcion,
     calificaciones: CalificacionesLote,
@@ -170,6 +252,32 @@ export class CalificacionService {
                 .trim(),
             }
           : null,
+        detalleParciales: {
+          q1: {
+            p1: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q1,
+              ParcialCalificacion.P1,
+            ),
+            p2: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q1,
+              ParcialCalificacion.P2,
+            ),
+          },
+          q2: {
+            p1: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q2,
+              ParcialCalificacion.P1,
+            ),
+            p2: this.construirDetalleParcialBe(
+              parciales,
+              QuimestreCalificacion.Q2,
+              ParcialCalificacion.P2,
+            ),
+          },
+        },
         quimestre1: q1,
         quimestre2: q2,
         final: calcularFinalBe(q1, q2),
@@ -213,9 +321,82 @@ export class CalificacionService {
               .trim(),
           }
         : null,
+      detalleParciales: {
+        q1: {
+          p1: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q1,
+            ParcialCalificacion.P1,
+          ),
+          p2: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q1,
+            ParcialCalificacion.P2,
+          ),
+        },
+        q2: {
+          p1: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q2,
+            ParcialCalificacion.P1,
+          ),
+          p2: this.construirDetalleParcialSuperior(
+            parciales,
+            QuimestreCalificacion.Q2,
+            ParcialCalificacion.P2,
+          ),
+        },
+      },
       quimestre1: q1,
       quimestre2: q2,
       final: calcularFinalSuperior(q1, q2, finalGuardado),
+    };
+  }
+
+  private construirDetalleParcialSuperior(
+    parciales: CalificacionParcial[],
+    quimestre: QuimestreCalificacion,
+    parcial: ParcialCalificacion,
+  ) {
+    const registro = parciales.find(
+      (row) => row.quimestre === quimestre && row.parcial === parcial,
+    );
+    if (!registro) return null;
+    const resultado = calcularParcialSuperior(registro);
+    return {
+      insumo1: registro.insumo1,
+      insumo2: registro.insumo2,
+      evaluacion: registro.evaluacion,
+      ponderacion70: resultado.ponderacion70,
+      ponderacion30: resultado.ponderacion30,
+      promedioParcial: resultado.promedioParcial,
+      criteriosComportamiento: registro.comportamiento ?? [],
+      promedioComportamiento: resultado.comportamiento,
+      valoracionComportamiento: resultado.valoracionComportamiento,
+    };
+  }
+
+  private construirDetalleParcialBe(
+    parciales: CalificacionParcialBe[],
+    quimestre: QuimestreCalificacion,
+    parcial: ParcialCalificacion,
+  ) {
+    const registro = parciales.find(
+      (row) => row.quimestre === quimestre && row.parcial === parcial,
+    );
+    if (!registro) return null;
+    const resultado = calcularParcialBe(registro);
+    return {
+      insumo1: registro.insumo1,
+      insumo2: registro.insumo2,
+      evaluacion: registro.evaluacion,
+      mejoramiento: registro.mejoramiento,
+      promedioInsumos: resultado.promedioInsumos,
+      ponderacion70: resultado.ponderacion70,
+      promedioMejora: resultado.promedioMejora,
+      promedioSumativas: resultado.promedioSumativas,
+      ponderacion30: resultado.ponderacion30,
+      notaParcial: resultado.notaParcial,
     };
   }
 
