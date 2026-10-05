@@ -13,8 +13,12 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
-import { TipoMateria } from '@domain/entities/materia.entity';
+import { NivelMateria, TipoMateria } from '@domain/entities/materia.entity';
+import { Jornada } from '@domain/interfaces/asignacion.repository.interface';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SecretariaGuard } from '../auth/secretaria.guard';
 
 @Controller('api/asignaciones')
 export class AsignacionController {
@@ -71,14 +75,30 @@ export class AsignacionController {
     @Query('nivel') nivel?: string,
   ) {
     if (page < 1 || limit < 1) {
-      throw new BadRequestException('La página y el límite deben ser mayores que cero');
+      throw new BadRequestException(
+        'La página y el límite deben ser mayores que cero',
+      );
     }
 
-    return this.asignacionService.getIndividuales(page, limit, search, periodo, nivel);
+    return this.asignacionService.getIndividuales(
+      page,
+      limit,
+      search,
+      periodo,
+      nivel,
+    );
   }
 
   @Get('obtener/periodo_academico/:periodo')
   async getAsignacionesPorPeriodo(
+    @Param('periodo', ParseIntPipe) periodo: number,
+  ) {
+    return this.asignacionService.getByPeriodo(periodo);
+  }
+
+  @Get('administracion-escolar/periodo/:periodo')
+  @UseGuards(JwtAuthGuard, SecretariaGuard)
+  getAsignacionesAdministracionEscolar(
     @Param('periodo', ParseIntPipe) periodo: number,
   ) {
     return this.asignacionService.getByPeriodo(periodo);
@@ -105,9 +125,9 @@ export class AsignacionController {
     }
     return this.asignacionService.getByMateria(
       periodo,
-      nivel as any,
+      nivel as NivelMateria,
       materia,
-      (jornadaPath ?? jornadaQuery) as any,
+      (jornadaPath ?? jornadaQuery) as Jornada,
       tipo,
       page,
       limit,

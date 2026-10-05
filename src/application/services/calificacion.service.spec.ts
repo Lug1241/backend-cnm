@@ -14,6 +14,7 @@ function crearDependencias() {
   };
   const inscripcionRepository = {
     findByMatricula: jest.fn(),
+    findByAsignacion: jest.fn(),
   };
   const estudianteRepository = {
     findByIds: jest.fn(),
@@ -63,6 +64,51 @@ const estudiante = {
 };
 
 describe('CalificacionService', () => {
+  it('mantiene una fila por inscripción al consultar varias asignaciones', async () => {
+    const {
+      service,
+      calificacionRepository,
+      inscripcionRepository,
+      estudianteRepository,
+    } = crearDependencias();
+
+    const matricula = {
+      id: 20,
+      nivel: NivelMatricula.PRIMERO_BASICO_MEDIO,
+      estudianteId: 9,
+      periodoAcademicoId: 3,
+    };
+    inscripcionRepository.findByAsignacion
+      .mockResolvedValueOnce([{ id: 100, matricula, asignacion }])
+      .mockResolvedValueOnce([
+        {
+          id: 101,
+          matricula,
+          asignacion: { ...asignacion, id: 51 },
+        },
+      ]);
+    estudianteRepository.findByIds.mockResolvedValue([estudiante]);
+    calificacionRepository.findByInscripcionIds.mockResolvedValue({
+      parciales: [],
+      quimestrales: [],
+      finales: [],
+      parcialesBe: [],
+      quimestralesBe: [],
+    });
+
+    const resultado = await service.getReporteByAsignaciones([50, 51, 50]);
+
+    expect(inscripcionRepository.findByAsignacion).toHaveBeenCalledTimes(2);
+    expect(calificacionRepository.findByInscripcionIds).toHaveBeenCalledWith([
+      100, 101,
+    ]);
+    expect(resultado.asignacionIds).toEqual([50, 51]);
+    expect(resultado.estudiantes.map((fila) => fila.idInscripcion)).toEqual([
+      100, 101,
+    ]);
+    expect(resultado.estudiantes[0].detalleParciales.q1.p1).toBeNull();
+  });
+
   it('arma el reporte superior por matrícula con Q1, Q2 y final', async () => {
     const {
       service,

@@ -9,10 +9,12 @@ import {
   Query,
   ParseIntPipe,
   DefaultValuePipe,
+  ParseEnumPipe,
 } from '@nestjs/common';
 import { FechaProcesoService } from '../application/services/fecha.service';
 import { CreateFechaProcesoDto } from '@application/dtos/fecha/create-fecha.dto';
 import { UpdateFechaProcesoDto } from '@application/dtos/fecha/update-fecha.dto';
+import { TipoProceso } from '@domain/entities/fecha-proceso.entity';
 
 @Controller('api/fechas_procesos')
 export class FechaProcesoController {
@@ -32,8 +34,12 @@ export class FechaProcesoController {
   }
 
   @Delete('eliminar/:id')
-  async deleteFechaProceso(@Param('id', ParseIntPipe) id: number) {
-    return this.fechaProcesoService.delete(id);
+  async deleteFechaProceso(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('proceso', new ParseEnumPipe(TipoProceso, { optional: true }))
+    proceso?: TipoProceso,
+  ) {
+    return this.fechaProcesoService.delete(id, proceso);
   }
 
   @Get('matricula')
@@ -42,8 +48,12 @@ export class FechaProcesoController {
   }
 
   @Get('obtener/:id')
-  async getFechaProceso(@Param('id', ParseIntPipe) id: number) {
-    return this.fechaProcesoService.getById(id);
+  async getFechaProceso(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('proceso', new ParseEnumPipe(TipoProceso, { optional: true }))
+    proceso?: TipoProceso,
+  ) {
+    return this.fechaProcesoService.getById(id, proceso);
   }
 
   @Get('obtener')
