@@ -11,6 +11,7 @@ import { FechaNotaOrmEntity } from '@infrastructure/database/entitites/fecha-not
   imports: [
     TypeOrmModule.forFeature([FechaProcesoOrmEntity, FechaNotaOrmEntity]),
   ],
+  exports: [I_FECHA_PROCESO_REPOSITORY],
   controllers: [FechaProcesoController],
   providers: [
     FechaProcesoService,
