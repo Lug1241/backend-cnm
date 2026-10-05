@@ -11,6 +11,8 @@ import { type MatriculaService } from './matricula.service';
 function crearDependencias() {
   const calificacionRepository = {
     findByInscripcionIds: jest.fn(),
+    findRegistros: jest.fn(),
+    guardar: jest.fn(),
   };
   const inscripcionRepository = {
     findByMatricula: jest.fn(),
@@ -277,5 +279,84 @@ describe('CalificacionService', () => {
     ).rejects.toThrow('No autorizado');
     expect(inscripcionRepository.findByMatricula).not.toHaveBeenCalled();
     expect(calificacionRepository.findByInscripcionIds).not.toHaveBeenCalled();
+  });
+});
+
+describe('Plantillas de la tabla unificada', () => {
+  it('conserva GENERAL con notas aunque la matrícula sea Básico Elemental', async () => {
+    const {
+      service,
+      calificacionRepository,
+      inscripcionRepository,
+      estudianteRepository,
+    } = crearDependencias();
+    inscripcionRepository.findByAsignacion.mockResolvedValue([
+      {
+        id: 100,
+        asignacion,
+        matricula: {
+          id: 20,
+          nivel: NivelMatricula.PRIMERO_BASICO_ELEMENTAL,
+          estudianteId: 9,
+        },
+      },
+    ]);
+    estudianteRepository.findByIds.mockResolvedValue([estudiante]);
+    calificacionRepository.findByInscripcionIds.mockResolvedValue({
+      parciales: [
+        {
+          id: 1,
+          inscripcionId: 100,
+          quimestre: QuimestreCalificacion.Q1,
+          parcial: ParcialCalificacion.P1,
+          insumo1: 8,
+          insumo2: 10,
+          evaluacion: 9,
+          comportamiento: Array(10).fill(1),
+        },
+      ],
+      quimestrales: [],
+      finales: [],
+      parcialesBe: [],
+      quimestralesBe: [],
+    });
+    const reporte = await service.getReporteByAsignaciones([50]);
+    expect(reporte.estudiantes[0].tipoCalificacion).toBe('Superior');
+    expect(reporte.estudiantes[0].detalleParciales.q1.p1).toMatchObject({
+      insumo1: 8,
+      insumo2: 10,
+      promedioParcial: 9,
+    });
+  });
+  it('usa el nivel de matrícula cuando todavía no existen notas', async () => {
+    const {
+      service,
+      calificacionRepository,
+      inscripcionRepository,
+      estudianteRepository,
+    } = crearDependencias();
+    inscripcionRepository.findByAsignacion.mockResolvedValue([
+      {
+        id: 100,
+        asignacion,
+        matricula: {
+          id: 20,
+          nivel: NivelMatricula.PRIMERO_BASICO_ELEMENTAL,
+          estudianteId: 9,
+        },
+      },
+    ]);
+    estudianteRepository.findByIds.mockResolvedValue([estudiante]);
+    calificacionRepository.findByInscripcionIds.mockResolvedValue({
+      parciales: [],
+      quimestrales: [],
+      finales: [],
+      parcialesBe: [],
+      quimestralesBe: [],
+    });
+    expect(
+      (await service.getReporteByAsignaciones([50])).estudiantes[0]
+        .tipoCalificacion,
+    ).toBe('BE');
   });
 });

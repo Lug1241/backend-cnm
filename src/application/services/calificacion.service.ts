@@ -17,13 +17,15 @@ import {
   type IEstudianteRepository,
 } from '@domain/interfaces/estudiante.repository.interface';
 import {
+  seleccionarPlantilla,
+  TipoPlantilla,
   CalificacionParcial,
   CalificacionParcialBe,
   CalificacionesLote,
   ParcialCalificacion,
   QuimestreCalificacion,
 } from '@domain/entities/calificacion.entity';
-import { NivelMatricula } from '@domain/entities/matricula.entity';
+
 import { Inscripcion } from '@domain/entities/inscripcion.entity';
 import {
   calcularFinalBe,
@@ -210,8 +212,8 @@ export class CalificacionService {
 
     const nivelMatricula = inscripcion.matricula?.nivel;
     const esBasicoElemental =
-      nivelMatricula === NivelMatricula.PRIMERO_BASICO_ELEMENTAL ||
-      nivelMatricula === NivelMatricula.SEGUNDO_BASICO_ELEMENTAL;
+      seleccionarPlantilla(nivelMatricula, calificaciones, idInscripcion) ===
+      TipoPlantilla.BASICO_ELEMENTAL;
 
     const asignacion = inscripcion.asignacion;
     const materia = asignacion?.materia;

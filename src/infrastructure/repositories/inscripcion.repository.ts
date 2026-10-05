@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IInscripcionRepository } from '@domain/interfaces/inscripcion.repository.interface';
 import { Inscripcion } from '@domain/entities/inscripcion.entity';
+import { CalificacionOrmEntity } from '@infrastructure/database/entitites/calificacion.orm-entity';
 import { InscripcionOrmEntity } from '@infrastructure/database/entitites/inscripcion.orm-entity';
 import { PeriodoAcademico } from '@domain/entities/periodo-academico.entity';
 import { NivelMateria } from '@domain/entities/materia.entity';
@@ -119,6 +120,15 @@ export class InscripcionRepository implements IInscripcionRepository {
   }
 
   async delete(id: number): Promise<void> {
+    if (
+      await this.ormRepository.manager
+        .getRepository(CalificacionOrmEntity)
+        .existsBy({ inscripcionId: id })
+    ) {
+      throw new ConflictException(
+        'No se puede eliminar una inscripción que tiene calificaciones',
+      );
+    }
     await this.ormRepository.delete(id);
   }
 
